@@ -1,0 +1,12 @@
+[package]
+name = "navis-pol"
+description = "Polarized single-inclusive hadron production matrix elements and PDF/FF interface"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+navis-core = { workspace = true }
+neopdf = { workspace = true }
+pineappl = { workspace = true }

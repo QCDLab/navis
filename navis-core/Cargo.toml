@@ -1,0 +1,16 @@
+[package]
+name = "navis-core"
+description = "Shared kinematics, VEGAS integrator, PineAPPL grid setup, and runcard parsing for navis"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+pineappl = { workspace = true }
+rand = { workspace = true }
+rayon = { workspace = true }
+serde = { workspace = true }
+serde_yaml = { workspace = true }
+thiserror = { workspace = true }

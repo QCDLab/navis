@@ -1,0 +1,29 @@
+[package]
+name = "navis-cli"
+description = "Command-line drivers for unpolarized and polarized single-inclusive hadron production"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "navis-unpol"
+path = "src/bin/navis-unpol.rs"
+
+[[bin]]
+name = "navis-pol"
+path = "src/bin/navis-pol.rs"
+
+[dependencies]
+anyhow = { workspace = true }
+clap = { workspace = true }
+navis-core = { workspace = true }
+navis-pol = { workspace = true }
+navis-unpol = { workspace = true }
+neopdf = { workspace = true }
+pineappl = { workspace = true }
+rayon = { workspace = true }
+serde_yaml = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3"
