@@ -1,17 +1,6 @@
-//! Unpolarized partonic matrix elements, ported literally from
-//! `unpolarized/me-unp-ms-new.f`. Function names and argument order mirror
-//! the Fortran subroutines/functions they replace; see each doc comment for
-//! the exact source function.
-//!
-//! No algebraic simplification is performed anywhere in this file — same
-//! grouping, same order of operations as the source, since a transcription
-//! bug in a multi-hundred-line polynomial is effectively unreviewable any
-//! other way. Correctness is established by numerical comparison against
-//! the Fortran binaries (see the project's validation plan), not by
-//! inspection alone.
+//! Unpolarized partonic matrix elements.
 
-/// Scale/color context threaded through the matrix elements, replacing the
-/// Fortran `COMMON /PARAMS/`, `COMMON /SCALES/` blocks.
+/// Scale/color context threaded through the matrix elements.
 #[derive(Debug, Clone, Copy)]
 pub struct MeContext {
     pub ca: f64,
@@ -42,7 +31,8 @@ pub fn fbor(v: f64, shd: f64, nc: f64, cf: f64) -> [f64; 16] {
     f0[2] = cf / nc * prelo * (v2 + 1.0) / vm2;
     f0[3] = 0.0;
     f0[4] = cf / nc * prelo * (2.0 * v2 - 2.0 * v + 1.0);
-    f0[5] = 2.0 * cf / nc2 * prelo
+    f0[5] = 2.0 * cf / nc2
+        * prelo
         * (nc * v4 - 2.0 * nc * v3 + 4.0 * nc * v2 + v2 - (3.0 * nc + 1.0) * v + nc)
         / v2
         / vm2;
@@ -50,23 +40,28 @@ pub fn fbor(v: f64, shd: f64, nc: f64, cf: f64) -> [f64; 16] {
     f0[7] = 0.0;
     f0[8] = 0.0;
     f0[9] = 0.0;
-    f0[10] = 2.0 * cf / nc2 * prelo
+    f0[10] = 2.0 * cf / nc2
+        * prelo
         * (nc * v4 - (3.0 * nc + 1.0) * v3 + (4.0 * nc + 1.0) * v2 - 2.0 * nc * v + nc)
         / vm2;
-    f0[11] = cf / nc2 * prelo * (2.0 * v2 - 2.0 * v + 1.0)
+    f0[11] = cf / nc2
+        * prelo
+        * (2.0 * v2 - 2.0 * v + 1.0)
         * (2.0 * nc2 * v2 - 2.0 * nc2 * v + nc2 - 1.0)
         / v
         / vm;
     f0[12] = 1.0 / (2.0 * nc2) * prelo * (v2 + 1.0) * ((nc2 - 1.0) * v2 + 2.0 * v + (nc2 - 1.0))
         / v
         / vm2;
-    f0[13] = 1.0 / (2.0 * nc2) * prelo * (v2 - 2.0 * v + 2.0)
+    f0[13] = 1.0 / (2.0 * nc2)
+        * prelo
+        * (v2 - 2.0 * v + 2.0)
         * ((nc2 - 1.0) * v2 - 2.0 * nc2 * v + 2.0 * nc2)
         / v2
         / vm;
     f0[14] = 4.0 * nc2 / vc * prelo * (3.0 - v * vm + v / vm2 + vm / v2);
-    f0[15] = 1.0 / (2.0 * nc) / vc * prelo * (v2 + vm2) * (2.0 * nc2 * (v2 - v) + nc2 - 1.0) / v
-        / vm;
+    f0[15] =
+        1.0 / (2.0 * nc) / vc * prelo * (v2 + vm2) * (2.0 * nc2 * (v2 - v) + nc2 - 1.0) / v / vm;
 
     f0
 }
@@ -360,14 +355,12 @@ pub fn avwpl(j0: usize, _w: f64, v: f64, s: f64, ctx: &MeContext) -> f64 {
                 - (8.0 * (3.0 - ca.powi(2)) * cf * l1v * (1.0 - 2.0 * v + 2.0 * v.powi(2))) / v
                 - (16.0 * ca * cf.powi(2) * lms * (1.0 - 2.0 * v + 2.0 * v.powi(2))) / v
                 - (8.0 * ca * cf.powi(2) * lmss * (1.0 - 2.0 * v + 2.0 * v.powi(2))) / v
-                + (4.0 * (5.0 + 3.0 * ca.powi(2)) * cf * lv * (1.0 - 2.0 * v + 2.0 * v.powi(2)))
-                    / v
+                + (4.0 * (5.0 + 3.0 * ca.powi(2)) * cf * lv * (1.0 - 2.0 * v + 2.0 * v.powi(2))) / v
         }
         6 => {
             (-12.0
                 * cf.powi(2)
-                * (ca - v - 3.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2)
-                    - 2.0 * ca * v.powi(3)
+                * (ca - v - 3.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2) - 2.0 * ca * v.powi(3)
                     + ca * v.powi(4)))
                 / ((1.0 - v).powi(2) * v.powi(3))
                 - (32.0
@@ -420,28 +413,33 @@ pub fn avwpl(j0: usize, _w: f64, v: f64, s: f64, ctx: &MeContext) -> f64 {
         11 => {
             (-12.0
                 * cf.powi(2)
-                * (ca - 2.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2) - v.powi(3)
+                * (ca - 2.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2)
+                    - v.powi(3)
                     - 3.0 * ca * v.powi(3)
                     + ca * v.powi(4)))
                 / ((1.0 - v).powi(2) * v)
                 - (32.0
                     * cf.powi(2)
                     * lms
-                    * (ca - 2.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2) - v.powi(3)
+                    * (ca - 2.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2)
+                        - v.powi(3)
                         - 3.0 * ca * v.powi(3)
                         + ca * v.powi(4)))
                     / ((1.0 - v).powi(2) * v)
                 - (16.0
                     * cf.powi(2)
                     * lmss
-                    * (ca - 2.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2) - v.powi(3)
+                    * (ca - 2.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2)
+                        - v.powi(3)
                         - 3.0 * ca * v.powi(3)
                         + ca * v.powi(4)))
                     / ((1.0 - v).powi(2) * v)
                 - (16.0
                     * cf
                     * l1v
-                    * (2.0 * ca - 6.0 * ca * v + 2.0 * ca.powi(3) * v + v.powi(2)
+                    * (2.0 * ca - 6.0 * ca * v
+                        + 2.0 * ca.powi(3) * v
+                        + v.powi(2)
                         + 11.0 * ca * v.powi(2)
                         + ca.powi(2) * v.powi(2)
                         - 3.0 * ca.powi(3) * v.powi(2)
@@ -469,7 +467,11 @@ pub fn avwpl(j0: usize, _w: f64, v: f64, s: f64, ctx: &MeContext) -> f64 {
                     / (ca * (1.0 - v).powi(2) * v)
         }
         12 => {
-            (-16.0 * ca.powi(2) * cf * lmss * (1.0 - 2.0 * v + 2.0 * v.powi(2))
+            (-16.0
+                * ca.powi(2)
+                * cf
+                * lmss
+                * (1.0 - 2.0 * v + 2.0 * v.powi(2))
                 * (cf - ca * v + ca * v.powi(2)))
                 / ((1.0 - v) * v.powi(2))
                 + (22.0
@@ -494,7 +496,8 @@ pub fn avwpl(j0: usize, _w: f64, v: f64, s: f64, ctx: &MeContext) -> f64 {
                     * cf
                     * l1v
                     * (1.0 - 2.0 * v + 2.0 * v.powi(2))
-                    * (1.0 + ca.powi(4) + 2.0 * ca.powi(2) * v - 2.0 * ca.powi(4) * v
+                    * (1.0 + ca.powi(4) + 2.0 * ca.powi(2) * v
+                        - 2.0 * ca.powi(4) * v
                         - 2.0 * ca.powi(2) * v.powi(2)))
                     / (ca * (1.0 - v) * v.powi(2))
                 + (8.0
@@ -673,18 +676,43 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                 - (40.0 * ca * cf * nf * (1.0 + v.powi(2))) / (9.0 * (1.0 - v).powi(2) * v)
                 + (8.0 * ca * cf * l1v * nf * (1.0 + v.powi(2))) / (3.0 * (1.0 - v).powi(2) * v)
                 - (8.0 * ca * cf * lmu * nf * (1.0 + v.powi(2))) / (3.0 * (1.0 - v).powi(2) * v)
-                - (2.0 * cf * lv.powi(2) * (16.0 - 9.0 * ca.powi(2) + 20.0 * v.powi(2) - 11.0 * ca.powi(2) * v.powi(2)))
+                - (2.0
+                    * cf
+                    * lv.powi(2)
+                    * (16.0 - 9.0 * ca.powi(2) + 20.0 * v.powi(2) - 11.0 * ca.powi(2) * v.powi(2)))
                     / ((1.0 - v).powi(2) * v)
-                + (4.0 * cf * l1v * lv * (5.0 - 4.0 * ca.powi(2) + 9.0 * v.powi(2) - 6.0 * ca.powi(2) * v.powi(2)))
+                + (4.0
+                    * cf
+                    * l1v
+                    * lv
+                    * (5.0 - 4.0 * ca.powi(2) + 9.0 * v.powi(2) - 6.0 * ca.powi(2) * v.powi(2)))
                     / ((1.0 - v).powi(2) * v)
-                - (4.0 * cf * l1v * (3.0 + 5.0 * ca.powi(2) - 3.0 * ca.powi(2) * v + 15.0 * v.powi(2) + 2.0 * ca.powi(2) * v.powi(2)))
+                - (4.0
+                    * cf
+                    * l1v
+                    * (3.0 + 5.0 * ca.powi(2) - 3.0 * ca.powi(2) * v
+                        + 15.0 * v.powi(2)
+                        + 2.0 * ca.powi(2) * v.powi(2)))
                     / (3.0 * (1.0 - v).powi(2) * v)
-                - (cf * lv * (5.0 - ca.powi(2) - 8.0 * v + 4.0 * ca.powi(2) * v - 3.0 * v.powi(2) + 3.0 * ca.powi(2) * v.powi(2)))
+                - (cf
+                    * lv
+                    * (5.0 - ca.powi(2) - 8.0 * v + 4.0 * ca.powi(2) * v - 3.0 * v.powi(2)
+                        + 3.0 * ca.powi(2) * v.powi(2)))
                     / ((1.0 - v).powi(2) * v)
-                + (2.0 * cf * l1v.powi(2) * (5.0 + 2.0 * ca.powi(2) - 3.0 * v.powi(2) + 4.0 * ca.powi(2) * v.powi(2)))
+                + (2.0
+                    * cf
+                    * l1v.powi(2)
+                    * (5.0 + 2.0 * ca.powi(2) - 3.0 * v.powi(2) + 4.0 * ca.powi(2) * v.powi(2)))
                     / ((1.0 - v).powi(2) * v)
-                + (cf * (225.0 + 115.0 * ca.powi(2) + 42.0 * pi2 + 12.0 * ca.powi(2) * pi2 + 225.0 * v.powi(2)
-                    + 115.0 * ca.powi(2) * v.powi(2) - 30.0 * pi2 * v.powi(2) + 48.0 * ca.powi(2) * pi2 * v.powi(2)))
+                + (cf
+                    * (225.0
+                        + 115.0 * ca.powi(2)
+                        + 42.0 * pi2
+                        + 12.0 * ca.powi(2) * pi2
+                        + 225.0 * v.powi(2)
+                        + 115.0 * ca.powi(2) * v.powi(2)
+                        - 30.0 * pi2 * v.powi(2)
+                        + 48.0 * ca.powi(2) * pi2 * v.powi(2)))
                     / (9.0 * (1.0 - v).powi(2) * v)
         }
         2 => 0.0,
@@ -698,18 +726,41 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                 - (40.0 * ca * cf * nf * (1.0 + v.powi(2))) / (9.0 * (1.0 - v).powi(2) * v)
                 + (8.0 * ca * cf * l1v * nf * (1.0 + v.powi(2))) / (3.0 * (1.0 - v).powi(2) * v)
                 - (8.0 * ca * cf * lmu * nf * (1.0 + v.powi(2))) / (3.0 * (1.0 - v).powi(2) * v)
-                + (cf * lv * (11.0 - 3.0 * ca.powi(2) - 8.0 * v + 3.0 * v.powi(2) - 3.0 * ca.powi(2) * v.powi(2)))
+                + (cf
+                    * lv
+                    * (11.0 - 3.0 * ca.powi(2) - 8.0 * v + 3.0 * v.powi(2)
+                        - 3.0 * ca.powi(2) * v.powi(2)))
                     / ((1.0 - v).powi(2) * v)
-                - (2.0 * cf * l1v.powi(2) * (3.0 - 4.0 * ca.powi(2) - 5.0 * v.powi(2) - 2.0 * ca.powi(2) * v.powi(2)))
+                - (2.0
+                    * cf
+                    * l1v.powi(2)
+                    * (3.0 - 4.0 * ca.powi(2) - 5.0 * v.powi(2) - 2.0 * ca.powi(2) * v.powi(2)))
                     / ((1.0 - v).powi(2) * v)
-                + (4.0 * cf * lv.powi(2) * (6.0 + ca.powi(2) + 8.0 * v.powi(2) + ca.powi(2) * v.powi(2)))
+                + (4.0
+                    * cf
+                    * lv.powi(2)
+                    * (6.0 + ca.powi(2) + 8.0 * v.powi(2) + ca.powi(2) * v.powi(2)))
                     / ((1.0 - v).powi(2) * v)
-                - (4.0 * cf * l1v * lv * (7.0 + ca.powi(2) + 11.0 * v.powi(2) + ca.powi(2) * v.powi(2)))
+                - (4.0
+                    * cf
+                    * l1v
+                    * lv
+                    * (7.0 + ca.powi(2) + 11.0 * v.powi(2) + ca.powi(2) * v.powi(2)))
                     / ((1.0 - v).powi(2) * v)
-                - (4.0 * cf * l1v * (15.0 + 2.0 * ca.powi(2) - 3.0 * ca.powi(2) * v + 3.0 * v.powi(2) + 5.0 * ca.powi(2) * v.powi(2)))
+                - (4.0
+                    * cf
+                    * l1v
+                    * (15.0 + 2.0 * ca.powi(2) - 3.0 * ca.powi(2) * v
+                        + 3.0 * v.powi(2)
+                        + 5.0 * ca.powi(2) * v.powi(2)))
                     / (3.0 * (1.0 - v).powi(2) * v)
-                + (cf * (225.0 + 115.0 * ca.powi(2) - 30.0 * pi2 + 30.0 * ca.powi(2) * pi2 + 225.0 * v.powi(2)
-                    + 115.0 * ca.powi(2) * v.powi(2) + 42.0 * pi2 * v.powi(2) + 30.0 * ca.powi(2) * pi2 * v.powi(2)))
+                + (cf
+                    * (225.0 + 115.0 * ca.powi(2) - 30.0 * pi2
+                        + 30.0 * ca.powi(2) * pi2
+                        + 225.0 * v.powi(2)
+                        + 115.0 * ca.powi(2) * v.powi(2)
+                        + 42.0 * pi2 * v.powi(2)
+                        + 30.0 * ca.powi(2) * pi2 * v.powi(2)))
                     / (9.0 * (1.0 - v).powi(2) * v)
         }
         4 => 0.0,
@@ -724,337 +775,1108 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                 - (8.0 * ca * cf.powi(2) * lmss * lv * (1.0 - 2.0 * v + 2.0 * v.powi(2))) / v
                 - (40.0 * ca * cf * nf * (1.0 - 2.0 * v + 2.0 * v.powi(2))) / (9.0 * v)
                 - (8.0 * ca * cf * lmu * nf * (1.0 - 2.0 * v + 2.0 * v.powi(2))) / (3.0 * v)
-                + (cf * (225.0 + 115.0 * ca.powi(2) - 30.0 * pi2 - 6.0 * ca.powi(2) * pi2) * (1.0 - 2.0 * v + 2.0 * v.powi(2)))
+                + (cf
+                    * (225.0 + 115.0 * ca.powi(2) - 30.0 * pi2 - 6.0 * ca.powi(2) * pi2)
+                    * (1.0 - 2.0 * v + 2.0 * v.powi(2)))
                     / (9.0 * v)
-                + (cf * lv * (11.0 - 3.0 * ca.powi(2) - 14.0 * v + 6.0 * ca.powi(2) * v + 6.0 * v.powi(2) - 6.0 * ca.powi(2) * v.powi(2)))
+                + (cf
+                    * lv
+                    * (11.0 - 3.0 * ca.powi(2) - 14.0 * v + 6.0 * ca.powi(2) * v + 6.0 * v.powi(2)
+                        - 6.0 * ca.powi(2) * v.powi(2)))
                     / v
-                - (2.0 * cf * l1v.powi(2) * (3.0 - 2.0 * ca.powi(2) - 6.0 * v + 4.0 * ca.powi(2) * v + 2.0 * v.powi(2) - 2.0 * ca.powi(2) * v.powi(2)))
+                - (2.0
+                    * cf
+                    * l1v.powi(2)
+                    * (3.0 - 2.0 * ca.powi(2) - 6.0 * v + 4.0 * ca.powi(2) * v + 2.0 * v.powi(2)
+                        - 2.0 * ca.powi(2) * v.powi(2)))
                     / v
-                + (4.0 * cf * lv.powi(2) * (6.0 + ca.powi(2) - 12.0 * v - 2.0 * ca.powi(2) * v + 14.0 * v.powi(2) + 2.0 * ca.powi(2) * v.powi(2)))
+                + (4.0
+                    * cf
+                    * lv.powi(2)
+                    * (6.0 + ca.powi(2) - 12.0 * v - 2.0 * ca.powi(2) * v
+                        + 14.0 * v.powi(2)
+                        + 2.0 * ca.powi(2) * v.powi(2)))
                     / v
         }
         6 => {
-            (-8.0 * cf * l1v * nf * (1.0 - v - ca * v - ca * v.powi(3))) / (3.0 * (1.0 - v).powi(2) * v.powi(2))
-                + (8.0 * cf * lv * nf * (2.0 * ca - v - 4.0 * ca * v + 3.0 * ca * v.powi(2) - ca * v.powi(3)))
+            (-8.0 * cf * l1v * nf * (1.0 - v - ca * v - ca * v.powi(3)))
+                / (3.0 * (1.0 - v).powi(2) * v.powi(2))
+                + (8.0
+                    * cf
+                    * lv
+                    * nf
+                    * (2.0 * ca - v - 4.0 * ca * v + 3.0 * ca * v.powi(2) - ca * v.powi(3)))
                     / (3.0 * (1.0 - v) * v.powi(3))
-                + (4.0 * cf * l1v * (6.0 - 6.0 * ca + 2.0 * ca.powi(2) + 3.0 * ca.powi(3) + 9.0 * ca * v - 2.0 * ca.powi(2) * v
-                    - 11.0 * ca.powi(3) * v - 6.0 * v.powi(2) - 6.0 * ca * v.powi(2) + 6.0 * ca.powi(3) * v.powi(2) - 15.0 * ca * v.powi(3)
-                    - 2.0 * ca.powi(3) * v.powi(3)))
+                + (4.0
+                    * cf
+                    * l1v
+                    * (6.0 - 6.0 * ca + 2.0 * ca.powi(2) + 3.0 * ca.powi(3) + 9.0 * ca * v
+                        - 2.0 * ca.powi(2) * v
+                        - 11.0 * ca.powi(3) * v
+                        - 6.0 * v.powi(2)
+                        - 6.0 * ca * v.powi(2)
+                        + 6.0 * ca.powi(3) * v.powi(2)
+                        - 15.0 * ca * v.powi(3)
+                        - 2.0 * ca.powi(3) * v.powi(3)))
                     / (3.0 * ca * (1.0 - v).powi(2) * v.powi(2))
-                - (24.0 * cf.powi(2) * lms * (ca - v - 3.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2) - 2.0 * ca * v.powi(3) + ca * v.powi(4)))
+                - (24.0
+                    * cf.powi(2)
+                    * lms
+                    * (ca - v - 3.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2)
+                        - 2.0 * ca * v.powi(3)
+                        + ca * v.powi(4)))
                     / ((1.0 - v).powi(2) * v.powi(3))
-                + (16.0 * cf.powi(2) * l1v * lms * (ca - v - 3.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2) - 2.0 * ca * v.powi(3) + ca * v.powi(4)))
+                + (16.0
+                    * cf.powi(2)
+                    * l1v
+                    * lms
+                    * (ca - v - 3.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2)
+                        - 2.0 * ca * v.powi(3)
+                        + ca * v.powi(4)))
                     / ((1.0 - v).powi(2) * v.powi(3))
-                - (12.0 * cf.powi(2) * lmss * (ca - v - 3.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2) - 2.0 * ca * v.powi(3) + ca * v.powi(4)))
+                - (12.0
+                    * cf.powi(2)
+                    * lmss
+                    * (ca - v - 3.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2)
+                        - 2.0 * ca * v.powi(3)
+                        + ca * v.powi(4)))
                     / ((1.0 - v).powi(2) * v.powi(3))
-                + (88.0 * ca * cf * lmu * (ca - v - 3.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2) - 2.0 * ca * v.powi(3) + ca * v.powi(4)))
+                + (88.0
+                    * ca
+                    * cf
+                    * lmu
+                    * (ca - v - 3.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2)
+                        - 2.0 * ca * v.powi(3)
+                        + ca * v.powi(4)))
                     / (3.0 * (1.0 - v).powi(2) * v.powi(3))
-                - (16.0 * cf.powi(2) * lms * lv * (ca - v - 3.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2) - 2.0 * ca * v.powi(3) + ca * v.powi(4)))
+                - (16.0
+                    * cf.powi(2)
+                    * lms
+                    * lv
+                    * (ca - v - 3.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2)
+                        - 2.0 * ca * v.powi(3)
+                        + ca * v.powi(4)))
                     / ((1.0 - v).powi(2) * v.powi(3))
-                - (16.0 * cf.powi(2) * lmss * lv * (ca - v - 3.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2) - 2.0 * ca * v.powi(3) + ca * v.powi(4)))
+                - (16.0
+                    * cf.powi(2)
+                    * lmss
+                    * lv
+                    * (ca - v - 3.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2)
+                        - 2.0 * ca * v.powi(3)
+                        + ca * v.powi(4)))
                     / ((1.0 - v).powi(2) * v.powi(3))
-                - (80.0 * cf * nf * (ca - v - 3.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2) - 2.0 * ca * v.powi(3) + ca * v.powi(4)))
+                - (80.0
+                    * cf
+                    * nf
+                    * (ca - v - 3.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2)
+                        - 2.0 * ca * v.powi(3)
+                        + ca * v.powi(4)))
                     / (9.0 * (1.0 - v).powi(2) * v.powi(3))
-                - (16.0 * cf * lmu * nf * (ca - v - 3.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2) - 2.0 * ca * v.powi(3) + ca * v.powi(4)))
+                - (16.0
+                    * cf
+                    * lmu
+                    * nf
+                    * (ca - v - 3.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2)
+                        - 2.0 * ca * v.powi(3)
+                        + ca * v.powi(4)))
                     / (3.0 * (1.0 - v).powi(2) * v.powi(3))
-                - (2.0 * cf * lv.powi(2) * (16.0 * ca - 8.0 * ca.powi(3) - 17.0 * v - 56.0 * ca * v + 6.0 * ca.powi(2) * v
-                    + 26.0 * ca.powi(3) * v + 19.0 * v.powi(2) + 92.0 * ca * v.powi(2) - 6.0 * ca.powi(2) * v.powi(2)
-                    - 42.0 * ca.powi(3) * v.powi(2) - 4.0 * v.powi(3) - 48.0 * ca * v.powi(3) + 20.0 * ca.powi(3) * v.powi(3)
-                    + 2.0 * v.powi(4) + 32.0 * ca * v.powi(4) - 16.0 * ca.powi(3) * v.powi(4)))
+                - (2.0
+                    * cf
+                    * lv.powi(2)
+                    * (16.0 * ca - 8.0 * ca.powi(3) - 17.0 * v - 56.0 * ca * v
+                        + 6.0 * ca.powi(2) * v
+                        + 26.0 * ca.powi(3) * v
+                        + 19.0 * v.powi(2)
+                        + 92.0 * ca * v.powi(2)
+                        - 6.0 * ca.powi(2) * v.powi(2)
+                        - 42.0 * ca.powi(3) * v.powi(2)
+                        - 4.0 * v.powi(3)
+                        - 48.0 * ca * v.powi(3)
+                        + 20.0 * ca.powi(3) * v.powi(3)
+                        + 2.0 * v.powi(4)
+                        + 32.0 * ca * v.powi(4)
+                        - 16.0 * ca.powi(3) * v.powi(4)))
                     / (ca * (1.0 - v).powi(2) * v.powi(3))
-                + (4.0 * cf * l1v * lv * (6.0 * ca - 2.0 * ca.powi(3) - 5.0 * v - 22.0 * ca * v + 2.0 * ca.powi(2) * v
-                    + 8.0 * ca.powi(3) * v + 7.0 * v.powi(2) + 36.0 * ca * v.powi(2) - 2.0 * ca.powi(2) * v.powi(2)
-                    - 16.0 * ca.powi(3) * v.powi(2) - 4.0 * v.powi(3) - 20.0 * ca * v.powi(3) + 8.0 * ca.powi(3) * v.powi(3)
-                    + 2.0 * v.powi(4) + 14.0 * ca * v.powi(4) - 8.0 * ca.powi(3) * v.powi(4)))
+                + (4.0
+                    * cf
+                    * l1v
+                    * lv
+                    * (6.0 * ca - 2.0 * ca.powi(3) - 5.0 * v - 22.0 * ca * v
+                        + 2.0 * ca.powi(2) * v
+                        + 8.0 * ca.powi(3) * v
+                        + 7.0 * v.powi(2)
+                        + 36.0 * ca * v.powi(2)
+                        - 2.0 * ca.powi(2) * v.powi(2)
+                        - 16.0 * ca.powi(3) * v.powi(2)
+                        - 4.0 * v.powi(3)
+                        - 20.0 * ca * v.powi(3)
+                        + 8.0 * ca.powi(3) * v.powi(3)
+                        + 2.0 * v.powi(4)
+                        + 14.0 * ca * v.powi(4)
+                        - 8.0 * ca.powi(3) * v.powi(4)))
                     / (ca * (1.0 - v).powi(2) * v.powi(3))
-                - (2.0 * cf * l1v.powi(2) * (2.0 * ca - 2.0 * ca.powi(3) + v - 10.0 * ca * v + 4.0 * ca.powi(2) * v
-                    + 8.0 * ca.powi(3) * v + v.powi(2) + 12.0 * ca * v.powi(2) - 4.0 * ca.powi(2) * v.powi(2)
-                    - 14.0 * ca.powi(3) * v.powi(2) - 4.0 * v.powi(3) - 12.0 * ca * v.powi(3) + 8.0 * ca.powi(3) * v.powi(3)
-                    + 2.0 * v.powi(4) + 6.0 * ca * v.powi(4) - 6.0 * ca.powi(3) * v.powi(4)))
+                - (2.0
+                    * cf
+                    * l1v.powi(2)
+                    * (2.0 * ca - 2.0 * ca.powi(3) + v - 10.0 * ca * v
+                        + 4.0 * ca.powi(2) * v
+                        + 8.0 * ca.powi(3) * v
+                        + v.powi(2)
+                        + 12.0 * ca * v.powi(2)
+                        - 4.0 * ca.powi(2) * v.powi(2)
+                        - 14.0 * ca.powi(3) * v.powi(2)
+                        - 4.0 * v.powi(3)
+                        - 12.0 * ca * v.powi(3)
+                        + 8.0 * ca.powi(3) * v.powi(3)
+                        + 2.0 * v.powi(4)
+                        + 6.0 * ca * v.powi(4)
+                        - 6.0 * ca.powi(3) * v.powi(4)))
                     / (ca * (1.0 - v).powi(2) * v.powi(3))
-                - (2.0 * cf * lv * (27.0 * ca + 17.0 * ca.powi(3) - 15.0 * v - 105.0 * ca * v - 13.0 * ca.powi(2) * v
-                    - 45.0 * ca.powi(3) * v + 27.0 * v.powi(2) + 162.0 * ca * v.powi(2) + 13.0 * ca.powi(2) * v.powi(2)
-                    + 46.0 * ca.powi(3) * v.powi(2) - 12.0 * v.powi(3) - 114.0 * ca * v.powi(3) - 22.0 * ca.powi(3) * v.powi(3)
-                    + 21.0 * ca * v.powi(4) + 13.0 * ca.powi(3) * v.powi(4)))
+                - (2.0
+                    * cf
+                    * lv
+                    * (27.0 * ca + 17.0 * ca.powi(3)
+                        - 15.0 * v
+                        - 105.0 * ca * v
+                        - 13.0 * ca.powi(2) * v
+                        - 45.0 * ca.powi(3) * v
+                        + 27.0 * v.powi(2)
+                        + 162.0 * ca * v.powi(2)
+                        + 13.0 * ca.powi(2) * v.powi(2)
+                        + 46.0 * ca.powi(3) * v.powi(2)
+                        - 12.0 * v.powi(3)
+                        - 114.0 * ca * v.powi(3)
+                        - 22.0 * ca.powi(3) * v.powi(3)
+                        + 21.0 * ca * v.powi(4)
+                        + 13.0 * ca.powi(3) * v.powi(4)))
                     / (3.0 * ca * (1.0 - v).powi(2) * v.powi(3))
-                + (2.0 * cf * (225.0 * ca + 115.0 * ca.powi(3) + 6.0 * ca * pi2 + 30.0 * ca.powi(3) * pi2 - 225.0 * v
-                    - 675.0 * ca * v - 115.0 * ca.powi(2) * v - 345.0 * ca.powi(3) * v - 15.0 * pi2 * v
-                    + 18.0 * ca * pi2 * v - 30.0 * ca.powi(2) * pi2 * v - 108.0 * ca.powi(3) * pi2 * v
-                    + 225.0 * v.powi(2) + 900.0 * ca * v.powi(2) + 115.0 * ca.powi(2) * v.powi(2) + 460.0 * ca.powi(3) * v.powi(2)
-                    - 3.0 * pi2 * v.powi(2) - 48.0 * ca * pi2 * v.powi(2) + 30.0 * ca.powi(2) * pi2 * v.powi(2)
-                    + 156.0 * ca.powi(3) * pi2 * v.powi(2) - 450.0 * ca * v.powi(3) - 230.0 * ca.powi(3) * v.powi(3)
-                    + 36.0 * pi2 * v.powi(3) + 60.0 * ca * pi2 * v.powi(3) - 96.0 * ca.powi(3) * pi2 * v.powi(3)
-                    + 225.0 * ca * v.powi(4) + 115.0 * ca.powi(3) * v.powi(4) - 18.0 * pi2 * v.powi(4)
-                    - 30.0 * ca * pi2 * v.powi(4) + 48.0 * ca.powi(3) * pi2 * v.powi(4)))
+                + (2.0
+                    * cf
+                    * (225.0 * ca + 115.0 * ca.powi(3) + 6.0 * ca * pi2 + 30.0 * ca.powi(3) * pi2
+                        - 225.0 * v
+                        - 675.0 * ca * v
+                        - 115.0 * ca.powi(2) * v
+                        - 345.0 * ca.powi(3) * v
+                        - 15.0 * pi2 * v
+                        + 18.0 * ca * pi2 * v
+                        - 30.0 * ca.powi(2) * pi2 * v
+                        - 108.0 * ca.powi(3) * pi2 * v
+                        + 225.0 * v.powi(2)
+                        + 900.0 * ca * v.powi(2)
+                        + 115.0 * ca.powi(2) * v.powi(2)
+                        + 460.0 * ca.powi(3) * v.powi(2)
+                        - 3.0 * pi2 * v.powi(2)
+                        - 48.0 * ca * pi2 * v.powi(2)
+                        + 30.0 * ca.powi(2) * pi2 * v.powi(2)
+                        + 156.0 * ca.powi(3) * pi2 * v.powi(2)
+                        - 450.0 * ca * v.powi(3)
+                        - 230.0 * ca.powi(3) * v.powi(3)
+                        + 36.0 * pi2 * v.powi(3)
+                        + 60.0 * ca * pi2 * v.powi(3)
+                        - 96.0 * ca.powi(3) * pi2 * v.powi(3)
+                        + 225.0 * ca * v.powi(4)
+                        + 115.0 * ca.powi(3) * v.powi(4)
+                        - 18.0 * pi2 * v.powi(4)
+                        - 30.0 * ca * pi2 * v.powi(4)
+                        + 48.0 * ca.powi(3) * pi2 * v.powi(4)))
                     / (9.0 * ca * (1.0 - v).powi(2) * v.powi(3))
         }
         7..=10 => 0.0,
         11 => {
-            (8.0 * cf * l1v * nf * (ca + v.powi(2) + ca * v.powi(2) - v.powi(3))) / (3.0 * (1.0 - v).powi(2) * v)
-                - (4.0 * cf * l1v * (15.0 * ca + 2.0 * ca.powi(3) + 6.0 * v + 6.0 * ca * v - 6.0 * ca.powi(3) * v
-                    - 9.0 * ca * v.powi(2) + 2.0 * ca.powi(2) * v.powi(2) + 11.0 * ca.powi(3) * v.powi(2) - 6.0 * v.powi(3)
-                    + 6.0 * ca * v.powi(3) - 2.0 * ca.powi(2) * v.powi(3) - 3.0 * ca.powi(3) * v.powi(3)))
+            (8.0 * cf * l1v * nf * (ca + v.powi(2) + ca * v.powi(2) - v.powi(3)))
+                / (3.0 * (1.0 - v).powi(2) * v)
+                - (4.0
+                    * cf
+                    * l1v
+                    * (15.0 * ca + 2.0 * ca.powi(3) + 6.0 * v + 6.0 * ca * v
+                        - 6.0 * ca.powi(3) * v
+                        - 9.0 * ca * v.powi(2)
+                        + 2.0 * ca.powi(2) * v.powi(2)
+                        + 11.0 * ca.powi(3) * v.powi(2)
+                        - 6.0 * v.powi(3)
+                        + 6.0 * ca * v.powi(3)
+                        - 2.0 * ca.powi(2) * v.powi(3)
+                        - 3.0 * ca.powi(3) * v.powi(3)))
                     / (3.0 * ca * (1.0 - v).powi(2) * v)
-                - (24.0 * cf.powi(2) * lms * (ca - 2.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2) - v.powi(3) - 3.0 * ca * v.powi(3) + ca * v.powi(4)))
+                - (24.0
+                    * cf.powi(2)
+                    * lms
+                    * (ca - 2.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2)
+                        - v.powi(3)
+                        - 3.0 * ca * v.powi(3)
+                        + ca * v.powi(4)))
                     / ((1.0 - v).powi(2) * v)
-                + (16.0 * cf.powi(2) * l1v * lms * (ca - 2.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2) - v.powi(3) - 3.0 * ca * v.powi(3) + ca * v.powi(4)))
+                + (16.0
+                    * cf.powi(2)
+                    * l1v
+                    * lms
+                    * (ca - 2.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2)
+                        - v.powi(3)
+                        - 3.0 * ca * v.powi(3)
+                        + ca * v.powi(4)))
                     / ((1.0 - v).powi(2) * v)
-                - (12.0 * cf.powi(2) * lmss * (ca - 2.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2) - v.powi(3) - 3.0 * ca * v.powi(3) + ca * v.powi(4)))
+                - (12.0
+                    * cf.powi(2)
+                    * lmss
+                    * (ca - 2.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2)
+                        - v.powi(3)
+                        - 3.0 * ca * v.powi(3)
+                        + ca * v.powi(4)))
                     / ((1.0 - v).powi(2) * v)
-                + (88.0 * ca * cf * lmu * (ca - 2.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2) - v.powi(3) - 3.0 * ca * v.powi(3) + ca * v.powi(4)))
+                + (88.0
+                    * ca
+                    * cf
+                    * lmu
+                    * (ca - 2.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2)
+                        - v.powi(3)
+                        - 3.0 * ca * v.powi(3)
+                        + ca * v.powi(4)))
                     / (3.0 * (1.0 - v).powi(2) * v)
-                - (16.0 * cf.powi(2) * lms * lv * (ca - 2.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2) - v.powi(3) - 3.0 * ca * v.powi(3) + ca * v.powi(4)))
+                - (16.0
+                    * cf.powi(2)
+                    * lms
+                    * lv
+                    * (ca - 2.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2)
+                        - v.powi(3)
+                        - 3.0 * ca * v.powi(3)
+                        + ca * v.powi(4)))
                     / ((1.0 - v).powi(2) * v)
-                - (16.0 * cf.powi(2) * lmss * lv * (ca - 2.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2) - v.powi(3) - 3.0 * ca * v.powi(3) + ca * v.powi(4)))
+                - (16.0
+                    * cf.powi(2)
+                    * lmss
+                    * lv
+                    * (ca - 2.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2)
+                        - v.powi(3)
+                        - 3.0 * ca * v.powi(3)
+                        + ca * v.powi(4)))
                     / ((1.0 - v).powi(2) * v)
-                - (80.0 * cf * nf * (ca - 2.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2) - v.powi(3) - 3.0 * ca * v.powi(3) + ca * v.powi(4)))
+                - (80.0
+                    * cf
+                    * nf
+                    * (ca - 2.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2)
+                        - v.powi(3)
+                        - 3.0 * ca * v.powi(3)
+                        + ca * v.powi(4)))
                     / (9.0 * (1.0 - v).powi(2) * v)
-                - (16.0 * cf * lmu * nf * (ca - 2.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2) - v.powi(3) - 3.0 * ca * v.powi(3) + ca * v.powi(4)))
+                - (16.0
+                    * cf
+                    * lmu
+                    * nf
+                    * (ca - 2.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2)
+                        - v.powi(3)
+                        - 3.0 * ca * v.powi(3)
+                        + ca * v.powi(4)))
                     / (3.0 * (1.0 - v).powi(2) * v)
-                + (2.0 * cf * lv * (11.0 * ca - 3.0 * ca.powi(3) - 22.0 * ca * v + 6.0 * ca.powi(3) * v + 3.0 * v.powi(2)
-                    + 24.0 * ca * v.powi(2) - 3.0 * ca.powi(2) * v.powi(2) - 12.0 * ca.powi(3) * v.powi(2) - 3.0 * v.powi(3)
-                    - 13.0 * ca * v.powi(3) + 3.0 * ca.powi(2) * v.powi(3) + 9.0 * ca.powi(3) * v.powi(3) + 3.0 * ca * v.powi(4)
-                    - 3.0 * ca.powi(3) * v.powi(4)))
+                + (2.0
+                    * cf
+                    * lv
+                    * (11.0 * ca - 3.0 * ca.powi(3) - 22.0 * ca * v
+                        + 6.0 * ca.powi(3) * v
+                        + 3.0 * v.powi(2)
+                        + 24.0 * ca * v.powi(2)
+                        - 3.0 * ca.powi(2) * v.powi(2)
+                        - 12.0 * ca.powi(3) * v.powi(2)
+                        - 3.0 * v.powi(3)
+                        - 13.0 * ca * v.powi(3)
+                        + 3.0 * ca.powi(2) * v.powi(3)
+                        + 9.0 * ca.powi(3) * v.powi(3)
+                        + 3.0 * ca * v.powi(4)
+                        - 3.0 * ca.powi(3) * v.powi(4)))
                     / (ca * (1.0 - v).powi(2) * v)
-                - (2.0 * cf * l1v.powi(2) * (2.0 + 6.0 * ca - 6.0 * ca.powi(3) - 4.0 * v - 12.0 * ca * v + 8.0 * ca.powi(3) * v
-                    + v.powi(2) + 12.0 * ca * v.powi(2) - 4.0 * ca.powi(2) * v.powi(2) - 14.0 * ca.powi(3) * v.powi(2) + v.powi(3)
-                    - 10.0 * ca * v.powi(3) + 4.0 * ca.powi(2) * v.powi(3) + 8.0 * ca.powi(3) * v.powi(3) + 2.0 * ca * v.powi(4)
-                    - 2.0 * ca.powi(3) * v.powi(4)))
+                - (2.0
+                    * cf
+                    * l1v.powi(2)
+                    * (2.0 + 6.0 * ca - 6.0 * ca.powi(3) - 4.0 * v - 12.0 * ca * v
+                        + 8.0 * ca.powi(3) * v
+                        + v.powi(2)
+                        + 12.0 * ca * v.powi(2)
+                        - 4.0 * ca.powi(2) * v.powi(2)
+                        - 14.0 * ca.powi(3) * v.powi(2)
+                        + v.powi(3)
+                        - 10.0 * ca * v.powi(3)
+                        + 4.0 * ca.powi(2) * v.powi(3)
+                        + 8.0 * ca.powi(3) * v.powi(3)
+                        + 2.0 * ca * v.powi(4)
+                        - 2.0 * ca.powi(3) * v.powi(4)))
                     / (ca * (1.0 - v).powi(2) * v)
-                - (8.0 * cf * l1v * lv * (7.0 * ca - 14.0 * ca * v + 2.0 * ca.powi(3) * v + 4.0 * v.powi(2) + 30.0 * ca * v.powi(2)
-                    + 4.0 * ca.powi(2) * v.powi(2) - 3.0 * ca.powi(3) * v.powi(2) - 4.0 * v.powi(3) - 21.0 * ca * v.powi(3)
-                    - 4.0 * ca.powi(2) * v.powi(3) + 3.0 * ca.powi(3) * v.powi(3) + 7.0 * ca * v.powi(4) - ca.powi(3) * v.powi(4)))
+                - (8.0
+                    * cf
+                    * l1v
+                    * lv
+                    * (7.0 * ca - 14.0 * ca * v
+                        + 2.0 * ca.powi(3) * v
+                        + 4.0 * v.powi(2)
+                        + 30.0 * ca * v.powi(2)
+                        + 4.0 * ca.powi(2) * v.powi(2)
+                        - 3.0 * ca.powi(3) * v.powi(2)
+                        - 4.0 * v.powi(3)
+                        - 21.0 * ca * v.powi(3)
+                        - 4.0 * ca.powi(2) * v.powi(3)
+                        + 3.0 * ca.powi(3) * v.powi(3)
+                        + 7.0 * ca * v.powi(4)
+                        - ca.powi(3) * v.powi(4)))
                     / (ca * (1.0 - v).powi(2) * v)
-                + (8.0 * cf * lv.powi(2) * (6.0 * ca + ca.powi(3) - 12.0 * ca * v - 2.0 * ca.powi(3) * v + 3.0 * v.powi(2)
-                    + 26.0 * ca * v.powi(2) + 5.0 * ca.powi(2) * v.powi(2) + 4.0 * ca.powi(3) * v.powi(2) - 3.0 * v.powi(3)
-                    - 20.0 * ca * v.powi(3) - 5.0 * ca.powi(2) * v.powi(3) - 3.0 * ca.powi(3) * v.powi(3) + 7.0 * ca * v.powi(4)
-                    + ca.powi(3) * v.powi(4)))
+                + (8.0
+                    * cf
+                    * lv.powi(2)
+                    * (6.0 * ca + ca.powi(3) - 12.0 * ca * v - 2.0 * ca.powi(3) * v
+                        + 3.0 * v.powi(2)
+                        + 26.0 * ca * v.powi(2)
+                        + 5.0 * ca.powi(2) * v.powi(2)
+                        + 4.0 * ca.powi(3) * v.powi(2)
+                        - 3.0 * v.powi(3)
+                        - 20.0 * ca * v.powi(3)
+                        - 5.0 * ca.powi(2) * v.powi(3)
+                        - 3.0 * ca.powi(3) * v.powi(3)
+                        + 7.0 * ca * v.powi(4)
+                        + ca.powi(3) * v.powi(4)))
                     / (ca * (1.0 - v).powi(2) * v)
-                + (2.0 * cf * (225.0 * ca + 115.0 * ca.powi(3) - 30.0 * ca * pi2 + 12.0 * ca.powi(3) * pi2 - 450.0 * ca * v
-                    - 230.0 * ca.powi(3) * v + 60.0 * ca * pi2 * v + 12.0 * ca.powi(3) * pi2 * v + 225.0 * v.powi(2)
-                    + 900.0 * ca * v.powi(2) + 115.0 * ca.powi(2) * v.powi(2) + 460.0 * ca.powi(3) * v.powi(2)
-                    - 12.0 * pi2 * v.powi(2) - 84.0 * ca * pi2 * v.powi(2) + 12.0 * ca.powi(2) * pi2 * v.powi(2)
-                    - 6.0 * ca.powi(3) * pi2 * v.powi(2) - 225.0 * v.powi(3) - 675.0 * ca * v.powi(3) - 115.0 * ca.powi(2) * v.powi(3)
-                    - 345.0 * ca.powi(3) * v.powi(3) + 12.0 * pi2 * v.powi(3) + 90.0 * ca * pi2 * v.powi(3)
-                    - 12.0 * ca.powi(2) * pi2 * v.powi(3) + 18.0 * ca.powi(3) * pi2 * v.powi(3) + 225.0 * ca * v.powi(4)
-                    + 115.0 * ca.powi(3) * v.powi(4) - 30.0 * ca * pi2 * v.powi(4) - 6.0 * ca.powi(3) * pi2 * v.powi(4)))
+                + (2.0
+                    * cf
+                    * (225.0 * ca + 115.0 * ca.powi(3) - 30.0 * ca * pi2 + 12.0 * ca.powi(3) * pi2
+                        - 450.0 * ca * v
+                        - 230.0 * ca.powi(3) * v
+                        + 60.0 * ca * pi2 * v
+                        + 12.0 * ca.powi(3) * pi2 * v
+                        + 225.0 * v.powi(2)
+                        + 900.0 * ca * v.powi(2)
+                        + 115.0 * ca.powi(2) * v.powi(2)
+                        + 460.0 * ca.powi(3) * v.powi(2)
+                        - 12.0 * pi2 * v.powi(2)
+                        - 84.0 * ca * pi2 * v.powi(2)
+                        + 12.0 * ca.powi(2) * pi2 * v.powi(2)
+                        - 6.0 * ca.powi(3) * pi2 * v.powi(2)
+                        - 225.0 * v.powi(3)
+                        - 675.0 * ca * v.powi(3)
+                        - 115.0 * ca.powi(2) * v.powi(3)
+                        - 345.0 * ca.powi(3) * v.powi(3)
+                        + 12.0 * pi2 * v.powi(3)
+                        + 90.0 * ca * pi2 * v.powi(3)
+                        - 12.0 * ca.powi(2) * pi2 * v.powi(3)
+                        + 18.0 * ca.powi(3) * pi2 * v.powi(3)
+                        + 225.0 * ca * v.powi(4)
+                        + 115.0 * ca.powi(3) * v.powi(4)
+                        - 30.0 * ca * pi2 * v.powi(4)
+                        - 6.0 * ca.powi(3) * pi2 * v.powi(4)))
                     / (9.0 * ca * (1.0 - v).powi(2) * v)
         }
         12 => {
-            (2.0 * cf * l1v * (2.0 + 2.0 * ca.powi(2) + v - 5.0 * ca.powi(2) * v) * (1.0 - ca.powi(2) * v)) / (ca * (1.0 - v) * v)
-                + (16.0 * ca * cf.powi(2) * l1v * lms * (1.0 - 2.0 * v + 2.0 * v.powi(2)) * (cf - ca * v + ca * v.powi(2)))
+            (2.0 * cf
+                * l1v
+                * (2.0 + 2.0 * ca.powi(2) + v - 5.0 * ca.powi(2) * v)
+                * (1.0 - ca.powi(2) * v))
+                / (ca * (1.0 - v) * v)
+                + (16.0
+                    * ca
+                    * cf.powi(2)
+                    * l1v
+                    * lms
+                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
+                    * (cf - ca * v + ca * v.powi(2)))
                     / ((1.0 - v) * v.powi(2))
-                - (44.0 * ca.powi(2) * cf * lmss * (1.0 - 2.0 * v + 2.0 * v.powi(2)) * (cf - ca * v + ca * v.powi(2)))
+                - (44.0
+                    * ca.powi(2)
+                    * cf
+                    * lmss
+                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
+                    * (cf - ca * v + ca * v.powi(2)))
                     / (3.0 * (1.0 - v) * v.powi(2))
-                + (88.0 * ca.powi(2) * cf * lmu * (1.0 - 2.0 * v + 2.0 * v.powi(2)) * (cf - ca * v + ca * v.powi(2)))
+                + (88.0
+                    * ca.powi(2)
+                    * cf
+                    * lmu
+                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
+                    * (cf - ca * v + ca * v.powi(2)))
                     / (3.0 * (1.0 - v) * v.powi(2))
-                - (16.0 * ca * cf.powi(2) * lms * lv * (1.0 - 2.0 * v + 2.0 * v.powi(2)) * (cf - ca * v + ca * v.powi(2)))
+                - (16.0
+                    * ca
+                    * cf.powi(2)
+                    * lms
+                    * lv
+                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
+                    * (cf - ca * v + ca * v.powi(2)))
                     / ((1.0 - v) * v.powi(2))
-                - (16.0 * ca.powi(2) * cf * lmss * lv * (1.0 - 2.0 * v + 2.0 * v.powi(2)) * (cf - ca * v + ca * v.powi(2)))
+                - (16.0
+                    * ca.powi(2)
+                    * cf
+                    * lmss
+                    * lv
+                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
+                    * (cf - ca * v + ca * v.powi(2)))
                     / ((1.0 - v) * v.powi(2))
-                + (8.0 * ca * cf * lmss * nf * (1.0 - 2.0 * v + 2.0 * v.powi(2)) * (cf - ca * v + ca * v.powi(2)))
+                + (8.0
+                    * ca
+                    * cf
+                    * lmss
+                    * nf
+                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
+                    * (cf - ca * v + ca * v.powi(2)))
                     / (3.0 * (1.0 - v) * v.powi(2))
-                - (16.0 * ca * cf * lmu * nf * (1.0 - 2.0 * v + 2.0 * v.powi(2)) * (cf - ca * v + ca * v.powi(2)))
+                - (16.0
+                    * ca
+                    * cf
+                    * lmu
+                    * nf
+                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
+                    * (cf - ca * v + ca * v.powi(2)))
                     / (3.0 * (1.0 - v) * v.powi(2))
-                + (12.0 * cf.powi(2) * lms * (1.0 - 2.0 * v + 2.0 * v.powi(2)) * (-2.0 * ca * cf + 2.0 * ca.powi(2) * v - 2.0 * ca.powi(2) * v.powi(2)))
+                + (12.0
+                    * cf.powi(2)
+                    * lms
+                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
+                    * (-2.0 * ca * cf + 2.0 * ca.powi(2) * v - 2.0 * ca.powi(2) * v.powi(2)))
                     / ((1.0 - v) * v.powi(2))
-                + (20.0 * cf * nf * (1.0 - 2.0 * v + 2.0 * v.powi(2)) * (-2.0 * ca * cf + 2.0 * ca.powi(2) * v - 2.0 * ca.powi(2) * v.powi(2)))
+                + (20.0
+                    * cf
+                    * nf
+                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
+                    * (-2.0 * ca * cf + 2.0 * ca.powi(2) * v - 2.0 * ca.powi(2) * v.powi(2)))
                     / (9.0 * (1.0 - v) * v.powi(2))
-                - (4.0 * cf * lv * nf * (1.0 - 2.0 * v + 2.0 * v.powi(2)) * (-2.0 * ca * cf + 2.0 * ca.powi(2) * v - 2.0 * ca.powi(2) * v.powi(2)))
+                - (4.0
+                    * cf
+                    * lv
+                    * nf
+                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
+                    * (-2.0 * ca * cf + 2.0 * ca.powi(2) * v - 2.0 * ca.powi(2) * v.powi(2)))
                     / (3.0 * (1.0 - v) * v.powi(2))
-                - (4.0 * cf * l1v * lv * (1.0 - 2.0 * v + 2.0 * v.powi(2))
-                    * (1.0 - 4.0 * ca.powi(2) + 3.0 * ca.powi(4) + 2.0 * ca.powi(2) * v - 6.0 * ca.powi(4) * v - 2.0 * ca.powi(2) * v.powi(2) + 2.0 * ca.powi(4) * v.powi(2)))
+                - (4.0
+                    * cf
+                    * l1v
+                    * lv
+                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
+                    * (1.0 - 4.0 * ca.powi(2) + 3.0 * ca.powi(4) + 2.0 * ca.powi(2) * v
+                        - 6.0 * ca.powi(4) * v
+                        - 2.0 * ca.powi(2) * v.powi(2)
+                        + 2.0 * ca.powi(4) * v.powi(2)))
                     / (ca * (1.0 - v) * v.powi(2))
-                + (2.0 * cf * lv * (9.0 - 7.0 * ca.powi(2) - 2.0 * ca.powi(4) - 12.0 * v + 23.0 * ca.powi(2) * v + 11.0 * ca.powi(4) * v
-                    + 3.0 * v.powi(2) - 8.0 * ca.powi(2) * v.powi(2) - 49.0 * ca.powi(4) * v.powi(2) + 3.0 * ca.powi(2) * v.powi(3)
-                    + 73.0 * ca.powi(4) * v.powi(3) - 44.0 * ca.powi(4) * v.powi(4)))
+                + (2.0
+                    * cf
+                    * lv
+                    * (9.0 - 7.0 * ca.powi(2) - 2.0 * ca.powi(4) - 12.0 * v
+                        + 23.0 * ca.powi(2) * v
+                        + 11.0 * ca.powi(4) * v
+                        + 3.0 * v.powi(2)
+                        - 8.0 * ca.powi(2) * v.powi(2)
+                        - 49.0 * ca.powi(4) * v.powi(2)
+                        + 3.0 * ca.powi(2) * v.powi(3)
+                        + 73.0 * ca.powi(4) * v.powi(3)
+                        - 44.0 * ca.powi(4) * v.powi(4)))
                     / (3.0 * ca * (1.0 - v) * v.powi(2))
-                + (2.0 * cf * l1v.powi(2) * (3.0 + ca.powi(4) - 4.0 * v + 2.0 * ca.powi(2) * v - 6.0 * ca.powi(4) * v + 3.0 * v.powi(2)
-                    - 7.0 * ca.powi(2) * v.powi(2) + 13.0 * ca.powi(4) * v.powi(2) + 7.0 * ca.powi(2) * v.powi(3) - 12.0 * ca.powi(4) * v.powi(3)
-                    - 4.0 * ca.powi(2) * v.powi(4) + 4.0 * ca.powi(4) * v.powi(4)))
+                + (2.0
+                    * cf
+                    * l1v.powi(2)
+                    * (3.0 + ca.powi(4) - 4.0 * v + 2.0 * ca.powi(2) * v - 6.0 * ca.powi(4) * v
+                        + 3.0 * v.powi(2)
+                        - 7.0 * ca.powi(2) * v.powi(2)
+                        + 13.0 * ca.powi(4) * v.powi(2)
+                        + 7.0 * ca.powi(2) * v.powi(3)
+                        - 12.0 * ca.powi(4) * v.powi(3)
+                        - 4.0 * ca.powi(2) * v.powi(4)
+                        + 4.0 * ca.powi(4) * v.powi(4)))
                     / (ca * (1.0 - v) * v.powi(2))
-                + (2.0 * cf * lv.powi(2) * (2.0 - 12.0 * ca.powi(2) + 10.0 * ca.powi(4) - 2.0 * v + 27.0 * ca.powi(2) * v - 40.0 * ca.powi(4) * v
-                    + 3.0 * v.powi(2) - 30.0 * ca.powi(2) * v.powi(2) + 73.0 * ca.powi(4) * v.powi(2) + 9.0 * ca.powi(2) * v.powi(3)
-                    - 68.0 * ca.powi(4) * v.powi(3) - 4.0 * ca.powi(2) * v.powi(4) + 28.0 * ca.powi(4) * v.powi(4)))
+                + (2.0
+                    * cf
+                    * lv.powi(2)
+                    * (2.0 - 12.0 * ca.powi(2) + 10.0 * ca.powi(4) - 2.0 * v
+                        + 27.0 * ca.powi(2) * v
+                        - 40.0 * ca.powi(4) * v
+                        + 3.0 * v.powi(2)
+                        - 30.0 * ca.powi(2) * v.powi(2)
+                        + 73.0 * ca.powi(4) * v.powi(2)
+                        + 9.0 * ca.powi(2) * v.powi(3)
+                        - 68.0 * ca.powi(4) * v.powi(3)
+                        - 4.0 * ca.powi(2) * v.powi(4)
+                        + 28.0 * ca.powi(4) * v.powi(4)))
                     / (ca * (1.0 - v) * v.powi(2))
-                - (2.0 * cf * (63.0 - 59.0 * ca.powi(2) - 4.0 * ca.powi(4) - 9.0 * pi2 + 12.0 * ca.powi(2) * pi2 - 3.0 * ca.powi(4) * pi2
-                    - 126.0 * v + 253.0 * ca.powi(2) * v + 25.0 * ca.powi(4) * v + 18.0 * pi2 * v - 42.0 * ca.powi(2) * pi2 * v
-                    + 12.0 * ca.powi(4) * pi2 * v + 126.0 * v.powi(2) - 541.0 * ca.powi(2) * v.powi(2) - 77.0 * ca.powi(4) * v.powi(2)
-                    - 18.0 * pi2 * v.powi(2) + 78.0 * ca.powi(2) * pi2 * v.powi(2) - 24.0 * ca.powi(4) * pi2 * v.powi(2)
-                    + 576.0 * ca.powi(2) * v.powi(3) + 104.0 * ca.powi(4) * v.powi(3) - 72.0 * ca.powi(2) * pi2 * v.powi(3)
-                    + 24.0 * ca.powi(4) * pi2 * v.powi(3) - 288.0 * ca.powi(2) * v.powi(4) - 52.0 * ca.powi(4) * v.powi(4)
-                    + 36.0 * ca.powi(2) * pi2 * v.powi(4) - 12.0 * ca.powi(4) * pi2 * v.powi(4)))
+                - (2.0
+                    * cf
+                    * (63.0 - 59.0 * ca.powi(2) - 4.0 * ca.powi(4) - 9.0 * pi2
+                        + 12.0 * ca.powi(2) * pi2
+                        - 3.0 * ca.powi(4) * pi2
+                        - 126.0 * v
+                        + 253.0 * ca.powi(2) * v
+                        + 25.0 * ca.powi(4) * v
+                        + 18.0 * pi2 * v
+                        - 42.0 * ca.powi(2) * pi2 * v
+                        + 12.0 * ca.powi(4) * pi2 * v
+                        + 126.0 * v.powi(2)
+                        - 541.0 * ca.powi(2) * v.powi(2)
+                        - 77.0 * ca.powi(4) * v.powi(2)
+                        - 18.0 * pi2 * v.powi(2)
+                        + 78.0 * ca.powi(2) * pi2 * v.powi(2)
+                        - 24.0 * ca.powi(4) * pi2 * v.powi(2)
+                        + 576.0 * ca.powi(2) * v.powi(3)
+                        + 104.0 * ca.powi(4) * v.powi(3)
+                        - 72.0 * ca.powi(2) * pi2 * v.powi(3)
+                        + 24.0 * ca.powi(4) * pi2 * v.powi(3)
+                        - 288.0 * ca.powi(2) * v.powi(4)
+                        - 52.0 * ca.powi(4) * v.powi(4)
+                        + 36.0 * ca.powi(2) * pi2 * v.powi(4)
+                        - 12.0 * ca.powi(4) * pi2 * v.powi(4)))
                     / (9.0 * ca * (1.0 - v) * v.powi(2))
         }
         13 => {
-            -((9.0 - 31.0 * ca.powi(2)) * cf * lms * (1.0 + v.powi(2)) * (-2.0 * ca * cf - 2.0 * v + v.powi(2) - ca.powi(2) * v.powi(2)))
+            -((9.0 - 31.0 * ca.powi(2))
+                * cf
+                * lms
+                * (1.0 + v.powi(2))
+                * (-2.0 * ca * cf - 2.0 * v + v.powi(2) - ca.powi(2) * v.powi(2)))
                 / (3.0 * ca * (1.0 - v).powi(2) * v.powi(2))
-                + (20.0 * cf * nf * (1.0 + v.powi(2)) * (-2.0 * ca * cf - 2.0 * v + v.powi(2) - ca.powi(2) * v.powi(2)))
+                + (20.0
+                    * cf
+                    * nf
+                    * (1.0 + v.powi(2))
+                    * (-2.0 * ca * cf - 2.0 * v + v.powi(2) - ca.powi(2) * v.powi(2)))
                     / (9.0 * (1.0 - v).powi(2) * v.powi(2))
-                - (4.0 * cf * lms * nf * (1.0 + v.powi(2)) * (-2.0 * ca * cf - 2.0 * v + v.powi(2) - ca.powi(2) * v.powi(2)))
+                - (4.0
+                    * cf
+                    * lms
+                    * nf
+                    * (1.0 + v.powi(2))
+                    * (-2.0 * ca * cf - 2.0 * v + v.powi(2) - ca.powi(2) * v.powi(2)))
                     / (3.0 * (1.0 - v).powi(2) * v.powi(2))
-                - (4.0 * cf * lv * nf * (1.0 + v.powi(2)) * (-2.0 * ca * cf - 2.0 * v + v.powi(2) - ca.powi(2) * v.powi(2)))
+                - (4.0
+                    * cf
+                    * lv
+                    * nf
+                    * (1.0 + v.powi(2))
+                    * (-2.0 * ca * cf - 2.0 * v + v.powi(2) - ca.powi(2) * v.powi(2)))
                     / (3.0 * (1.0 - v).powi(2) * v.powi(2))
-                + (8.0 * ca * cf * l1v * lms * (1.0 + v.powi(2)) * (2.0 * ca * cf + 2.0 * v - v.powi(2) + ca.powi(2) * v.powi(2)))
+                + (8.0
+                    * ca
+                    * cf
+                    * l1v
+                    * lms
+                    * (1.0 + v.powi(2))
+                    * (2.0 * ca * cf + 2.0 * v - v.powi(2) + ca.powi(2) * v.powi(2)))
                     / ((1.0 - v).powi(2) * v.powi(2))
-                - (6.0 * cf.powi(2) * lmss * (1.0 + v.powi(2)) * (2.0 * ca * cf + 2.0 * v - v.powi(2) + ca.powi(2) * v.powi(2)))
+                - (6.0
+                    * cf.powi(2)
+                    * lmss
+                    * (1.0 + v.powi(2))
+                    * (2.0 * ca * cf + 2.0 * v - v.powi(2) + ca.powi(2) * v.powi(2)))
                     / ((1.0 - v).powi(2) * v.powi(2))
-                + (44.0 * ca * cf * lmu * (1.0 + v.powi(2)) * (2.0 * ca * cf + 2.0 * v - v.powi(2) + ca.powi(2) * v.powi(2)))
+                + (44.0
+                    * ca
+                    * cf
+                    * lmu
+                    * (1.0 + v.powi(2))
+                    * (2.0 * ca * cf + 2.0 * v - v.powi(2) + ca.powi(2) * v.powi(2)))
                     / (3.0 * (1.0 - v).powi(2) * v.powi(2))
-                - (8.0 * ca * cf * lms * lv * (1.0 + v.powi(2)) * (2.0 * ca * cf + 2.0 * v - v.powi(2) + ca.powi(2) * v.powi(2)))
+                - (8.0
+                    * ca
+                    * cf
+                    * lms
+                    * lv
+                    * (1.0 + v.powi(2))
+                    * (2.0 * ca * cf + 2.0 * v - v.powi(2) + ca.powi(2) * v.powi(2)))
                     / ((1.0 - v).powi(2) * v.powi(2))
-                - (8.0 * cf.powi(2) * lmss * lv * (1.0 + v.powi(2)) * (2.0 * ca * cf + 2.0 * v - v.powi(2) + ca.powi(2) * v.powi(2)))
+                - (8.0
+                    * cf.powi(2)
+                    * lmss
+                    * lv
+                    * (1.0 + v.powi(2))
+                    * (2.0 * ca * cf + 2.0 * v - v.powi(2) + ca.powi(2) * v.powi(2)))
                     / ((1.0 - v).powi(2) * v.powi(2))
-                - (8.0 * cf * lmu * nf * (1.0 + v.powi(2)) * (2.0 * ca * cf + 2.0 * v - v.powi(2) + ca.powi(2) * v.powi(2)))
+                - (8.0
+                    * cf
+                    * lmu
+                    * nf
+                    * (1.0 + v.powi(2))
+                    * (2.0 * ca * cf + 2.0 * v - v.powi(2) + ca.powi(2) * v.powi(2)))
                     / (3.0 * (1.0 - v).powi(2) * v.powi(2))
-                + (2.0 * cf * l1v * (4.0 - ca.powi(2) + ca.powi(4) - 8.0 * v - 10.0 * ca.powi(2) * v + 10.0 * ca.powi(4) * v
-                    + 4.0 * v.powi(2) - ca.powi(2) * v.powi(2) + ca.powi(4) * v.powi(2)))
+                + (2.0
+                    * cf
+                    * l1v
+                    * (4.0 - ca.powi(2) + ca.powi(4) - 8.0 * v - 10.0 * ca.powi(2) * v
+                        + 10.0 * ca.powi(4) * v
+                        + 4.0 * v.powi(2)
+                        - ca.powi(2) * v.powi(2)
+                        + ca.powi(4) * v.powi(2)))
                     / (ca * (1.0 - v).powi(2) * v)
-                + (2.0 * cf * lv * (9.0 - 7.0 * ca.powi(2) - 2.0 * ca.powi(4) - 24.0 * v + 5.0 * ca.powi(2) * v - 3.0 * ca.powi(4) * v
-                    + 21.0 * v.powi(2) + 19.0 * ca.powi(2) * v.powi(2) - 28.0 * ca.powi(4) * v.powi(2) - 6.0 * v.powi(3)
-                    - 28.0 * ca.powi(2) * v.powi(3) + 11.0 * ca.powi(2) * v.powi(4) - 11.0 * ca.powi(4) * v.powi(4)))
+                + (2.0
+                    * cf
+                    * lv
+                    * (9.0 - 7.0 * ca.powi(2) - 2.0 * ca.powi(4) - 24.0 * v + 5.0 * ca.powi(2) * v
+                        - 3.0 * ca.powi(4) * v
+                        + 21.0 * v.powi(2)
+                        + 19.0 * ca.powi(2) * v.powi(2)
+                        - 28.0 * ca.powi(4) * v.powi(2)
+                        - 6.0 * v.powi(3)
+                        - 28.0 * ca.powi(2) * v.powi(3)
+                        + 11.0 * ca.powi(2) * v.powi(4)
+                        - 11.0 * ca.powi(4) * v.powi(4)))
                     / (3.0 * ca * (1.0 - v).powi(2) * v.powi(2))
-                + (4.0 * cf * l1v * lv * (4.0 * ca.powi(2) - 4.0 * ca.powi(4) + 2.0 * v - 9.0 * ca.powi(2) * v - 5.0 * v.powi(2)
-                    + 5.0 * ca.powi(2) * v.powi(2) - 5.0 * ca.powi(4) * v.powi(2) + 4.0 * v.powi(3) - 6.0 * ca.powi(2) * v.powi(3)
-                    - 2.0 * ca.powi(4) * v.powi(3) - v.powi(4) + 2.0 * ca.powi(2) * v.powi(4) - ca.powi(4) * v.powi(4)))
+                + (4.0
+                    * cf
+                    * l1v
+                    * lv
+                    * (4.0 * ca.powi(2) - 4.0 * ca.powi(4) + 2.0 * v
+                        - 9.0 * ca.powi(2) * v
+                        - 5.0 * v.powi(2)
+                        + 5.0 * ca.powi(2) * v.powi(2)
+                        - 5.0 * ca.powi(4) * v.powi(2)
+                        + 4.0 * v.powi(3)
+                        - 6.0 * ca.powi(2) * v.powi(3)
+                        - 2.0 * ca.powi(4) * v.powi(3)
+                        - v.powi(4)
+                        + 2.0 * ca.powi(2) * v.powi(4)
+                        - ca.powi(4) * v.powi(4)))
                     / (ca * (1.0 - v).powi(2) * v.powi(2))
-                + (2.0 * cf * l1v.powi(2) * (3.0 + ca.powi(4) - 10.0 * v - ca.powi(2) * v + 2.0 * ca.powi(4) * v + 14.0 * v.powi(2)
-                    + 2.0 * ca.powi(2) * v.powi(2) + 2.0 * ca.powi(4) * v.powi(2) - 10.0 * v.powi(3) - ca.powi(2) * v.powi(3)
-                    + 2.0 * ca.powi(4) * v.powi(3) + 3.0 * v.powi(4) + ca.powi(4) * v.powi(4)))
+                + (2.0
+                    * cf
+                    * l1v.powi(2)
+                    * (3.0 + ca.powi(4) - 10.0 * v - ca.powi(2) * v
+                        + 2.0 * ca.powi(4) * v
+                        + 14.0 * v.powi(2)
+                        + 2.0 * ca.powi(2) * v.powi(2)
+                        + 2.0 * ca.powi(4) * v.powi(2)
+                        - 10.0 * v.powi(3)
+                        - ca.powi(2) * v.powi(3)
+                        + 2.0 * ca.powi(4) * v.powi(3)
+                        + 3.0 * v.powi(4)
+                        + ca.powi(4) * v.powi(4)))
                     / (ca * (1.0 - v).powi(2) * v.powi(2))
-                + (2.0 * cf * lv.powi(2) * (2.0 - 12.0 * ca.powi(2) + 10.0 * ca.powi(4) - 6.0 * v + 21.0 * ca.powi(2) * v + 9.0 * v.powi(2)
-                    - 21.0 * ca.powi(2) * v.powi(2) + 13.0 * ca.powi(4) * v.powi(2) - 8.0 * v.powi(3) + 18.0 * ca.powi(2) * v.powi(3)
-                    + 2.0 * ca.powi(4) * v.powi(3) + 3.0 * v.powi(4) - 10.0 * ca.powi(2) * v.powi(4) + 3.0 * ca.powi(4) * v.powi(4)))
+                + (2.0
+                    * cf
+                    * lv.powi(2)
+                    * (2.0 - 12.0 * ca.powi(2) + 10.0 * ca.powi(4) - 6.0 * v
+                        + 21.0 * ca.powi(2) * v
+                        + 9.0 * v.powi(2)
+                        - 21.0 * ca.powi(2) * v.powi(2)
+                        + 13.0 * ca.powi(4) * v.powi(2)
+                        - 8.0 * v.powi(3)
+                        + 18.0 * ca.powi(2) * v.powi(3)
+                        + 2.0 * ca.powi(4) * v.powi(3)
+                        + 3.0 * v.powi(4)
+                        - 10.0 * ca.powi(2) * v.powi(4)
+                        + 3.0 * ca.powi(4) * v.powi(4)))
                     / (ca * (1.0 - v).powi(2) * v.powi(2))
-                - (2.0 * cf * (63.0 - 59.0 * ca.powi(2) - 4.0 * ca.powi(4) - 9.0 * pi2 + 12.0 * ca.powi(2) * pi2 - 3.0 * ca.powi(4) * pi2
-                    - 126.0 * v - 17.0 * ca.powi(2) * v - 9.0 * ca.powi(4) * v + 36.0 * pi2 * v - 15.0 * ca.powi(2) * pi2 * v
-                    + 126.0 * v.powi(2) - 136.0 * ca.powi(2) * v.powi(2) - 26.0 * ca.powi(4) * v.powi(2) - 63.0 * pi2 * v.powi(2)
-                    - 3.0 * ca.powi(2) * pi2 * v.powi(2) - 15.0 * ca.powi(4) * pi2 * v.powi(2) - 126.0 * v.powi(3) - 17.0 * ca.powi(2) * v.powi(3)
-                    - 9.0 * ca.powi(4) * v.powi(3) + 54.0 * pi2 * v.powi(3) + 12.0 * ca.powi(2) * pi2 * v.powi(3)
-                    - 18.0 * ca.powi(4) * pi2 * v.powi(3) + 63.0 * v.powi(4) - 59.0 * ca.powi(2) * v.powi(4) - 4.0 * ca.powi(4) * v.powi(4)
-                    - 18.0 * pi2 * v.powi(4) - 6.0 * ca.powi(2) * pi2 * v.powi(4) - 12.0 * ca.powi(4) * pi2 * v.powi(4)))
+                - (2.0
+                    * cf
+                    * (63.0 - 59.0 * ca.powi(2) - 4.0 * ca.powi(4) - 9.0 * pi2
+                        + 12.0 * ca.powi(2) * pi2
+                        - 3.0 * ca.powi(4) * pi2
+                        - 126.0 * v
+                        - 17.0 * ca.powi(2) * v
+                        - 9.0 * ca.powi(4) * v
+                        + 36.0 * pi2 * v
+                        - 15.0 * ca.powi(2) * pi2 * v
+                        + 126.0 * v.powi(2)
+                        - 136.0 * ca.powi(2) * v.powi(2)
+                        - 26.0 * ca.powi(4) * v.powi(2)
+                        - 63.0 * pi2 * v.powi(2)
+                        - 3.0 * ca.powi(2) * pi2 * v.powi(2)
+                        - 15.0 * ca.powi(4) * pi2 * v.powi(2)
+                        - 126.0 * v.powi(3)
+                        - 17.0 * ca.powi(2) * v.powi(3)
+                        - 9.0 * ca.powi(4) * v.powi(3)
+                        + 54.0 * pi2 * v.powi(3)
+                        + 12.0 * ca.powi(2) * pi2 * v.powi(3)
+                        - 18.0 * ca.powi(4) * pi2 * v.powi(3)
+                        + 63.0 * v.powi(4)
+                        - 59.0 * ca.powi(2) * v.powi(4)
+                        - 4.0 * ca.powi(4) * v.powi(4)
+                        - 18.0 * pi2 * v.powi(4)
+                        - 6.0 * ca.powi(2) * pi2 * v.powi(4)
+                        - 12.0 * ca.powi(4) * pi2 * v.powi(4)))
                     / (9.0 * ca * (1.0 - v).powi(2) * v.powi(2))
         }
         14 => {
-            (-2.0 * cf * l1v * (ca.powi(2) - v) * (1.0 - 5.0 * ca.powi(2) + 2.0 * v + 2.0 * ca.powi(2) * v)) / (ca * (1.0 - v) * v.powi(2))
-                + ((9.0 - 31.0 * ca.powi(2)) * cf * lms * (2.0 - 2.0 * v + v.powi(2)) * (2.0 * ca.powi(2) - 2.0 * ca.powi(2) * v - v.powi(2) + ca.powi(2) * v.powi(2)))
+            (-2.0
+                * cf
+                * l1v
+                * (ca.powi(2) - v)
+                * (1.0 - 5.0 * ca.powi(2) + 2.0 * v + 2.0 * ca.powi(2) * v))
+                / (ca * (1.0 - v) * v.powi(2))
+                + ((9.0 - 31.0 * ca.powi(2))
+                    * cf
+                    * lms
+                    * (2.0 - 2.0 * v + v.powi(2))
+                    * (2.0 * ca.powi(2) - 2.0 * ca.powi(2) * v - v.powi(2)
+                        + ca.powi(2) * v.powi(2)))
                     / (3.0 * ca * (1.0 - v) * v.powi(3))
-                + (8.0 * ca * cf * l1v * lms * (2.0 - 2.0 * v + v.powi(2)) * (2.0 * ca.powi(2) - 2.0 * ca.powi(2) * v - v.powi(2) + ca.powi(2) * v.powi(2)))
+                + (8.0
+                    * ca
+                    * cf
+                    * l1v
+                    * lms
+                    * (2.0 - 2.0 * v + v.powi(2))
+                    * (2.0 * ca.powi(2) - 2.0 * ca.powi(2) * v - v.powi(2)
+                        + ca.powi(2) * v.powi(2)))
                     / ((1.0 - v) * v.powi(3))
-                - (22.0 * ca * cf * lmss * (2.0 - 2.0 * v + v.powi(2)) * (2.0 * ca.powi(2) - 2.0 * ca.powi(2) * v - v.powi(2) + ca.powi(2) * v.powi(2)))
+                - (22.0
+                    * ca
+                    * cf
+                    * lmss
+                    * (2.0 - 2.0 * v + v.powi(2))
+                    * (2.0 * ca.powi(2) - 2.0 * ca.powi(2) * v - v.powi(2)
+                        + ca.powi(2) * v.powi(2)))
                     / (3.0 * (1.0 - v) * v.powi(3))
-                + (44.0 * ca * cf * lmu * (2.0 - 2.0 * v + v.powi(2)) * (2.0 * ca.powi(2) - 2.0 * ca.powi(2) * v - v.powi(2) + ca.powi(2) * v.powi(2)))
+                + (44.0
+                    * ca
+                    * cf
+                    * lmu
+                    * (2.0 - 2.0 * v + v.powi(2))
+                    * (2.0 * ca.powi(2) - 2.0 * ca.powi(2) * v - v.powi(2)
+                        + ca.powi(2) * v.powi(2)))
                     / (3.0 * (1.0 - v) * v.powi(3))
-                - (8.0 * ca * cf * lms * lv * (2.0 - 2.0 * v + v.powi(2)) * (2.0 * ca.powi(2) - 2.0 * ca.powi(2) * v - v.powi(2) + ca.powi(2) * v.powi(2)))
+                - (8.0
+                    * ca
+                    * cf
+                    * lms
+                    * lv
+                    * (2.0 - 2.0 * v + v.powi(2))
+                    * (2.0 * ca.powi(2) - 2.0 * ca.powi(2) * v - v.powi(2)
+                        + ca.powi(2) * v.powi(2)))
                     / ((1.0 - v) * v.powi(3))
-                - (8.0 * ca * cf * lmss * lv * (2.0 - 2.0 * v + v.powi(2)) * (2.0 * ca.powi(2) - 2.0 * ca.powi(2) * v - v.powi(2) + ca.powi(2) * v.powi(2)))
+                - (8.0
+                    * ca
+                    * cf
+                    * lmss
+                    * lv
+                    * (2.0 - 2.0 * v + v.powi(2))
+                    * (2.0 * ca.powi(2) - 2.0 * ca.powi(2) * v - v.powi(2)
+                        + ca.powi(2) * v.powi(2)))
                     / ((1.0 - v) * v.powi(3))
-                + (4.0 * cf * lms * nf * (2.0 - 2.0 * v + v.powi(2)) * (2.0 * ca.powi(2) - 2.0 * ca.powi(2) * v - v.powi(2) + ca.powi(2) * v.powi(2)))
+                + (4.0
+                    * cf
+                    * lms
+                    * nf
+                    * (2.0 - 2.0 * v + v.powi(2))
+                    * (2.0 * ca.powi(2) - 2.0 * ca.powi(2) * v - v.powi(2)
+                        + ca.powi(2) * v.powi(2)))
                     / (3.0 * (1.0 - v) * v.powi(3))
-                + (4.0 * cf * lmss * nf * (2.0 - 2.0 * v + v.powi(2)) * (2.0 * ca.powi(2) - 2.0 * ca.powi(2) * v - v.powi(2) + ca.powi(2) * v.powi(2)))
+                + (4.0
+                    * cf
+                    * lmss
+                    * nf
+                    * (2.0 - 2.0 * v + v.powi(2))
+                    * (2.0 * ca.powi(2) - 2.0 * ca.powi(2) * v - v.powi(2)
+                        + ca.powi(2) * v.powi(2)))
                     / (3.0 * (1.0 - v) * v.powi(3))
-                - (8.0 * cf * lmu * nf * (2.0 - 2.0 * v + v.powi(2)) * (2.0 * ca.powi(2) - 2.0 * ca.powi(2) * v - v.powi(2) + ca.powi(2) * v.powi(2)))
+                - (8.0
+                    * cf
+                    * lmu
+                    * nf
+                    * (2.0 - 2.0 * v + v.powi(2))
+                    * (2.0 * ca.powi(2) - 2.0 * ca.powi(2) * v - v.powi(2)
+                        + ca.powi(2) * v.powi(2)))
                     / (3.0 * (1.0 - v) * v.powi(3))
-                + (2.0 * cf * l1v.powi(2) * (8.0 * ca.powi(4) - ca.powi(2) * v - 20.0 * ca.powi(4) * v + v.powi(2) - ca.powi(2) * v.powi(2)
-                    + 21.0 * ca.powi(4) * v.powi(2) - 2.0 * v.powi(3) - 10.0 * ca.powi(4) * v.powi(3) + 2.0 * v.powi(4) + 2.0 * ca.powi(4) * v.powi(4)))
+                + (2.0
+                    * cf
+                    * l1v.powi(2)
+                    * (8.0 * ca.powi(4) - ca.powi(2) * v - 20.0 * ca.powi(4) * v + v.powi(2)
+                        - ca.powi(2) * v.powi(2)
+                        + 21.0 * ca.powi(4) * v.powi(2)
+                        - 2.0 * v.powi(3)
+                        - 10.0 * ca.powi(4) * v.powi(3)
+                        + 2.0 * v.powi(4)
+                        + 2.0 * ca.powi(4) * v.powi(4)))
                     / (ca * (1.0 - v) * v.powi(3))
-                - (cf * lv * (12.0 * ca.powi(2) - 12.0 * ca.powi(4) - 24.0 * ca.powi(2) * v + 24.0 * ca.powi(4) * v - 2.0 * v.powi(2)
-                    - 4.0 * ca.powi(2) * v.powi(2) - 2.0 * ca.powi(4) * v.powi(2) + 2.0 * v.powi(3) + 16.0 * ca.powi(2) * v.powi(3)
-                    - 10.0 * ca.powi(4) * v.powi(3) + 3.0 * v.powi(4) - 6.0 * ca.powi(2) * v.powi(4) + 3.0 * ca.powi(4) * v.powi(4)))
+                - (cf
+                    * lv
+                    * (12.0 * ca.powi(2) - 12.0 * ca.powi(4) - 24.0 * ca.powi(2) * v
+                        + 24.0 * ca.powi(4) * v
+                        - 2.0 * v.powi(2)
+                        - 4.0 * ca.powi(2) * v.powi(2)
+                        - 2.0 * ca.powi(4) * v.powi(2)
+                        + 2.0 * v.powi(3)
+                        + 16.0 * ca.powi(2) * v.powi(3)
+                        - 10.0 * ca.powi(4) * v.powi(3)
+                        + 3.0 * v.powi(4)
+                        - 6.0 * ca.powi(2) * v.powi(4)
+                        + 3.0 * ca.powi(4) * v.powi(4)))
                     / (ca * (1.0 - v) * v.powi(3))
-                - (4.0 * cf * l1v * lv * (16.0 * ca.powi(4) - ca.powi(2) * v - 36.0 * ca.powi(4) * v + v.powi(2) + 3.0 * ca.powi(2) * v.powi(2)
-                    + 37.0 * ca.powi(4) * v.powi(2) - 2.0 * v.powi(3) - 4.0 * ca.powi(2) * v.powi(3) - 18.0 * ca.powi(4) * v.powi(3)
-                    + 2.0 * v.powi(4) + 2.0 * ca.powi(2) * v.powi(4) + 4.0 * ca.powi(4) * v.powi(4)))
+                - (4.0
+                    * cf
+                    * l1v
+                    * lv
+                    * (16.0 * ca.powi(4) - ca.powi(2) * v - 36.0 * ca.powi(4) * v
+                        + v.powi(2)
+                        + 3.0 * ca.powi(2) * v.powi(2)
+                        + 37.0 * ca.powi(4) * v.powi(2)
+                        - 2.0 * v.powi(3)
+                        - 4.0 * ca.powi(2) * v.powi(3)
+                        - 18.0 * ca.powi(4) * v.powi(3)
+                        + 2.0 * v.powi(4)
+                        + 2.0 * ca.powi(2) * v.powi(4)
+                        + 4.0 * ca.powi(4) * v.powi(4)))
                     / (ca * (1.0 - v) * v.powi(3))
-                + (2.0 * cf * lv.powi(2) * (48.0 * ca.powi(4) - 96.0 * ca.powi(4) * v + 2.0 * v.powi(2) - 5.0 * ca.powi(2) * v.powi(2)
-                    + 94.0 * ca.powi(4) * v.powi(2) - 2.0 * v.powi(3) + 5.0 * ca.powi(2) * v.powi(3) - 46.0 * ca.powi(4) * v.powi(3)
-                    + 3.0 * v.powi(4) - 2.0 * ca.powi(2) * v.powi(4) + 11.0 * ca.powi(4) * v.powi(4)))
+                + (2.0
+                    * cf
+                    * lv.powi(2)
+                    * (48.0 * ca.powi(4) - 96.0 * ca.powi(4) * v + 2.0 * v.powi(2)
+                        - 5.0 * ca.powi(2) * v.powi(2)
+                        + 94.0 * ca.powi(4) * v.powi(2)
+                        - 2.0 * v.powi(3)
+                        + 5.0 * ca.powi(2) * v.powi(3)
+                        - 46.0 * ca.powi(4) * v.powi(3)
+                        + 3.0 * v.powi(4)
+                        - 2.0 * ca.powi(2) * v.powi(4)
+                        + 11.0 * ca.powi(4) * v.powi(4)))
                     / (ca * (1.0 - v) * v.powi(3))
-                + (cf * (108.0 * ca.powi(2) - 60.0 * ca.powi(4) + 8.0 * ca.powi(2) * pi2 + 40.0 * ca.powi(4) * pi2 - 216.0 * ca.powi(2) * v
-                    + 120.0 * ca.powi(4) * v - 22.0 * ca.powi(2) * pi2 * v - 104.0 * ca.powi(4) * pi2 * v - 42.0 * v.powi(2)
-                    + 240.0 * ca.powi(2) * v.powi(2) - 138.0 * ca.powi(4) * v.powi(2) + 2.0 * pi2 * v.powi(2) + 14.0 * ca.powi(2) * pi2 * v.powi(2)
-                    + 110.0 * ca.powi(4) * pi2 * v.powi(2) + 42.0 * v.powi(3) - 132.0 * ca.powi(2) * v.powi(3) + 78.0 * ca.powi(4) * v.powi(3)
-                    - 8.0 * pi2 * v.powi(3) - 12.0 * ca.powi(2) * pi2 * v.powi(3) - 52.0 * ca.powi(4) * pi2 * v.powi(3) - 21.0 * v.powi(4)
-                    + 42.0 * ca.powi(2) * v.powi(4) - 21.0 * ca.powi(4) * v.powi(4) + 10.0 * pi2 * v.powi(4) + 4.0 * ca.powi(2) * pi2 * v.powi(4)
-                    + 10.0 * ca.powi(4) * pi2 * v.powi(4)))
+                + (cf
+                    * (108.0 * ca.powi(2) - 60.0 * ca.powi(4)
+                        + 8.0 * ca.powi(2) * pi2
+                        + 40.0 * ca.powi(4) * pi2
+                        - 216.0 * ca.powi(2) * v
+                        + 120.0 * ca.powi(4) * v
+                        - 22.0 * ca.powi(2) * pi2 * v
+                        - 104.0 * ca.powi(4) * pi2 * v
+                        - 42.0 * v.powi(2)
+                        + 240.0 * ca.powi(2) * v.powi(2)
+                        - 138.0 * ca.powi(4) * v.powi(2)
+                        + 2.0 * pi2 * v.powi(2)
+                        + 14.0 * ca.powi(2) * pi2 * v.powi(2)
+                        + 110.0 * ca.powi(4) * pi2 * v.powi(2)
+                        + 42.0 * v.powi(3)
+                        - 132.0 * ca.powi(2) * v.powi(3)
+                        + 78.0 * ca.powi(4) * v.powi(3)
+                        - 8.0 * pi2 * v.powi(3)
+                        - 12.0 * ca.powi(2) * pi2 * v.powi(3)
+                        - 52.0 * ca.powi(4) * pi2 * v.powi(3)
+                        - 21.0 * v.powi(4)
+                        + 42.0 * ca.powi(2) * v.powi(4)
+                        - 21.0 * ca.powi(4) * v.powi(4)
+                        + 10.0 * pi2 * v.powi(4)
+                        + 4.0 * ca.powi(2) * pi2 * v.powi(4)
+                        + 10.0 * ca.powi(4) * pi2 * v.powi(4)))
                     / (3.0 * ca * (1.0 - v) * v.powi(3))
         }
         15 => {
             (-16.0 * ca.powi(3) * lv.powi(2) * nf * (1.0 - v - v.powi(2))) / (3.0 * (1.0 - v) * v)
-                + (16.0 * ca.powi(3) * l1v.powi(2) * nf * (1.0 - 3.0 * v + v.powi(2))) / (3.0 * v.powi(2))
-                - (1408.0 * ca.powi(3) * lms * (1.0 - v + v.powi(2)).powi(3)) / (3.0 * (1.0 - v).powi(2) * v.powi(3))
-                + (256.0 * ca.powi(3) * l1v * lms * (1.0 - v + v.powi(2)).powi(3)) / ((1.0 - v).powi(2) * v.powi(3))
-                - (704.0 * ca.powi(3) * lmss * (1.0 - v + v.powi(2)).powi(3)) / (3.0 * (1.0 - v).powi(2) * v.powi(3))
-                + (1408.0 * ca.powi(3) * lmu * (1.0 - v + v.powi(2)).powi(3)) / (3.0 * (1.0 - v).powi(2) * v.powi(3))
-                - (256.0 * ca.powi(3) * lms * lv * (1.0 - v + v.powi(2)).powi(3)) / ((1.0 - v).powi(2) * v.powi(3))
-                - (256.0 * ca.powi(3) * lmss * lv * (1.0 - v + v.powi(2)).powi(3)) / ((1.0 - v).powi(2) * v.powi(3))
-                + (256.0 * ca.powi(3) * lms * nf * (1.0 - v + v.powi(2)).powi(3)) / (9.0 * (1.0 - v).powi(2) * v.powi(3))
-                + (128.0 * ca.powi(3) * lmss * nf * (1.0 - v + v.powi(2)).powi(3)) / (9.0 * (1.0 - v).powi(2) * v.powi(3))
-                - (256.0 * ca.powi(3) * lmu * nf * (1.0 - v + v.powi(2)).powi(3)) / (9.0 * (1.0 - v).powi(2) * v.powi(3))
-                - (32.0 * ca.powi(3) * l1v * lv * nf * (1.0 - 2.0 * v + 2.0 * v.powi(2))) / (3.0 * (1.0 - v) * v.powi(2))
-                - (32.0 * ca.powi(3) * l1v * nf * (1.0 - v + v.powi(2)) * (5.0 - 2.0 * v + 5.0 * v.powi(2))) / (9.0 * (1.0 - v).powi(2) * v.powi(2))
-                + (64.0 * ca.powi(3) * l1v * (1.0 - v + v.powi(2)) * (7.0 + 8.0 * v + 7.0 * v.powi(2))) / (3.0 * (1.0 - v).powi(2) * v.powi(2))
-                + (64.0 * ca.powi(3) * lv * (1.0 - v + v.powi(2)) * (11.0 - 22.0 * v - 4.0 * v.powi(2) + 15.0 * v.powi(3) - 11.0 * v.powi(4)))
+                + (16.0 * ca.powi(3) * l1v.powi(2) * nf * (1.0 - 3.0 * v + v.powi(2)))
+                    / (3.0 * v.powi(2))
+                - (1408.0 * ca.powi(3) * lms * (1.0 - v + v.powi(2)).powi(3))
                     / (3.0 * (1.0 - v).powi(2) * v.powi(3))
-                - (32.0 * ca.powi(3) * lv * nf * (1.0 - v + v.powi(2)) * (4.0 - 8.0 * v + v.powi(2) + 3.0 * v.powi(3) - 4.0 * v.powi(4)))
+                + (256.0 * ca.powi(3) * l1v * lms * (1.0 - v + v.powi(2)).powi(3))
+                    / ((1.0 - v).powi(2) * v.powi(3))
+                - (704.0 * ca.powi(3) * lmss * (1.0 - v + v.powi(2)).powi(3))
+                    / (3.0 * (1.0 - v).powi(2) * v.powi(3))
+                + (1408.0 * ca.powi(3) * lmu * (1.0 - v + v.powi(2)).powi(3))
+                    / (3.0 * (1.0 - v).powi(2) * v.powi(3))
+                - (256.0 * ca.powi(3) * lms * lv * (1.0 - v + v.powi(2)).powi(3))
+                    / ((1.0 - v).powi(2) * v.powi(3))
+                - (256.0 * ca.powi(3) * lmss * lv * (1.0 - v + v.powi(2)).powi(3))
+                    / ((1.0 - v).powi(2) * v.powi(3))
+                + (256.0 * ca.powi(3) * lms * nf * (1.0 - v + v.powi(2)).powi(3))
                     / (9.0 * (1.0 - v).powi(2) * v.powi(3))
-                + (64.0 * ca.powi(3) * l1v.powi(2)
-                    * (2.0 - 7.0 * v + 14.0 * v.powi(2) - 16.0 * v.powi(3) + 14.0 * v.powi(4) - 7.0 * v.powi(5) + 2.0 * v.powi(6)))
+                + (128.0 * ca.powi(3) * lmss * nf * (1.0 - v + v.powi(2)).powi(3))
+                    / (9.0 * (1.0 - v).powi(2) * v.powi(3))
+                - (256.0 * ca.powi(3) * lmu * nf * (1.0 - v + v.powi(2)).powi(3))
+                    / (9.0 * (1.0 - v).powi(2) * v.powi(3))
+                - (32.0 * ca.powi(3) * l1v * lv * nf * (1.0 - 2.0 * v + 2.0 * v.powi(2)))
+                    / (3.0 * (1.0 - v) * v.powi(2))
+                - (32.0
+                    * ca.powi(3)
+                    * l1v
+                    * nf
+                    * (1.0 - v + v.powi(2))
+                    * (5.0 - 2.0 * v + 5.0 * v.powi(2)))
+                    / (9.0 * (1.0 - v).powi(2) * v.powi(2))
+                + (64.0
+                    * ca.powi(3)
+                    * l1v
+                    * (1.0 - v + v.powi(2))
+                    * (7.0 + 8.0 * v + 7.0 * v.powi(2)))
+                    / (3.0 * (1.0 - v).powi(2) * v.powi(2))
+                + (64.0
+                    * ca.powi(3)
+                    * lv
+                    * (1.0 - v + v.powi(2))
+                    * (11.0 - 22.0 * v - 4.0 * v.powi(2) + 15.0 * v.powi(3) - 11.0 * v.powi(4)))
+                    / (3.0 * (1.0 - v).powi(2) * v.powi(3))
+                - (32.0
+                    * ca.powi(3)
+                    * lv
+                    * nf
+                    * (1.0 - v + v.powi(2))
+                    * (4.0 - 8.0 * v + v.powi(2) + 3.0 * v.powi(3) - 4.0 * v.powi(4)))
+                    / (9.0 * (1.0 - v).powi(2) * v.powi(3))
+                + (64.0
+                    * ca.powi(3)
+                    * l1v.powi(2)
+                    * (2.0 - 7.0 * v + 14.0 * v.powi(2) - 16.0 * v.powi(3) + 14.0 * v.powi(4)
+                        - 7.0 * v.powi(5)
+                        + 2.0 * v.powi(6)))
                     / ((1.0 - v).powi(2) * v.powi(3))
-                - (64.0 * ca.powi(3) * l1v * lv
-                    * (8.0 - 26.0 * v + 47.0 * v.powi(2) - 50.0 * v.powi(3) + 37.0 * v.powi(4) - 16.0 * v.powi(5) + 4.0 * v.powi(6)))
+                - (64.0
+                    * ca.powi(3)
+                    * l1v
+                    * lv
+                    * (8.0 - 26.0 * v + 47.0 * v.powi(2) - 50.0 * v.powi(3) + 37.0 * v.powi(4)
+                        - 16.0 * v.powi(5)
+                        + 4.0 * v.powi(6)))
                     / ((1.0 - v).powi(2) * v.powi(3))
-                + (64.0 * ca.powi(3) * lv.powi(2)
-                    * (12.0 - 36.0 * v + 66.0 * v.powi(2) - 72.0 * v.powi(3) + 57.0 * v.powi(4) - 27.0 * v.powi(5) + 8.0 * v.powi(6)))
+                + (64.0
+                    * ca.powi(3)
+                    * lv.powi(2)
+                    * (12.0 - 36.0 * v + 66.0 * v.powi(2) - 72.0 * v.powi(3) + 57.0 * v.powi(4)
+                        - 27.0 * v.powi(5)
+                        + 8.0 * v.powi(6)))
                     / ((1.0 - v).powi(2) * v.powi(3))
-                + (16.0 * ca.powi(3) * nf
-                    * (40.0 - 120.0 * v + 9.0 * pi2 * v + 294.0 * v.powi(2) - 27.0 * pi2 * v.powi(2) - 388.0 * v.powi(3)
-                        + 36.0 * pi2 * v.powi(3) + 294.0 * v.powi(4) - 18.0 * pi2 * v.powi(4) - 120.0 * v.powi(5) + 40.0 * v.powi(6)))
+                + (16.0
+                    * ca.powi(3)
+                    * nf
+                    * (40.0 - 120.0 * v + 9.0 * pi2 * v + 294.0 * v.powi(2)
+                        - 27.0 * pi2 * v.powi(2)
+                        - 388.0 * v.powi(3)
+                        + 36.0 * pi2 * v.powi(3)
+                        + 294.0 * v.powi(4)
+                        - 18.0 * pi2 * v.powi(4)
+                        - 120.0 * v.powi(5)
+                        + 40.0 * v.powi(6)))
                     / (27.0 * (1.0 - v).powi(2) * v.powi(3))
-                - (32.0 * ca.powi(3)
-                    * (134.0 - 24.0 * pi2 - 402.0 * v + 90.0 * pi2 * v + 831.0 * v.powi(2) - 171.0 * pi2 * v.powi(2) - 992.0 * v.powi(3)
-                        + 186.0 * pi2 * v.powi(3) + 831.0 * v.powi(4) - 153.0 * pi2 * v.powi(4) - 402.0 * v.powi(5) + 72.0 * pi2 * v.powi(5)
-                        + 134.0 * v.powi(6) - 24.0 * pi2 * v.powi(6)))
+                - (32.0
+                    * ca.powi(3)
+                    * (134.0 - 24.0 * pi2 - 402.0 * v + 90.0 * pi2 * v + 831.0 * v.powi(2)
+                        - 171.0 * pi2 * v.powi(2)
+                        - 992.0 * v.powi(3)
+                        + 186.0 * pi2 * v.powi(3)
+                        + 831.0 * v.powi(4)
+                        - 153.0 * pi2 * v.powi(4)
+                        - 402.0 * v.powi(5)
+                        + 72.0 * pi2 * v.powi(5)
+                        + 134.0 * v.powi(6)
+                        - 24.0 * pi2 * v.powi(6)))
                     / (9.0 * (1.0 - v).powi(2) * v.powi(3))
         }
         16 => {
-            (2.0 * cf * l1v * (2.0 + 2.0 * ca.powi(2) + v - 5.0 * ca.powi(2) * v) * (1.0 - ca.powi(2) * v)) / (ca * (1.0 - v) * v)
-                + (16.0 * ca * cf * l1v * lv * (1.0 + ca - ca * v) * (1.0 - ca + ca * v) * (1.0 - 2.0 * v + 2.0 * v.powi(2)))
+            (2.0 * cf
+                * l1v
+                * (2.0 + 2.0 * ca.powi(2) + v - 5.0 * ca.powi(2) * v)
+                * (1.0 - ca.powi(2) * v))
+                / (ca * (1.0 - v) * v)
+                + (16.0
+                    * ca
+                    * cf
+                    * l1v
+                    * lv
+                    * (1.0 + ca - ca * v)
+                    * (1.0 - ca + ca * v)
+                    * (1.0 - 2.0 * v + 2.0 * v.powi(2)))
                     / ((1.0 - v) * v.powi(2))
-                + (16.0 * ca.powi(2) * cf * l1v * lms * (1.0 - 2.0 * v + 2.0 * v.powi(2)) * (cf - ca * v + ca * v.powi(2)))
+                + (16.0
+                    * ca.powi(2)
+                    * cf
+                    * l1v
+                    * lms
+                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
+                    * (cf - ca * v + ca * v.powi(2)))
                     / ((1.0 - v) * v.powi(2))
-                - (12.0 * ca * cf.powi(2) * lmss * (1.0 - 2.0 * v + 2.0 * v.powi(2)) * (cf - ca * v + ca * v.powi(2)))
+                - (12.0
+                    * ca
+                    * cf.powi(2)
+                    * lmss
+                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
+                    * (cf - ca * v + ca * v.powi(2)))
                     / ((1.0 - v) * v.powi(2))
-                + (88.0 * ca.powi(2) * cf * lmu * (1.0 - 2.0 * v + 2.0 * v.powi(2)) * (cf - ca * v + ca * v.powi(2)))
+                + (88.0
+                    * ca.powi(2)
+                    * cf
+                    * lmu
+                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
+                    * (cf - ca * v + ca * v.powi(2)))
                     / (3.0 * (1.0 - v) * v.powi(2))
-                - (16.0 * ca.powi(2) * cf * lms * lv * (1.0 - 2.0 * v + 2.0 * v.powi(2)) * (cf - ca * v + ca * v.powi(2)))
+                - (16.0
+                    * ca.powi(2)
+                    * cf
+                    * lms
+                    * lv
+                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
+                    * (cf - ca * v + ca * v.powi(2)))
                     / ((1.0 - v) * v.powi(2))
-                - (16.0 * ca * cf.powi(2) * lmss * lv * (1.0 - 2.0 * v + 2.0 * v.powi(2)) * (cf - ca * v + ca * v.powi(2)))
+                - (16.0
+                    * ca
+                    * cf.powi(2)
+                    * lmss
+                    * lv
+                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
+                    * (cf - ca * v + ca * v.powi(2)))
                     / ((1.0 - v) * v.powi(2))
-                - (16.0 * ca * cf * lmu * nf * (1.0 - 2.0 * v + 2.0 * v.powi(2)) * (cf - ca * v + ca * v.powi(2)))
+                - (16.0
+                    * ca
+                    * cf
+                    * lmu
+                    * nf
+                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
+                    * (cf - ca * v + ca * v.powi(2)))
                     / (3.0 * (1.0 - v) * v.powi(2))
-                + (44.0 * ca * cf * lms * (1.0 - 2.0 * v + 2.0 * v.powi(2)) * (-2.0 * ca * cf + 2.0 * ca.powi(2) * v - 2.0 * ca.powi(2) * v.powi(2)))
+                + (44.0
+                    * ca
+                    * cf
+                    * lms
+                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
+                    * (-2.0 * ca * cf + 2.0 * ca.powi(2) * v - 2.0 * ca.powi(2) * v.powi(2)))
                     / (3.0 * (1.0 - v) * v.powi(2))
-                - (8.0 * cf * lms * nf * (1.0 - 2.0 * v + 2.0 * v.powi(2)) * (-2.0 * ca * cf + 2.0 * ca.powi(2) * v - 2.0 * ca.powi(2) * v.powi(2)))
+                - (8.0
+                    * cf
+                    * lms
+                    * nf
+                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
+                    * (-2.0 * ca * cf + 2.0 * ca.powi(2) * v - 2.0 * ca.powi(2) * v.powi(2)))
                     / (3.0 * (1.0 - v) * v.powi(2))
-                + (cf * lv * (3.0 - 6.0 * ca.powi(2) + 3.0 * ca.powi(4) - 2.0 * v + 12.0 * ca.powi(2) * v - 10.0 * ca.powi(4) * v
-                    - 4.0 * v.powi(2) + 10.0 * ca.powi(2) * v.powi(2) + 2.0 * ca.powi(4) * v.powi(2) - 22.0 * ca.powi(2) * v.powi(3)
-                    + 14.0 * ca.powi(4) * v.powi(3) + 12.0 * ca.powi(2) * v.powi(4) - 12.0 * ca.powi(4) * v.powi(4)))
+                + (cf
+                    * lv
+                    * (3.0 - 6.0 * ca.powi(2) + 3.0 * ca.powi(4) - 2.0 * v + 12.0 * ca.powi(2) * v
+                        - 10.0 * ca.powi(4) * v
+                        - 4.0 * v.powi(2)
+                        + 10.0 * ca.powi(2) * v.powi(2)
+                        + 2.0 * ca.powi(4) * v.powi(2)
+                        - 22.0 * ca.powi(2) * v.powi(3)
+                        + 14.0 * ca.powi(4) * v.powi(3)
+                        + 12.0 * ca.powi(2) * v.powi(4)
+                        - 12.0 * ca.powi(4) * v.powi(4)))
                     / (ca * (1.0 - v) * v.powi(2))
-                + (2.0 * cf * l1v.powi(2) * (2.0 + 2.0 * ca.powi(4) - 2.0 * v - 10.0 * ca.powi(4) * v + v.powi(2) - ca.powi(2) * v.powi(2)
-                    + 21.0 * ca.powi(4) * v.powi(2) - ca.powi(2) * v.powi(3) - 20.0 * ca.powi(4) * v.powi(3) + 8.0 * ca.powi(4) * v.powi(4)))
+                + (2.0
+                    * cf
+                    * l1v.powi(2)
+                    * (2.0 + 2.0 * ca.powi(4) - 2.0 * v - 10.0 * ca.powi(4) * v + v.powi(2)
+                        - ca.powi(2) * v.powi(2)
+                        + 21.0 * ca.powi(4) * v.powi(2)
+                        - ca.powi(2) * v.powi(3)
+                        - 20.0 * ca.powi(4) * v.powi(3)
+                        + 8.0 * ca.powi(4) * v.powi(4)))
                     / (ca * (1.0 - v) * v.powi(2))
-                + (2.0 * cf * lv.powi(2) * (2.0 - 12.0 * ca.powi(2) + 10.0 * ca.powi(4) - 2.0 * v + 27.0 * ca.powi(2) * v - 40.0 * ca.powi(4) * v
-                    + 3.0 * v.powi(2) - 30.0 * ca.powi(2) * v.powi(2) + 73.0 * ca.powi(4) * v.powi(2) + 9.0 * ca.powi(2) * v.powi(3)
-                    - 68.0 * ca.powi(4) * v.powi(3) - 4.0 * ca.powi(2) * v.powi(4) + 28.0 * ca.powi(4) * v.powi(4)))
+                + (2.0
+                    * cf
+                    * lv.powi(2)
+                    * (2.0 - 12.0 * ca.powi(2) + 10.0 * ca.powi(4) - 2.0 * v
+                        + 27.0 * ca.powi(2) * v
+                        - 40.0 * ca.powi(4) * v
+                        + 3.0 * v.powi(2)
+                        - 30.0 * ca.powi(2) * v.powi(2)
+                        + 73.0 * ca.powi(4) * v.powi(2)
+                        + 9.0 * ca.powi(2) * v.powi(3)
+                        - 68.0 * ca.powi(4) * v.powi(3)
+                        - 4.0 * ca.powi(2) * v.powi(4)
+                        + 28.0 * ca.powi(4) * v.powi(4)))
                     / (ca * (1.0 - v) * v.powi(2))
-                - (cf * (21.0 - 42.0 * ca.powi(2) + 21.0 * ca.powi(4) - 4.0 * pi2 + 8.0 * ca.powi(2) * pi2 - 4.0 * ca.powi(4) * pi2
-                    - 42.0 * v + 132.0 * ca.powi(2) * v - 78.0 * ca.powi(4) * v + 8.0 * pi2 * v - 24.0 * ca.powi(2) * pi2 * v
-                    + 16.0 * ca.powi(4) * pi2 * v + 42.0 * v.powi(2) - 240.0 * ca.powi(2) * v.powi(2) + 138.0 * ca.powi(4) * v.powi(2)
-                    - 8.0 * pi2 * v.powi(2) + 40.0 * ca.powi(2) * pi2 * v.powi(2) - 32.0 * ca.powi(4) * pi2 * v.powi(2)
-                    + 216.0 * ca.powi(2) * v.powi(3) - 120.0 * ca.powi(4) * v.powi(3) - 32.0 * ca.powi(2) * pi2 * v.powi(3)
-                    + 32.0 * ca.powi(4) * pi2 * v.powi(3) - 108.0 * ca.powi(2) * v.powi(4) + 60.0 * ca.powi(4) * v.powi(4)
-                    + 16.0 * ca.powi(2) * pi2 * v.powi(4) - 16.0 * ca.powi(4) * pi2 * v.powi(4)))
+                - (cf
+                    * (21.0 - 42.0 * ca.powi(2) + 21.0 * ca.powi(4) - 4.0 * pi2
+                        + 8.0 * ca.powi(2) * pi2
+                        - 4.0 * ca.powi(4) * pi2
+                        - 42.0 * v
+                        + 132.0 * ca.powi(2) * v
+                        - 78.0 * ca.powi(4) * v
+                        + 8.0 * pi2 * v
+                        - 24.0 * ca.powi(2) * pi2 * v
+                        + 16.0 * ca.powi(4) * pi2 * v
+                        + 42.0 * v.powi(2)
+                        - 240.0 * ca.powi(2) * v.powi(2)
+                        + 138.0 * ca.powi(4) * v.powi(2)
+                        - 8.0 * pi2 * v.powi(2)
+                        + 40.0 * ca.powi(2) * pi2 * v.powi(2)
+                        - 32.0 * ca.powi(4) * pi2 * v.powi(2)
+                        + 216.0 * ca.powi(2) * v.powi(3)
+                        - 120.0 * ca.powi(4) * v.powi(3)
+                        - 32.0 * ca.powi(2) * pi2 * v.powi(3)
+                        + 32.0 * ca.powi(4) * pi2 * v.powi(3)
+                        - 108.0 * ca.powi(2) * v.powi(4)
+                        + 60.0 * ca.powi(4) * v.powi(4)
+                        + 16.0 * ca.powi(2) * pi2 * v.powi(4)
+                        - 16.0 * ca.powi(4) * pi2 * v.powi(4)))
                     / (3.0 * ca * (1.0 - v) * v.powi(2))
         }
         _ => unreachable!("j0 must be in 1..=16, got {j0}"),
@@ -1072,20 +1894,26 @@ pub fn avlo(j0: usize, _w: f64, v: f64, _s: f64, ctx: &MeContext) -> f64 {
         2 | 4 | 7..=10 => 0.0,
         5 => (40.0 * ca * cf.powi(2) * (1.0 - 2.0 * v + 2.0 * v.powi(2))) / v,
         6 => {
-            (80.0 * cf.powi(2)
+            (80.0
+                * cf.powi(2)
                 * (ca - v - 3.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2) - 2.0 * ca * v.powi(3)
                     + ca * v.powi(4)))
                 / ((-1.0 + v).powi(2) * v.powi(3))
         }
         11 => {
-            (80.0 * cf.powi(2)
-                * (ca - 2.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2) - v.powi(3)
+            (80.0
+                * cf.powi(2)
+                * (ca - 2.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2)
+                    - v.powi(3)
                     - 3.0 * ca * v.powi(3)
                     + ca * v.powi(4)))
                 / ((-1.0 + v).powi(2) * v)
         }
         12 => {
-            (-16.0 * (-2.0 + 3.0 * ca.powi(2)) * cf * (1.0 - 2.0 * v + 2.0 * v.powi(2))
+            (-16.0
+                * (-2.0 + 3.0 * ca.powi(2))
+                * cf
+                * (1.0 - 2.0 * v + 2.0 * v.powi(2))
                 * (cf - ca * v + ca * v.powi(2)))
                 / ((-1.0 + v) * v.powi(2))
         }
@@ -1097,13 +1925,23 @@ pub fn avlo(j0: usize, _w: f64, v: f64, _s: f64, ctx: &MeContext) -> f64 {
                 / (ca * (-1.0 + v).powi(2) * v.powi(2))
         }
         14 => {
-            (-4.0 * (-1.0 + 3.0 * ca) * (1.0 + 3.0 * ca) * cf * (2.0 - 2.0 * v + v.powi(2))
+            (-4.0
+                * (-1.0 + 3.0 * ca)
+                * (1.0 + 3.0 * ca)
+                * cf
+                * (2.0 - 2.0 * v + v.powi(2))
                 * (2.0 * ca.powi(2) - 2.0 * ca.powi(2) * v - v.powi(2) + ca.powi(2) * v.powi(2)))
                 / (ca * (-1.0 + v) * v.powi(3))
         }
-        15 => (1280.0 * ca.powi(3) * (1.0 - v + v.powi(2)).powi(3)) / ((-1.0 + v).powi(2) * v.powi(3)),
+        15 => {
+            (1280.0 * ca.powi(3) * (1.0 - v + v.powi(2)).powi(3)) / ((-1.0 + v).powi(2) * v.powi(3))
+        }
         16 => {
-            (-8.0 * (-1.0 + 3.0 * ca) * (1.0 + 3.0 * ca) * cf * (1.0 - 2.0 * v + 2.0 * v.powi(2))
+            (-8.0
+                * (-1.0 + 3.0 * ca)
+                * (1.0 + 3.0 * ca)
+                * cf
+                * (1.0 - 2.0 * v + 2.0 * v.powi(2))
                 * (cf - ca * v + ca * v.powi(2)))
                 / ((-1.0 + v) * v.powi(2))
         }
@@ -1152,27 +1990,37 @@ pub fn struv1(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
     let (w2, w3, w4, w5, w6, w7, w8) = (pre.w2, pre.w3, pre.w4, pre.w5, pre.w6, pre.w7, pre.w8);
     let ca2 = pre.ca2;
     let cacf = ca * cf; // CA*CF appears literally, not via COMMON /PRECOLOR/ CACF here
-    let (l1v, lv, l1w, lw, lvw, l1vw, lms, lmss) =
-        (pre.l1v, pre.lv, pre.l1w, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.lmss);
+    let (l1v, lv, l1w, lw, lvw, l1vw, lms, lmss) = (
+        pre.l1v, pre.lv, pre.l1w, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.lmss,
+    );
 
-    let part1 = (-4.0 * cf * l1v
-        * (2.0 - 4.0 * ca2 - 4.0 * v + ca2 * v - ca2 * v2 + 4.0 * v * w - 3.0 * ca2 * v * w
+    let part1 = (-4.0
+        * cf
+        * l1v
+        * (2.0 - 4.0 * ca2 - 4.0 * v + ca2 * v - ca2 * v2 + 4.0 * v * w
+            - 3.0 * ca2 * v * w
             - 4.0 * v2 * w
             + 3.0 * ca2 * v2 * w
             + 2.0 * v2 * w2))
         / ((1.0 - v).powi(2) * (1.0 - v * w));
 
-    let part2 = (4.0 * ca * cf.powi(2)
+    let part2 = (4.0
+        * ca
+        * cf.powi(2)
         * lmss
-        * (4.0 - 5.0 * v + 2.0 * v2 - v3 + 9.0 * v * w - 8.0 * v2 * w + 3.0 * v3 * w
+        * (4.0 - 5.0 * v + 2.0 * v2 - v3 + 9.0 * v * w - 8.0 * v2 * w
+            + 3.0 * v3 * w
             + 6.0 * v2 * w2
             - 4.0 * v3 * w2
             + 2.0 * v3 * w3))
         / ((1.0 - v).powi(2) * (1.0 - v + v * w));
 
-    let part3 = (4.0 * cf
+    let part3 = (4.0
+        * cf
         * lvw
-        * (2.0 * cacf - v2 + ca2 * v2 + 5.0 * w + 2.0 * ca2 * w - v * w - 4.0 * ca2 * v * w
+        * (2.0 * cacf - v2 + ca2 * v2 + 5.0 * w + 2.0 * ca2 * w
+            - v * w
+            - 4.0 * ca2 * v * w
             - v2 * w
             + 3.0 * ca2 * v2 * w
             + v3 * w
@@ -1190,7 +2038,8 @@ pub fn struv1(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 2.0 * ca2 * v3 * w4))
         / ((1.0 - v).powi(2) * v * w);
 
-    let part4 = -(4.0 * cf
+    let part4 = -(4.0
+        * cf
         * l1vw
         * (2.0 * ca2 - 4.0 * cacf + 3.0 * v - 6.0 * ca2 * v + 12.0 * cacf * v - 7.0 * v2
             + 7.0 * ca2 * v2
@@ -1233,9 +2082,11 @@ pub fn struv1(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 4.0 * cacf * v4 * w4))
         / ((1.0 - v).powi(2) * v * (1.0 - v + v * w));
 
-    let part5 = -(2.0 * cf
+    let part5 = -(2.0
+        * cf
         * lms
-        * (4.0 * cacf + 4.0 * cacf * v2 - 2.0 * cacf * w + 2.0 * v * w - 18.0 * cacf * v * w
+        * (4.0 * cacf + 4.0 * cacf * v2 - 2.0 * cacf * w + 2.0 * v * w
+            - 18.0 * cacf * v * w
             - 4.0 * cacf * v2 * w
             + 2.0 * v3 * w
             - 8.0 * cacf * v3 * w
@@ -1272,7 +2123,8 @@ pub fn struv1(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 2.0 * v6 * w6
             + 2.0 * ca2 * v6 * w6))
         / ((1.0 - v).powi(2) * v * w * (1.0 - v * w).powi(3))
-        - (2.0 * cf
+        - (2.0
+            * cf
             * l1w
             * (2.0 - 2.0 * ca2 - 2.0 * v + 2.0 * ca2 * v + 2.0 * v2 - 2.0 * ca2 * v2 - 2.0 * v3
                 + 2.0 * ca2 * v3
@@ -1328,7 +2180,8 @@ pub fn struv1(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
                 - 4.0 * ca2 * v7 * w7))
             / ((1.0 - v).powi(2) * v * w * (1.0 - v * w).powi(3) * (1.0 - v + v * w));
 
-    let part6 = -(2.0 * cf
+    let part6 = -(2.0
+        * cf
         * lv
         * (2.0 - 2.0 * ca2 - 2.0 * v + 2.0 * ca2 * v + 2.0 * v2 - 2.0 * ca2 * v2 - 2.0 * v3
             + 2.0 * ca2 * v3
@@ -1463,7 +2316,8 @@ pub fn struv1(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 4.0 * ca2 * v7 * w7))
         / ((1.0 - v).powi(2) * v * w * (1.0 - v * w).powi(3) * (1.0 - v + v * w));
 
-    let part8 = -(2.0 * cf
+    let part8 = -(2.0
+        * cf
         * lw
         * (3.0 - 3.0 * ca2 + 2.0 * cacf - 3.0 * v + 3.0 * ca2 * v - 2.0 * cacf * v + 3.0 * v2
             - 3.0 * ca2 * v2
@@ -1587,7 +2441,9 @@ pub fn struv2(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
     let (l1v, lw, lvw, l1vw, lms, l1w, lv) =
         (pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv);
 
-    let part1 = (16.0 * ca * cf.powi(2)
+    let part1 = (16.0
+        * ca
+        * cf.powi(2)
         * l1vw
         * (1.0 - w)
         * (1.0 - v - v2 + v3 + v * w + 4.0 * v2 * w - 5.0 * v3 * w - 3.0 * v2 * w2
@@ -1595,7 +2451,8 @@ pub fn struv2(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - v3 * w3))
         / ((1.0 - v) * v * w * (1.0 - v + v * w).powi(2));
 
-    let part2 = -(4.0 * cf
+    let part2 = -(4.0
+        * cf
         * l1v
         * (1.0 - v - v * w)
         * (2.0 * ca2 - 2.0 * ca2 * v + 2.0 * ca2 * v2 - 2.0 * ca2 * v3 - 2.0 * v * w
@@ -1610,7 +2467,9 @@ pub fn struv2(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 2.0 * ca2 * v3 * w3))
         / ((1.0 - v).powi(2) * v2 * w2 * (1.0 - v + v * w));
 
-    let part3 = -(8.0 * ca * cf.powi(2)
+    let part3 = -(8.0
+        * ca
+        * cf.powi(2)
         * lms
         * (1.0 + v2 - 2.0 * v2 * w + v2 * w2)
         * (1.0 - 4.0 * v + 6.0 * v2 - 4.0 * v3 + v4 + v * w - 3.0 * v2 * w + 3.0 * v3 * w
@@ -1623,7 +2482,8 @@ pub fn struv2(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + v4 * w4))
         / ((1.0 - v).powi(2) * v2 * w2 * (1.0 - v + v * w).powi(2));
 
-    let part4 = -(4.0 * cf
+    let part4 = -(4.0
+        * cf
         * lw
         * (2.0 - 4.0 * ca2 - 6.0 * v + 6.0 * ca2 * v + 8.0 * v2 - 8.0 * ca2 * v2 - 8.0 * v3
             + 8.0 * ca2 * v3
@@ -1658,10 +2518,13 @@ pub fn struv2(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 2.0 * ca2 * v4 * w4))
         / ((1.0 - v).powi(2) * v2 * w2 * (1.0 - v + v * w));
 
-    let part5 = (4.0 * cf
+    let part5 = (4.0
+        * cf
         * lvw
         * (1.0 - w)
-        * (4.0 * ca2 + 4.0 * ca2 * v2 + 2.0 * v * w - 9.0 * ca2 * v * w - 6.0 * ca2 * v2 * w
+        * (4.0 * ca2 + 4.0 * ca2 * v2 + 2.0 * v * w
+            - 9.0 * ca2 * v * w
+            - 6.0 * ca2 * v2 * w
             - 2.0 * v3 * w
             - ca2 * v3 * w
             - 5.0 * v2 * w2
@@ -1678,7 +2541,8 @@ pub fn struv2(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 2.0 * ca2 * v4 * w4))
         / ((1.0 - v).powi(2) * v2 * w2);
 
-    let part6 = (2.0 * cf
+    let part6 = (2.0
+        * cf
         * lms
         * (2.0 - 6.0 * ca2 - 4.0 * v + 4.0 * v2 - 8.0 * ca2 * v2 - 4.0 * v3 + 2.0 * v4
             - 2.0 * ca2 * v4
@@ -1734,10 +2598,10 @@ pub fn struv2(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 2.0 * ca2 * v6 * w6))
         / ((1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(2));
 
-    let part7 = -(2.0 * cf
+    let part7 = -(2.0
+        * cf
         * l1w
-        * (4.0 - 12.0 * ca2 - 16.0 * v + 32.0 * ca2 * v + 28.0 * v2 - 44.0 * ca2 * v2
-            - 32.0 * v3
+        * (4.0 - 12.0 * ca2 - 16.0 * v + 32.0 * ca2 * v + 28.0 * v2 - 44.0 * ca2 * v2 - 32.0 * v3
             + 48.0 * ca2 * v3
             + 28.0 * v4
             - 36.0 * ca2 * v4
@@ -1833,10 +2697,10 @@ pub fn struv2(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 4.0 * ca2 * v8 * w8))
         / ((1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
 
-    let part8 = -(2.0 * cf
+    let part8 = -(2.0
+        * cf
         * lv
-        * (4.0 - 16.0 * ca2 - 16.0 * v + 44.0 * ca2 * v + 28.0 * v2 - 60.0 * ca2 * v2
-            - 32.0 * v3
+        * (4.0 - 16.0 * ca2 - 16.0 * v + 44.0 * ca2 * v + 28.0 * v2 - 60.0 * ca2 * v2 - 32.0 * v3
             + 64.0 * ca2 * v3
             + 28.0 * v4
             - 48.0 * ca2 * v4
@@ -1933,7 +2797,8 @@ pub fn struv2(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 4.0 * ca2 * v8 * w8))
         / ((1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
 
-    let part9 = -(2.0 * cf
+    let part9 = -(2.0
+        * cf
         * (2.0 - 6.0 * ca2 - 12.0 * v + 28.0 * ca2 * v + 30.0 * v2 - 54.0 * ca2 * v2 - 40.0 * v3
             + 56.0 * ca2 * v3
             + 30.0 * v4
@@ -2044,22 +2909,28 @@ pub fn struv3(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
     let (l1v, lw, lvw, l1vw, lms, l1w, lv) =
         (pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv);
 
-    let part1 = (4.0 * cf * l1v
+    let part1 = (4.0
+        * cf
+        * l1v
         * (6.0 + 2.0 * ca2 - 4.0 * v + ca2 * v + ca2 * v2 + 4.0 * v * w + ca2 * v * w
             - 4.0 * v2 * w
             - ca2 * v2 * w
             - 2.0 * v2 * w2))
         / ((1.0 - v).powi(2) * (1.0 - v * w));
 
-    let part2 = (4.0 * ca * cf.powi(2)
+    let part2 = (4.0
+        * ca
+        * cf.powi(2)
         * pre.lmss
-        * (4.0 - 5.0 * v + 2.0 * v2 - v3 + 9.0 * v * w - 8.0 * v2 * w + 3.0 * v3 * w
+        * (4.0 - 5.0 * v + 2.0 * v2 - v3 + 9.0 * v * w - 8.0 * v2 * w
+            + 3.0 * v3 * w
             + 6.0 * v2 * w2
             - 4.0 * v3 * w2
             + 2.0 * v3 * w3))
         / ((1.0 - v).powi(2) * (1.0 - v + v * w));
 
-    let part3 = (4.0 * cf
+    let part3 = (4.0
+        * cf
         * lvw
         * (2.0 * cacf - v2 + ca2 * v2 - 3.0 * w + 4.0 * ca2 * w + 7.0 * v * w
             - 6.0 * ca2 * v * w
@@ -2080,7 +2951,8 @@ pub fn struv3(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 2.0 * ca2 * v3 * w4))
         / ((1.0 - v).powi(2) * v * w);
 
-    let part4 = (4.0 * cf
+    let part4 = (4.0
+        * cf
         * l1vw
         * (4.0 - 3.0 * ca2 + 4.0 * cacf - 11.0 * v + 8.0 * ca2 * v - 12.0 * cacf * v + 11.0 * v2
             - 8.0 * ca2 * v2
@@ -2123,9 +2995,11 @@ pub fn struv3(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 4.0 * cacf * v4 * w4))
         / ((1.0 - v).powi(2) * v * (1.0 - v + v * w));
 
-    let part5 = -(2.0 * cf
+    let part5 = -(2.0
+        * cf
         * lms
-        * (4.0 * cacf + 4.0 * cacf * v2 - 2.0 * cacf * w + 2.0 * v * w - 18.0 * cacf * v * w
+        * (4.0 * cacf + 4.0 * cacf * v2 - 2.0 * cacf * w + 2.0 * v * w
+            - 18.0 * cacf * v * w
             - 4.0 * cacf * v2 * w
             + 2.0 * v3 * w
             - 8.0 * cacf * v3 * w
@@ -2163,7 +3037,8 @@ pub fn struv3(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 2.0 * ca2 * v6 * w6))
         / ((1.0 - v).powi(2) * v * w * (1.0 - v * w).powi(3));
 
-    let part6 = -(2.0 * cf
+    let part6 = -(2.0
+        * cf
         * l1w
         * (2.0 - 2.0 * ca2 - 2.0 * v + 2.0 * ca2 * v + 2.0 * v2 - 2.0 * ca2 * v2 - 2.0 * v3
             + 2.0 * ca2 * v3
@@ -2219,7 +3094,8 @@ pub fn struv3(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 4.0 * ca2 * v7 * w7))
         / ((1.0 - v).powi(2) * v * w * (1.0 - v * w).powi(3) * (1.0 - v + v * w));
 
-    let part7 = -(2.0 * cf
+    let part7 = -(2.0
+        * cf
         * lv
         * (2.0 - 2.0 * ca2 - 2.0 * v + 2.0 * ca2 * v + 2.0 * v2 - 2.0 * ca2 * v2 - 2.0 * v3
             + 2.0 * ca2 * v3
@@ -2357,7 +3233,8 @@ pub fn struv3(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 4.0 * ca2 * v7 * w7))
         / ((1.0 - v).powi(2) * v * w * (1.0 - v * w).powi(3) * (1.0 - v + v * w));
 
-    let part9 = -(2.0 * cf
+    let part9 = -(2.0
+        * cf
         * lw
         * (3.0 - 3.0 * ca2 + 2.0 * cacf - 3.0 * v + 3.0 * ca2 * v - 2.0 * cacf * v + 3.0 * v2
             - 3.0 * ca2 * v2
@@ -2477,11 +3354,11 @@ pub fn struv4(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
     let (l1v, lw, lvw, l1vw, lms, l1w, lv) =
         (pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv);
 
-    let part1 = (8.0 * cf
+    let part1 = (8.0
+        * cf
         * l1vw
         * (1.0 - w)
-        * (3.0 - 3.0 * v - 3.0 * v2 + 3.0 * v3 + 3.0 * v * w + 4.0 * v2 * w
-            + 2.0 * ca2 * v2 * w
+        * (3.0 - 3.0 * v - 3.0 * v2 + 3.0 * v3 + 3.0 * v * w + 4.0 * v2 * w + 2.0 * ca2 * v2 * w
             - 7.0 * v3 * w
             - 2.0 * ca2 * v3 * w
             - v2 * w2
@@ -2491,10 +3368,12 @@ pub fn struv4(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 3.0 * v3 * w3))
         / ((1.0 - v) * v * w * (1.0 - v + v * w).powi(2));
 
-    let part2 = -(8.0 * cf
+    let part2 = -(8.0
+        * cf
         * l1v
         * (1.0 - v - v * w)
-        * (ca2 - ca2 * v + ca2 * v2 - ca2 * v3 + v * w - ca2 * v2 * w - v3 * w + 3.0 * ca2 * v3 * w
+        * (ca2 - ca2 * v + ca2 * v2 - ca2 * v3 + v * w - ca2 * v2 * w - v3 * w
+            + 3.0 * ca2 * v3 * w
             - v2 * w2
             + ca2 * v2 * w2
             + v3 * w2
@@ -2502,7 +3381,9 @@ pub fn struv4(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + ca2 * v3 * w3))
         / ((1.0 - v).powi(2) * v2 * w2 * (1.0 - v + v * w));
 
-    let part3 = -(8.0 * ca * cf.powi(2)
+    let part3 = -(8.0
+        * ca
+        * cf.powi(2)
         * lms
         * (1.0 + v2 - 2.0 * v2 * w + v2 * w2)
         * (1.0 - 4.0 * v + 6.0 * v2 - 4.0 * v3 + v4 + v * w - 3.0 * v2 * w + 3.0 * v3 * w
@@ -2515,7 +3396,8 @@ pub fn struv4(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + v4 * w4))
         / ((1.0 - v).powi(2) * v2 * w2 * (1.0 - v + v * w).powi(2));
 
-    let part4 = -(4.0 * cf
+    let part4 = -(4.0
+        * cf
         * lw
         * (2.0 - 4.0 * ca2 - 6.0 * v + 6.0 * ca2 * v + 8.0 * v2 - 8.0 * ca2 * v2 - 8.0 * v3
             + 8.0 * ca2 * v3
@@ -2550,7 +3432,8 @@ pub fn struv4(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 2.0 * ca2 * v4 * w4))
         / ((1.0 - v).powi(2) * v2 * w2 * (1.0 - v + v * w));
 
-    let part5 = (4.0 * cf
+    let part5 = (4.0
+        * cf
         * lvw
         * (1.0 - w)
         * (4.0 * ca2 + 4.0 * ca2 * v2 - 2.0 * v * w - 8.0 * ca2 * v * w - 6.0 * ca2 * v2 * w
@@ -2570,7 +3453,8 @@ pub fn struv4(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 2.0 * ca2 * v4 * w4))
         / ((1.0 - v).powi(2) * v2 * w2);
 
-    let part6 = (2.0 * cf
+    let part6 = (2.0
+        * cf
         * lms
         * (2.0 - 6.0 * ca2 - 4.0 * v + 4.0 * v2 - 8.0 * ca2 * v2 - 4.0 * v3 + 2.0 * v4
             - 2.0 * ca2 * v4
@@ -2626,10 +3510,10 @@ pub fn struv4(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 2.0 * ca2 * v6 * w6))
         / ((1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(2));
 
-    let part7 = -(2.0 * cf
+    let part7 = -(2.0
+        * cf
         * l1w
-        * (4.0 - 12.0 * ca2 - 16.0 * v + 32.0 * ca2 * v + 28.0 * v2 - 44.0 * ca2 * v2
-            - 32.0 * v3
+        * (4.0 - 12.0 * ca2 - 16.0 * v + 32.0 * ca2 * v + 28.0 * v2 - 44.0 * ca2 * v2 - 32.0 * v3
             + 48.0 * ca2 * v3
             + 28.0 * v4
             - 36.0 * ca2 * v4
@@ -2726,10 +3610,10 @@ pub fn struv4(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 4.0 * ca2 * v8 * w8))
         / ((1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
 
-    let part8 = -(2.0 * cf
+    let part8 = -(2.0
+        * cf
         * lv
-        * (4.0 - 16.0 * ca2 - 16.0 * v + 44.0 * ca2 * v + 28.0 * v2 - 60.0 * ca2 * v2
-            - 32.0 * v3
+        * (4.0 - 16.0 * ca2 - 16.0 * v + 44.0 * ca2 * v + 28.0 * v2 - 60.0 * ca2 * v2 - 32.0 * v3
             + 64.0 * ca2 * v3
             + 28.0 * v4
             - 48.0 * ca2 * v4
@@ -2826,7 +3710,8 @@ pub fn struv4(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 4.0 * ca2 * v8 * w8))
         / ((1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
 
-    let part9 = -(2.0 * cf
+    let part9 = -(2.0
+        * cf
         * (2.0 - 6.0 * ca2 - 12.0 * v + 28.0 * ca2 * v + 30.0 * v2 - 54.0 * ca2 * v2 - 40.0 * v3
             + 56.0 * ca2 * v3
             + 30.0 * v4
@@ -2929,16 +3814,20 @@ pub fn struv5(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
     let (w2, w3, w4, w5, w6, w7, w8) = (pre.w2, pre.w3, pre.w4, pre.w5, pre.w6, pre.w7, pre.w8);
     let ca2 = pre.ca2;
     let cacf = ca * cf;
-    let (l1v, lw, lvw, l1vw, lms, l1w, lv, lmss) =
-        (pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv, pre.lmss);
+    let (l1v, lw, lvw, l1vw, lms, l1w, lv, lmss) = (
+        pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv, pre.lmss,
+    );
 
-    let part1 = (-4.0 * cf * l1v
+    let part1 = (-4.0
+        * cf
+        * l1v
         * (10.0 - 2.0 * ca2 - 20.0 * v + 5.0 * ca2 * v + 14.0 * v2 - 4.0 * ca2 * v2 - 8.0 * v * w
             + ca2 * v * w
             + 2.0 * v2 * w2))
         / (1.0 - v + v * w);
 
-    let part2 = -(4.0 * cf
+    let part2 = -(4.0
+        * cf
         * lvw
         * (4.0 - 3.0 * ca2 - 5.0 * v + 4.0 * ca2 * v + 2.0 * v2 - 2.0 * ca2 * v2 - 7.0 * v * w
             + 5.0 * ca2 * v * w
@@ -2952,9 +3841,12 @@ pub fn struv5(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 2.0 * ca2 * v3 * w3))
         / ((1.0 - v) * v);
 
-    let part3 = -(4.0 * ca * cf.powi(2)
+    let part3 = -(4.0
+        * ca
+        * cf.powi(2)
         * lms
-        * (1.0 - 3.0 * v + 4.0 * v2 - 2.0 * v3 - w + 6.0 * v * w - 8.0 * v2 * w + 2.0 * v3 * w
+        * (1.0 - 3.0 * v + 4.0 * v2 - 2.0 * v3 - w + 6.0 * v * w - 8.0 * v2 * w
+            + 2.0 * v3 * w
             + 2.0 * v4 * w
             + v * w2
             - 12.0 * v2 * w2
@@ -2965,7 +3857,8 @@ pub fn struv5(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 2.0 * v4 * w4))
         / ((1.0 - v) * v * w * (1.0 - v * w));
 
-    let part4 = (4.0 * cf
+    let part4 = (4.0
+        * cf
         * l1vw
         * (4.0 - 5.0 * ca2 + 4.0 * cacf - 14.0 * v + 18.0 * ca2 * v - 12.0 * cacf * v + 20.0 * v2
             - 28.0 * ca2 * v2
@@ -3006,9 +3899,11 @@ pub fn struv5(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 2.0 * cacf * v4 * w4))
         / (v * (1.0 - v + v * w).powi(3));
 
-    let part5 = -(2.0 * cf
+    let part5 = -(2.0
+        * cf
         * lmss
-        * (2.0 * cacf + 2.0 * v - 2.0 * ca2 * v - 8.0 * cacf * v - 9.0 * v2 + 9.0 * ca2 * v2
+        * (2.0 * cacf + 2.0 * v - 2.0 * ca2 * v - 8.0 * cacf * v - 9.0 * v2
+            + 9.0 * ca2 * v2
             + 14.0 * cacf * v2
             + 18.0 * v3
             - 18.0 * ca2 * v3
@@ -3170,7 +4065,8 @@ pub fn struv5(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 8.0 * ca2 * v7 * w6))
         / ((1.0 - v) * v * w * (1.0 - v * w) * (1.0 - v + v * w).powi(3));
 
-    let part7 = -(2.0 * cf
+    let part7 = -(2.0
+        * cf
         * l1w
         * (2.0 - 2.0 * ca2 - 12.0 * v + 12.0 * ca2 * v + 32.0 * v2 - 32.0 * ca2 * v2 - 48.0 * v3
             + 48.0 * ca2 * v3
@@ -3243,7 +4139,8 @@ pub fn struv5(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 4.0 * ca2 * v7 * w7))
         / ((1.0 - v) * v * w * (1.0 - v * w) * (1.0 - v + v * w).powi(3));
 
-    let part8 = -(2.0 * cf
+    let part8 = -(2.0
+        * cf
         * lv
         * (2.0 - 2.0 * ca2 - 12.0 * v + 12.0 * ca2 * v + 32.0 * v2 - 32.0 * ca2 * v2 - 48.0 * v3
             + 48.0 * ca2 * v3
@@ -3317,7 +4214,8 @@ pub fn struv5(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 4.0 * ca2 * v7 * w7))
         / ((1.0 - v) * v * w * (1.0 - v * w) * (1.0 - v + v * w).powi(3));
 
-    let part9 = -(2.0 * cf
+    let part9 = -(2.0
+        * cf
         * lw
         * (3.0 - 3.0 * ca2 + 2.0 * cacf - 18.0 * v + 18.0 * ca2 * v - 12.0 * cacf * v + 48.0 * v2
             - 48.0 * ca2 * v2
@@ -3461,18 +4359,23 @@ pub fn struv5(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
 pub fn struv6(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc) -> f64 {
     let cf = ctx.cf;
     let ca = ctx.ca;
-    let (v2, v3, v4, v5, v6, v7, v8, v9) =
-        (pre.v2, pre.v3, pre.v4, pre.v5, pre.v6, pre.v7, pre.v8, pre.v9);
-    let (w2, w3, w4, w5, w6, w7, w8, w9) =
-        (pre.w2, pre.w3, pre.w4, pre.w5, pre.w6, pre.w7, pre.w8, pre.w9);
+    let (v2, v3, v4, v5, v6, v7, v8, v9) = (
+        pre.v2, pre.v3, pre.v4, pre.v5, pre.v6, pre.v7, pre.v8, pre.v9,
+    );
+    let (w2, w3, w4, w5, w6, w7, w8, w9) = (
+        pre.w2, pre.w3, pre.w4, pre.w5, pre.w6, pre.w7, pre.w8, pre.w9,
+    );
     let ca2 = pre.ca2;
     let ca3 = ca.powi(3);
     let cacf = ca * cf;
     let ca2cf = ca2 * cf;
-    let (l1v, lw, lvw, l1vw, lms, l1w, lv, lmss) =
-        (pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv, pre.lmss);
+    let (l1v, lw, lvw, l1vw, lms, l1w, lv, lmss) = (
+        pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv, pre.lmss,
+    );
 
-    let part1 = (4.0 * cf * l1v
+    let part1 = (4.0
+        * cf
+        * l1v
         * (4.0 * ca - 12.0 * ca * v + 14.0 * ca * v2 - 8.0 * ca * v3 + 2.0 * ca * v4
             - 12.0 * ca * w
             + 4.0 * ca3 * w
@@ -3531,9 +4434,11 @@ pub fn struv6(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + ca2 * v6 * w4))
         / (ca * (1.0 - v).powi(2) * v3 * w2 * (1.0 - v * w));
 
-    let part2 = -(4.0 * cf
+    let part2 = -(4.0
+        * cf
         * lvw
-        * (4.0 * ca - 4.0 * ca3 - 8.0 * ca * v + 8.0 * ca3 * v + 6.0 * ca * v2 - 6.0 * ca3 * v2
+        * (4.0 * ca - 4.0 * ca3 - 8.0 * ca * v + 8.0 * ca3 * v + 6.0 * ca * v2
+            - 6.0 * ca3 * v2
             - 2.0 * ca * v3
             + 2.0 * ca3 * v3
             - v * w
@@ -3580,7 +4485,8 @@ pub fn struv6(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 2.0 * ca3 * v5 * w5))
         / (ca * (1.0 - v).powi(2) * v3 * w2);
 
-    let part3 = -(8.0 * cf.powi(2)
+    let part3 = -(8.0
+        * cf.powi(2)
         * lmss
         * (2.0 * ca - 10.0 * ca * v + 21.0 * ca * v2 - 24.0 * ca * v3 + 16.0 * ca * v4
             - 6.0 * ca * v5
@@ -3622,7 +4528,8 @@ pub fn struv6(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - ca * v6 * w5))
         / ((1.0 - v).powi(2) * v3 * w2 * (1.0 - v + v * w));
 
-    let part4 = (4.0 * cf
+    let part4 = (4.0
+        * cf
         * l1vw
         * (4.0 * ca - 4.0 * ca3 + 8.0 * ca2cf - 20.0 * ca * v + 20.0 * ca3 * v - 40.0 * ca2cf * v
             + 42.0 * ca * v2
@@ -3765,9 +4672,11 @@ pub fn struv6(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 4.0 * ca2cf * v6 * w6))
         / (ca * (1.0 - v).powi(2) * v3 * w2 * (1.0 - v + v * w));
 
-    let part5 = -(2.0 * cf
+    let part5 = -(2.0
+        * cf
         * lms
-        * (8.0 * ca2 + 8.0 * cacf - 24.0 * ca2 * v - 16.0 * cacf * v - 4.0 * v2 + 32.0 * ca2 * v2
+        * (8.0 * ca2 + 8.0 * cacf - 24.0 * ca2 * v - 16.0 * cacf * v - 4.0 * v2
+            + 32.0 * ca2 * v2
             + 12.0 * cacf * v2
             + 8.0 * v3
             - 24.0 * ca2 * v3
@@ -3888,7 +4797,8 @@ pub fn struv6(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 2.0 * ca2 * v8 * w7))
         / ((1.0 - v).powi(2) * v3 * w2 * (1.0 - v * w).powi(3));
 
-    let part6 = -(2.0 * cf
+    let part6 = -(2.0
+        * cf
         * l1w
         * (16.0 * ca - 16.0 * ca3 - 64.0 * ca * v + 64.0 * ca3 * v + 112.0 * ca * v2
             - 112.0 * ca3 * v2
@@ -4062,7 +4972,8 @@ pub fn struv6(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 4.0 * ca3 * v9 * w8))
         / (ca * (1.0 - v).powi(2) * v3 * w2 * (1.0 - v * w).powi(3) * (1.0 - v + v * w));
 
-    let part7 = -(2.0 * cf
+    let part7 = -(2.0
+        * cf
         * lv
         * (24.0 * ca - 16.0 * ca3 - 96.0 * ca * v + 64.0 * ca3 * v + 164.0 * ca * v2
             - 112.0 * ca3 * v2
@@ -4497,9 +5408,11 @@ pub fn struv6(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 4.0 * ca3 * v9 * w8))
         / (ca * (1.0 - v).powi(2) * v3 * w2 * (1.0 - v * w).powi(3) * (1.0 - v + v * w));
 
-    let part9 = -(4.0 * cf
+    let part9 = -(4.0
+        * cf
         * lw
-        * (8.0 * ca - 12.0 * ca3 + 8.0 * ca2cf - 32.0 * ca * v + 48.0 * ca3 * v - 32.0 * ca2cf * v
+        * (8.0 * ca - 12.0 * ca3 + 8.0 * ca2cf - 32.0 * ca * v + 48.0 * ca3 * v
+            - 32.0 * ca2cf * v
             + 58.0 * ca * v2
             - 84.0 * ca3 * v2
             + 56.0 * ca2cf * v2
@@ -4824,7 +5737,13 @@ pub fn struv6(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - ca * v9 * w9
             + ca3 * v9 * w9
             - 2.0 * ca2cf * v9 * w9))
-        / (ca * (1.0 - v).powi(2) * v3 * (1.0 - w) * w2 * (1.0 - v * w).powi(3) * (1.0 - v + v * w));
+        / (ca
+            * (1.0 - v).powi(2)
+            * v3
+            * (1.0 - w)
+            * w2
+            * (1.0 - v * w).powi(3)
+            * (1.0 - v + v * w));
 
     part1 + part2 + part3 + part4 + part5 + part6 + part7 + part8 + part9
 }
@@ -4838,10 +5757,13 @@ pub fn struv7(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
     let (w2, w3, w4, w5, w6, w7, w8) = (pre.w2, pre.w3, pre.w4, pre.w5, pre.w6, pre.w7, pre.w8);
     let ca2 = pre.ca2;
     let ca3 = ca.powi(3);
-    let (l1v, lw, lvw, l1vw, lms, l1w, lv, lmss) =
-        (pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv, pre.lmss);
+    let (l1v, lw, lvw, l1vw, lms, l1w, lv, lmss) = (
+        pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv, pre.lmss,
+    );
 
-    let part1 = (16.0 * ca * cf.powi(2)
+    let part1 = (16.0
+        * ca
+        * cf.powi(2)
         * l1vw
         * (1.0 - w)
         * (1.0 - v - v2 + v3 + v * w + 4.0 * v2 * w - 5.0 * v3 * w - 3.0 * v2 * w2
@@ -4849,10 +5771,12 @@ pub fn struv7(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - v3 * w3))
         / ((1.0 - v) * v * w * (1.0 - v + v * w).powi(2));
 
-    let part2 = -(8.0 * cf.powi(2)
+    let part2 = -(8.0
+        * cf.powi(2)
         * lmss
         * (1.0 + v2 - 2.0 * v2 * w + v2 * w2)
-        * (ca - 4.0 * ca * v + 6.0 * ca * v2 - 4.0 * ca * v3 + ca * v4 - v * w + ca * v * w
+        * (ca - 4.0 * ca * v + 6.0 * ca * v2 - 4.0 * ca * v3 + ca * v4 - v * w
+            + ca * v * w
             + 3.0 * v2 * w
             - 3.0 * ca * v2 * w
             - 3.0 * v3 * w
@@ -4872,10 +5796,13 @@ pub fn struv7(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + ca * v4 * w4))
         / ((1.0 - v).powi(2) * v2 * w2 * (1.0 - v + v * w).powi(2));
 
-    let part3 = (4.0 * cf
+    let part3 = (4.0
+        * cf
         * lvw
         * (1.0 - w)
-        * (4.0 * ca2 + 4.0 * ca2 * v2 + 2.0 * v * w - 9.0 * ca2 * v * w - 6.0 * ca2 * v2 * w
+        * (4.0 * ca2 + 4.0 * ca2 * v2 + 2.0 * v * w
+            - 9.0 * ca2 * v * w
+            - 6.0 * ca2 * v2 * w
             - 2.0 * v3 * w
             - ca2 * v3 * w
             - 5.0 * v2 * w2
@@ -4892,9 +5819,11 @@ pub fn struv7(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 2.0 * ca2 * v4 * w4))
         / ((1.0 - v).powi(2) * v2 * w2);
 
-    let part4 = -(4.0 * cf
+    let part4 = -(4.0
+        * cf
         * lw
-        * (2.0 * ca - 4.0 * ca3 - 6.0 * ca * v + 6.0 * ca3 * v + 8.0 * ca * v2 - 8.0 * ca3 * v2
+        * (2.0 * ca - 4.0 * ca3 - 6.0 * ca * v + 6.0 * ca3 * v + 8.0 * ca * v2
+            - 8.0 * ca3 * v2
             - 8.0 * ca * v3
             + 8.0 * ca3 * v3
             + 6.0 * ca * v4
@@ -4982,9 +5911,11 @@ pub fn struv7(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + ca2 * v6 * w5))
         / (ca * (1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w) * (1.0 - v + v * w));
 
-    let part5 = -(4.0 * cf
+    let part5 = -(4.0
+        * cf
         * l1v
-        * (2.0 * ca3 - 4.0 * ca3 * v + 4.0 * ca3 * v2 - 4.0 * ca3 * v3 + 2.0 * ca3 * v4 - w
+        * (2.0 * ca3 - 4.0 * ca3 * v + 4.0 * ca3 * v2 - 4.0 * ca3 * v3 + 2.0 * ca3 * v4
+            - w
             - ca2 * w
             + v * w
             - 2.0 * ca * v * w
@@ -5053,7 +5984,8 @@ pub fn struv7(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + ca2 * v6 * w5))
         / (ca * (1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w) * (1.0 - v + v * w));
 
-    let part6 = (2.0 * cf
+    let part6 = (2.0
+        * cf
         * lms
         * (2.0 - 6.0 * ca2 - 4.0 * v + 4.0 * v2 - 8.0 * ca2 * v2 - 4.0 * v3 + 2.0 * v4
             - 2.0 * ca2 * v4
@@ -5109,7 +6041,8 @@ pub fn struv7(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 2.0 * ca2 * v6 * w6))
         / ((1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(2));
 
-    let part7 = -(2.0 * cf
+    let part7 = -(2.0
+        * cf
         * l1w
         * (4.0 * ca - 12.0 * ca3 - 16.0 * ca * v + 32.0 * ca3 * v + 28.0 * ca * v2
             - 44.0 * ca3 * v2
@@ -5268,7 +6201,8 @@ pub fn struv7(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 4.0 * ca3 * v8 * w8))
         / (ca * (1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
 
-    let part8 = -(2.0 * cf
+    let part8 = -(2.0
+        * cf
         * lv
         * (4.0 * ca - 16.0 * ca3 - 16.0 * ca * v + 44.0 * ca3 * v + 28.0 * ca * v2
             - 60.0 * ca3 * v2
@@ -5428,7 +6362,8 @@ pub fn struv7(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 4.0 * ca3 * v8 * w8))
         / (ca * (1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
 
-    let part9 = -(2.0 * cf
+    let part9 = -(2.0
+        * cf
         * (2.0 * ca - 6.0 * ca3 - 12.0 * ca * v + 28.0 * ca3 * v + 30.0 * ca * v2
             - 54.0 * ca3 * v2
             - 40.0 * ca * v3
@@ -5602,19 +6537,23 @@ pub fn struv8(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
     let (w2, w3, w4, w5, w6, w7, w8) = (pre.w2, pre.w3, pre.w4, pre.w5, pre.w6, pre.w7, pre.w8);
     let ca2 = pre.ca2;
     let cacf = ca * cf;
-    let (l1v, lw, lvw, l1vw, lms, l1w, lv, lmss) =
-        (pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv, pre.lmss);
+    let (l1v, lw, lvw, l1vw, lms, l1w, lv, lmss) = (
+        pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv, pre.lmss,
+    );
 
-    let part1 = (-2.0 * cf
+    let part1 = (-2.0
+        * cf
         * lmss
         * (2.0 - 4.0 * v + 2.0 * v2 + 2.0 * v * w - 2.0 * v2 * w + v2 * w2)
         * (1.0 - 2.0 * v + 2.0 * v2 + 2.0 * v * w - 4.0 * v2 * w + 2.0 * v2 * w2)
-        * (2.0 * ca2 - 4.0 * ca2 * v + 2.0 * ca2 * v2 + 2.0 * ca2 * v * w - 2.0 * ca2 * v2 * w
+        * (2.0 * ca2 - 4.0 * ca2 * v + 2.0 * ca2 * v2 + 2.0 * ca2 * v * w
+            - 2.0 * ca2 * v2 * w
             - v2 * w2
             + ca2 * v2 * w2))
         / ((1.0 - v) * v2 * w2 * (1.0 - v + v * w).powi(2));
 
-    let part2 = -(4.0 * cf
+    let part2 = -(4.0
+        * cf
         * l1vw
         * (1.0 - w)
         * (2.0 - 8.0 * v + 2.0 * ca2 * v + 10.0 * v2 - 4.0 * ca2 * v2 - 4.0 * v3
@@ -5630,7 +6569,8 @@ pub fn struv8(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 2.0 * v3 * w3))
         / (v * w * (1.0 - v + v * w).powi(2));
 
-    let part3 = -(8.0 * cf
+    let part3 = -(8.0
+        * cf
         * l1v
         * (ca2 - 2.0 * ca2 * v + 2.0 * ca2 * v2 - 3.0 * v * w + ca2 * v * w + 6.0 * v2 * w
             - 3.0 * ca2 * v2 * w
@@ -5645,10 +6585,13 @@ pub fn struv8(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + ca2 * v4 * w4))
         / (v2 * w2 * (1.0 - v * w));
 
-    let part4 = (8.0 * cf
+    let part4 = (8.0
+        * cf
         * lvw
         * (1.0 - w)
-        * (2.0 * cacf + 2.0 * v - 2.0 * ca2 * v - 2.0 * v2 + 2.0 * ca2 * v2 + 2.0 * v * w
+        * (2.0 * cacf + 2.0 * v - 2.0 * ca2 * v - 2.0 * v2
+            + 2.0 * ca2 * v2
+            + 2.0 * v * w
             + ca2 * v * w
             - 5.0 * v2 * w
             - 4.0 * ca2 * v2 * w
@@ -5667,7 +6610,8 @@ pub fn struv8(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + ca2 * v4 * w4))
         / ((1.0 - v) * v2 * w2);
 
-    let part5 = -(4.0 * cf
+    let part5 = -(4.0
+        * cf
         * lw
         * (2.0 - 4.0 * ca2 - 4.0 * v + 14.0 * ca2 * v + 4.0 * v2 - 24.0 * ca2 * v2
             + 20.0 * ca2 * v3
@@ -5696,7 +6640,8 @@ pub fn struv8(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 2.0 * ca2 * v5 * w4))
         / ((1.0 - v) * v2 * w2 * (1.0 - v * w));
 
-    let part6 = (2.0 * cf
+    let part6 = (2.0
+        * cf
         * lms
         * (4.0 - 4.0 * ca2 - 8.0 * v + 12.0 * ca2 * v + 8.0 * v2 - 20.0 * ca2 * v2
             + 16.0 * ca2 * v3
@@ -5746,9 +6691,11 @@ pub fn struv8(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 2.0 * ca2 * v6 * w6))
         / ((1.0 - v) * v2 * w2 * (1.0 - v * w).powi(2));
 
-    let part7 = -(2.0 * cf
+    let part7 = -(2.0
+        * cf
         * l1w
-        * (4.0 - 12.0 * ca2 - 16.0 * v + 64.0 * ca2 * v + 28.0 * v2 - 156.0 * ca2 * v2
+        * (4.0 - 12.0 * ca2 - 16.0 * v + 64.0 * ca2 * v + 28.0 * v2
+            - 156.0 * ca2 * v2
             - 24.0 * v3
             + 216.0 * ca2 * v3
             + 8.0 * v4
@@ -5842,9 +6789,11 @@ pub fn struv8(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 4.0 * ca2 * v8 * w8))
         / ((1.0 - v) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
 
-    let part8 = -(2.0 * cf
+    let part8 = -(2.0
+        * cf
         * lv
-        * (4.0 - 16.0 * ca2 - 16.0 * v + 84.0 * ca2 * v + 28.0 * v2 - 200.0 * ca2 * v2
+        * (4.0 - 16.0 * ca2 - 16.0 * v + 84.0 * ca2 * v + 28.0 * v2
+            - 200.0 * ca2 * v2
             - 24.0 * v3
             + 268.0 * ca2 * v3
             + 8.0 * v4
@@ -5938,8 +6887,10 @@ pub fn struv8(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 4.0 * ca2 * v8 * w8))
         / ((1.0 - v) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
 
-    let part9 = -(2.0 * cf
-        * (4.0 * v - 12.0 * ca2 * v - 12.0 * v2 + 52.0 * ca2 * v2 + 12.0 * v3 - 92.0 * ca2 * v3
+    let part9 = -(2.0
+        * cf
+        * (4.0 * v - 12.0 * ca2 * v - 12.0 * v2 + 52.0 * ca2 * v2 + 12.0 * v3
+            - 92.0 * ca2 * v3
             - 4.0 * v4
             + 84.0 * ca2 * v4
             - 40.0 * ca2 * v5
@@ -6040,19 +6991,23 @@ pub fn struv9(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
     let (v2, v3, v4, v5, v6, v7, v8) = (pre.v2, pre.v3, pre.v4, pre.v5, pre.v6, pre.v7, pre.v8);
     let (w2, w3, w4, w5, w6, w7, w8) = (pre.w2, pre.w3, pre.w4, pre.w5, pre.w6, pre.w7, pre.w8);
     let ca2 = pre.ca2;
-    let (l1v, lw, lvw, l1vw, lms, l1w, lv, lmss) =
-        (pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv, pre.lmss);
+    let (l1v, lw, lvw, l1vw, lms, l1w, lv, lmss) = (
+        pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv, pre.lmss,
+    );
 
-    let part1 = (-2.0 * cf
+    let part1 = (-2.0
+        * cf
         * lmss
         * (2.0 - 4.0 * v + 2.0 * v2 + 2.0 * v * w - 2.0 * v2 * w + v2 * w2)
         * (1.0 - 2.0 * v + 2.0 * v2 + 2.0 * v * w - 4.0 * v2 * w + 2.0 * v2 * w2)
-        * (2.0 * ca2 - 4.0 * ca2 * v + 2.0 * ca2 * v2 + 2.0 * ca2 * v * w - 2.0 * ca2 * v2 * w
+        * (2.0 * ca2 - 4.0 * ca2 * v + 2.0 * ca2 * v2 + 2.0 * ca2 * v * w
+            - 2.0 * ca2 * v2 * w
             - v2 * w2
             + ca2 * v2 * w2))
         / ((1.0 - v) * v2 * w2 * (1.0 - v + v * w).powi(2));
 
-    let part2 = (4.0 * cf
+    let part2 = (4.0
+        * cf
         * l1vw
         * (1.0 - w)
         * (2.0 - ca2 - 8.0 * v + 2.0 * ca2 * v + 10.0 * v2 - ca2 * v2 - 4.0 * v3 + 7.0 * v * w
@@ -6069,7 +7024,9 @@ pub fn struv9(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - ca2 * v3 * w3))
         / (v * w * (1.0 - v + v * w).powi(2));
 
-    let part3 = (16.0 * ca * cf.powi(2)
+    let part3 = (16.0
+        * ca
+        * cf.powi(2)
         * lvw
         * (1.0 - w)
         * (1.0 - 2.0 * v + 2.0 * v2 + 2.0 * v * w - 7.0 * v2 * w + 4.0 * v3 * w + 4.0 * v2 * w2
@@ -6080,10 +7037,10 @@ pub fn struv9(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + v4 * w4))
         / ((1.0 - v) * v2 * w2);
 
-    let part4 = -(4.0 * cf
+    let part4 = -(4.0
+        * cf
         * l1v
-        * (2.0 * ca2 - 4.0 * ca2 * v + 4.0 * ca2 * v2 + 6.0 * v * w - ca2 * v * w
-            - 12.0 * v2 * w
+        * (2.0 * ca2 - 4.0 * ca2 * v + 4.0 * ca2 * v2 + 6.0 * v * w - ca2 * v * w - 12.0 * v2 * w
             + 16.0 * v3 * w
             - 8.0 * ca2 * v3 * w
             + 4.0 * v2 * w2
@@ -6097,7 +7054,8 @@ pub fn struv9(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 2.0 * ca2 * v4 * w4))
         / (v2 * w2 * (1.0 - v * w));
 
-    let part5 = -(4.0 * cf
+    let part5 = -(4.0
+        * cf
         * lw
         * (2.0 - 4.0 * ca2 - 4.0 * v + 14.0 * ca2 * v + 4.0 * v2 - 24.0 * ca2 * v2
             + 20.0 * ca2 * v3
@@ -6126,7 +7084,8 @@ pub fn struv9(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 2.0 * ca2 * v5 * w4))
         / ((1.0 - v) * v2 * w2 * (1.0 - v * w));
 
-    let part6 = (2.0 * cf
+    let part6 = (2.0
+        * cf
         * lms
         * (4.0 - 4.0 * ca2 - 8.0 * v + 12.0 * ca2 * v + 8.0 * v2 - 20.0 * ca2 * v2
             + 16.0 * ca2 * v3
@@ -6176,9 +7135,11 @@ pub fn struv9(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 2.0 * ca2 * v6 * w6))
         / ((1.0 - v) * v2 * w2 * (1.0 - v * w).powi(2));
 
-    let part7 = -(2.0 * cf
+    let part7 = -(2.0
+        * cf
         * l1w
-        * (4.0 - 12.0 * ca2 - 16.0 * v + 64.0 * ca2 * v + 28.0 * v2 - 156.0 * ca2 * v2
+        * (4.0 - 12.0 * ca2 - 16.0 * v + 64.0 * ca2 * v + 28.0 * v2
+            - 156.0 * ca2 * v2
             - 24.0 * v3
             + 216.0 * ca2 * v3
             + 8.0 * v4
@@ -6272,9 +7233,11 @@ pub fn struv9(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 4.0 * ca2 * v8 * w8))
         / ((1.0 - v) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
 
-    let part8 = -(2.0 * cf
+    let part8 = -(2.0
+        * cf
         * lv
-        * (4.0 - 16.0 * ca2 - 16.0 * v + 84.0 * ca2 * v + 28.0 * v2 - 200.0 * ca2 * v2
+        * (4.0 - 16.0 * ca2 - 16.0 * v + 84.0 * ca2 * v + 28.0 * v2
+            - 200.0 * ca2 * v2
             - 24.0 * v3
             + 268.0 * ca2 * v3
             + 8.0 * v4
@@ -6368,8 +7331,10 @@ pub fn struv9(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 4.0 * ca2 * v8 * w8))
         / ((1.0 - v) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
 
-    let part9 = -(2.0 * cf
-        * (4.0 * v - 12.0 * ca2 * v - 12.0 * v2 + 52.0 * ca2 * v2 + 12.0 * v3 - 92.0 * ca2 * v3
+    let part9 = -(2.0
+        * cf
+        * (4.0 * v - 12.0 * ca2 * v - 12.0 * v2 + 52.0 * ca2 * v2 + 12.0 * v3
+            - 92.0 * ca2 * v3
             - 4.0 * v4
             + 84.0 * ca2 * v4
             - 40.0 * ca2 * v5
@@ -6470,19 +7435,23 @@ pub fn struv10(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
     let (w2, w3, w4, w5, w6, w7, w8) = (pre.w2, pre.w3, pre.w4, pre.w5, pre.w6, pre.w7, pre.w8);
     let ca2 = pre.ca2;
     let ca3 = ca.powi(3);
-    let (l1v, lw, lvw, l1vw, lms, l1w, lv, lmss) =
-        (pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv, pre.lmss);
+    let (l1v, lw, lvw, l1vw, lms, l1w, lv, lmss) = (
+        pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv, pre.lmss,
+    );
 
-    let part1 = (-2.0 * cf
+    let part1 = (-2.0
+        * cf
         * lmss
         * (2.0 - 4.0 * v + 2.0 * v2 + 2.0 * v * w - 2.0 * v2 * w + v2 * w2)
         * (1.0 - 2.0 * v + 2.0 * v2 + 2.0 * v * w - 4.0 * v2 * w + 2.0 * v2 * w2)
-        * (2.0 * ca2 - 4.0 * ca2 * v + 2.0 * ca2 * v2 + 2.0 * ca2 * v * w - 2.0 * ca2 * v2 * w
+        * (2.0 * ca2 - 4.0 * ca2 * v + 2.0 * ca2 * v2 + 2.0 * ca2 * v * w
+            - 2.0 * ca2 * v2 * w
             - v2 * w2
             + ca2 * v2 * w2))
         / ((1.0 - v) * v2 * w2 * (1.0 - v + v * w).powi(2));
 
-    let part2 = (4.0 * cf
+    let part2 = (4.0
+        * cf
         * l1vw
         * (1.0 - w)
         * (2.0 - ca2 - 8.0 * v + 2.0 * ca2 * v + 10.0 * v2 - ca2 * v2 - 4.0 * v3 + 7.0 * v * w
@@ -6499,10 +7468,12 @@ pub fn struv10(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - ca2 * v3 * w3))
         / (v * w * (1.0 - v + v * w).powi(2));
 
-    let part3 = (16.0 * cf.powi(2)
+    let part3 = (16.0
+        * cf.powi(2)
         * lvw
         * (1.0 - w)
-        * (ca - 2.0 * ca * v + 2.0 * ca * v2 + v * w + 2.0 * ca * v * w - 2.0 * v2 * w
+        * (ca - 2.0 * ca * v + 2.0 * ca * v2 + v * w + 2.0 * ca * v * w
+            - 2.0 * v2 * w
             - 7.0 * ca * v2 * w
             + 2.0 * v3 * w
             + 4.0 * ca * v3 * w
@@ -6516,7 +7487,8 @@ pub fn struv10(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + ca * v4 * w4))
         / ((1.0 - v) * v2 * w2);
 
-    let part4 = -(4.0 * cf
+    let part4 = -(4.0
+        * cf
         * lw
         * (2.0 * ca - 4.0 * ca3 - 6.0 * ca * v + 18.0 * ca3 * v + 8.0 * ca * v2
             - 38.0 * ca3 * v2
@@ -6592,9 +7564,11 @@ pub fn struv10(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 2.0 * ca3 * v6 * w5))
         / (ca * (1.0 - v) * v2 * w2 * (1.0 - v * w) * (1.0 - v + v * w));
 
-    let part5 = -(4.0 * cf
+    let part5 = -(4.0
+        * cf
         * l1v
-        * (2.0 * ca3 - 8.0 * ca3 * v + 14.0 * ca3 * v2 - 12.0 * ca3 * v3 + 4.0 * ca3 * v4
+        * (2.0 * ca3 - 8.0 * ca3 * v + 14.0 * ca3 * v2 - 12.0 * ca3 * v3
+            + 4.0 * ca3 * v4
             + w
             + ca2 * w
             - 5.0 * v * w
@@ -6659,10 +7633,10 @@ pub fn struv10(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 2.0 * ca3 * v6 * w5))
         / (ca * (1.0 - v) * v2 * w2 * (1.0 - v * w) * (1.0 - v + v * w));
 
-    let part6 = (2.0 * cf
+    let part6 = (2.0
+        * cf
         * lms
-        * (4.0 * ca - 4.0 * ca3 - 8.0 * ca * v + 12.0 * ca3 * v + 8.0 * ca * v2
-            - 20.0 * ca3 * v2
+        * (4.0 * ca - 4.0 * ca3 - 8.0 * ca * v + 12.0 * ca3 * v + 8.0 * ca * v2 - 20.0 * ca3 * v2
             + 16.0 * ca3 * v3
             - 8.0 * ca3 * v4
             - 2.0 * ca * w
@@ -6734,7 +7708,8 @@ pub fn struv10(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 2.0 * ca3 * v6 * w6))
         / (ca * (1.0 - v) * v2 * w2 * (1.0 - v * w).powi(2));
 
-    let part7 = -(2.0 * cf
+    let part7 = -(2.0
+        * cf
         * l1w
         * (4.0 * ca - 12.0 * ca3 - 16.0 * ca * v + 64.0 * ca3 * v + 28.0 * ca * v2
             - 156.0 * ca3 * v2
@@ -6888,7 +7863,8 @@ pub fn struv10(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 4.0 * ca3 * v8 * w8))
         / (ca * (1.0 - v) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
 
-    let part8 = -(2.0 * cf
+    let part8 = -(2.0
+        * cf
         * lv
         * (4.0 * ca - 16.0 * ca3 - 16.0 * ca * v + 84.0 * ca3 * v + 28.0 * ca * v2
             - 200.0 * ca3 * v2
@@ -7030,7 +8006,8 @@ pub fn struv10(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 4.0 * ca3 * v8 * w8))
         / (ca * (1.0 - v) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
 
-    let part9 = -(2.0 * cf
+    let part9 = -(2.0
+        * cf
         * (4.0 * ca * v - 12.0 * ca3 * v - 12.0 * ca * v2 + 52.0 * ca3 * v2 + 12.0 * ca * v3
             - 92.0 * ca3 * v3
             - 4.0 * ca * v4
@@ -7181,12 +8158,16 @@ pub fn struv11(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
     let ca3 = ca.powi(3);
     let cacf = ca * cf;
     let ca2cf = ca2 * cf;
-    let (l1v, lw, lvw, l1vw, lms, l1w, lv, lmss) =
-        (pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv, pre.lmss);
+    let (l1v, lw, lvw, l1vw, lms, l1w, lv, lmss) = (
+        pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv, pre.lmss,
+    );
 
-    let part1 = (-4.0 * cf
+    let part1 = (-4.0
+        * cf
         * lvw
-        * (ca - ca3 + ca * v2 - ca3 * v2 + 2.0 * w + 7.0 * ca * w - 7.0 * ca3 * w - 4.0 * v * w
+        * (ca - ca3 + ca * v2 - ca3 * v2 + 2.0 * w + 7.0 * ca * w
+            - 7.0 * ca3 * w
+            - 4.0 * v * w
             - 16.0 * ca * v * w
             + 13.0 * ca3 * v * w
             + 3.0 * v2 * w
@@ -7216,7 +8197,8 @@ pub fn struv11(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 2.0 * ca3 * v4 * w4))
         / (ca * (1.0 - v).powi(2) * v * w);
 
-    let part2 = -(4.0 * cf
+    let part2 = -(4.0
+        * cf
         * l1v
         * (v - ca2 * v - 2.0 * v2 + 2.0 * ca2 * v2 + v3 - ca2 * v3 + 4.0 * ca * w
             - 4.0 * ca3 * w
@@ -7272,7 +8254,8 @@ pub fn struv11(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 2.0 * ca * v5 * w4))
         / (ca * (1.0 - v).powi(2) * w * (1.0 - v * w) * (1.0 - v + v * w));
 
-    let part3 = (4.0 * cf
+    let part3 = (4.0
+        * cf
         * l1vw
         * (2.0 + 8.0 * ca - 8.0 * ca3 + 8.0 * ca2cf - 10.0 * v - 41.0 * ca * v + 42.0 * ca3 * v
             - 40.0 * ca2cf * v
@@ -7414,9 +8397,11 @@ pub fn struv11(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 4.0 * ca2cf * v6 * w6))
         / (ca * (1.0 - v).powi(2) * v * (1.0 - v + v * w).powi(3));
 
-    let part4 = -(2.0 * cf
+    let part4 = -(2.0
+        * cf
         * lmss
-        * (2.0 * cacf + 2.0 * v - 2.0 * ca2 * v - 10.0 * cacf * v - 11.0 * v2 + 11.0 * ca2 * v2
+        * (2.0 * cacf + 2.0 * v - 2.0 * ca2 * v - 10.0 * cacf * v - 11.0 * v2
+            + 11.0 * ca2 * v2
             + 22.0 * cacf * v2
             + 27.0 * v3
             - 27.0 * ca2 * v3
@@ -7528,9 +8513,11 @@ pub fn struv11(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 2.0 * ca2 * v7 * w6))
         / ((1.0 - v).powi(2) * v * w * (1.0 - v + v * w).powi(3));
 
-    let part5 = -(2.0 * cf
+    let part5 = -(2.0
+        * cf
         * lms
-        * (6.0 * cacf - 8.0 * cacf * v + 4.0 * cf * v2 + 18.0 * cacf * v2 - 4.0 * cf * v3
+        * (6.0 * cacf - 8.0 * cacf * v + 4.0 * cf * v2 + 18.0 * cacf * v2
+            - 4.0 * cf * v3
             - 12.0 * cacf * v3
             + 4.0 * cacf * v4
             - 4.0 * cacf * w
@@ -7601,7 +8588,8 @@ pub fn struv11(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
         / ((1.0 - v).powi(2) * v * w * (1.0 - v * w).powi(3));
 
     let part6 = -(cf
-        * (4.0 + 10.0 * ca - 4.0 * ca2 - 10.0 * ca3 + 8.0 * cacf + 8.0 * ca2cf - 20.0 * v
+        * (4.0 + 10.0 * ca - 4.0 * ca2 - 10.0 * ca3 + 8.0 * cacf + 8.0 * ca2cf
+            - 20.0 * v
             - 46.0 * ca * v
             + 20.0 * ca2 * v
             + 46.0 * ca3 * v
@@ -7905,9 +8893,11 @@ pub fn struv11(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 4.0 * ca3 * v9 * w9))
         / (ca * (1.0 - v).powi(2) * v * w * (1.0 - v * w).powi(3) * (1.0 - v + v * w).powi(3));
 
-    let part7 = -(2.0 * cf
+    let part7 = -(2.0
+        * cf
         * lv
-        * (4.0 * ca - 4.0 * ca3 - 20.0 * ca * v + 20.0 * ca3 * v - 2.0 * v2 + 52.0 * ca * v2
+        * (4.0 * ca - 4.0 * ca3 - 20.0 * ca * v + 20.0 * ca3 * v - 2.0 * v2
+            + 52.0 * ca * v2
             + 2.0 * ca2 * v2
             - 52.0 * ca3 * v2
             + 8.0 * v3
@@ -8109,7 +9099,8 @@ pub fn struv11(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 4.0 * ca3 * v10 * w9))
         / (ca * (1.0 - v).powi(2) * v * w * (1.0 - v * w).powi(3) * (1.0 - v + v * w).powi(3));
 
-    let part8 = -(2.0 * cf
+    let part8 = -(2.0
+        * cf
         * l1w
         * (4.0 * ca - 4.0 * ca3 - 20.0 * ca * v + 20.0 * ca3 * v + 52.0 * ca * v2
             - 52.0 * ca3 * v2
@@ -8302,7 +9293,8 @@ pub fn struv11(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 4.0 * ca3 * v10 * w9))
         / (ca * (1.0 - v).powi(2) * v * w * (1.0 - v * w).powi(3) * (1.0 - v + v * w).powi(3));
 
-    let part9 = -(4.0 * cf
+    let part9 = -(4.0
+        * cf
         * lw
         * (3.0 * ca - 3.0 * ca3 + 2.0 * ca2cf - 15.0 * ca * v + 15.0 * ca3 * v - 10.0 * ca2cf * v
             + 2.0 * v2
@@ -8661,7 +9653,13 @@ pub fn struv11(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - ca * v10 * w10
             + ca3 * v10 * w10
             - 2.0 * ca2cf * v10 * w10))
-        / (ca * (1.0 - v).powi(2) * v * (1.0 - w) * w * (1.0 - v * w).powi(3) * (1.0 - v + v * w).powi(3));
+        / (ca
+            * (1.0 - v).powi(2)
+            * v
+            * (1.0 - w)
+            * w
+            * (1.0 - v * w).powi(3)
+            * (1.0 - v + v * w).powi(3));
 
     part1 + part2 + part3 + part4 + part5 + part6 + part7 + part8 + part9
 }
@@ -8683,31 +9681,40 @@ pub fn struv12(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
     let ca4 = pre.ca4;
     let cacf = ca * cf;
     let ca3cf = ca3 * cf;
-    let (l1v, lw, lvw, l1vw, lms, l1w, lv, lmss) =
-        (pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv, pre.lmss);
+    let (l1v, lw, lvw, l1vw, lms, l1w, lv, lmss) = (
+        pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv, pre.lmss,
+    );
 
-    let part1 = (8.0 * ca * cf.powi(2)
+    let part1 = (8.0
+        * ca
+        * cf.powi(2)
         * l1w
         * nf
         * (1.0 - 2.0 * v + v2 + v2 * w2)
         * (1.0 + v2 - 2.0 * v2 * w + v2 * w2))
         / (1.0 - v + v * w).powi(4);
 
-    let part2 = -(8.0 * ca * cf.powi(2)
+    let part2 = -(8.0
+        * ca
+        * cf.powi(2)
         * lmss
         * nf
         * (1.0 - 2.0 * v + v2 + v2 * w2)
         * (1.0 + v2 - 2.0 * v2 * w + v2 * w2))
         / (1.0 - v + v * w).powi(4);
 
-    let part3 = (8.0 * ca * cf.powi(2)
+    let part3 = (8.0
+        * ca
+        * cf.powi(2)
         * lv
         * nf
         * (1.0 - 2.0 * v + v2 + v2 * w2)
         * (1.0 + v2 - 2.0 * v2 * w + v2 * w2))
         / (1.0 - v + v * w).powi(4);
 
-    let part4 = (16.0 * ca * cf.powi(2)
+    let part4 = (16.0
+        * ca
+        * cf.powi(2)
         * l1vw
         * nf
         * (1.0 - w)
@@ -8715,7 +9722,8 @@ pub fn struv12(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
         * (1.0 + v2 - 2.0 * v2 * w + v2 * w2))
         / (1.0 - v + v * w).powi(4);
 
-    let part5 = (4.0 * cf
+    let part5 = (4.0
+        * cf
         * lvw
         * (4.0 * ca3 + 4.0 * ca3 * v2 + 4.0 * w - 2.0 * ca2 * w - 4.0 * ca3 * w + 2.0 * ca4 * w
             - 6.0 * v * w
@@ -8786,7 +9794,8 @@ pub fn struv12(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 4.0 * ca4 * v5 * w5))
         / (ca * (1.0 - v).powi(2) * v2 * w2);
 
-    let part6 = -(4.0 * cf
+    let part6 = -(4.0
+        * cf
         * nf
         * (-2.0 * cacf - 4.0 * v + 4.0 * ca2 * v + 7.0 * v2 - 7.0 * ca2 * v2 - 8.0 * v3
             + 8.0 * ca2 * v3
@@ -8845,7 +9854,8 @@ pub fn struv12(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 2.0 * ca2 * v7 * w5))
         / (3.0 * (1.0 - v) * v2 * w * (1.0 - v + v * w).powi(4));
 
-    let part7 = -(4.0 * cf
+    let part7 = -(4.0
+        * cf
         * l1v
         * (2.0 * ca3 - 4.0 * ca3 * v + 4.0 * ca3 * v2 - 4.0 * ca3 * v3 + 2.0 * ca3 * v4 + w
             - ca2 * w
@@ -8943,9 +9953,11 @@ pub fn struv12(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 4.0 * ca2 * v7 * w5))
         / (ca * (1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w) * (1.0 - v + v * w));
 
-    let part8 = -(4.0 * cf
+    let part8 = -(4.0
+        * cf
         * lw
-        * (2.0 * ca - 4.0 * ca3 - 6.0 * ca * v + 6.0 * ca3 * v + 8.0 * ca * v2 - 8.0 * ca3 * v2
+        * (2.0 * ca - 4.0 * ca3 - 6.0 * ca * v + 6.0 * ca3 * v + 8.0 * ca * v2
+            - 8.0 * ca3 * v2
             - 8.0 * ca * v3
             + 8.0 * ca3 * v3
             + 6.0 * ca * v4
@@ -9094,7 +10106,8 @@ pub fn struv12(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 4.0 * ca2 * v7 * w6))
         / (ca * (1.0 - v).powi(2) * v2 * (1.0 - w) * w2 * (1.0 - v * w) * (1.0 - v + v * w));
 
-    let part9 = (2.0 * cf
+    let part9 = (2.0
+        * cf
         * lms
         * (2.0 - 6.0 * ca2 - 4.0 * v + 4.0 * v2 - 8.0 * ca2 * v2 - 4.0 * v3 + 2.0 * v4
             - 2.0 * ca2 * v4
@@ -9197,7 +10210,8 @@ pub fn struv12(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 8.0 * ca2 * cf * v7 * w6))
         / ((1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(2));
 
-    let part10 = -(4.0 * cf
+    let part10 = -(4.0
+        * cf
         * l1vw
         * (3.0 - 2.0 * ca2 + 3.0 * ca4 - 8.0 * ca3cf - 11.0 * v - 6.0 * ca * v + 8.0 * ca2 * v
             - 12.0 * ca4 * v
@@ -9360,9 +10374,11 @@ pub fn struv12(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + ca4 * v7 * w7))
         / (ca * (1.0 - v) * v2 * w * (1.0 - v + v * w).powi(4));
 
-    let part11 = (4.0 * cf
+    let part11 = (4.0
+        * cf
         * lmss
-        * (ca - ca3 - 6.0 * ca * v + 6.0 * ca3 * v + 16.0 * ca * v2 - 16.0 * ca3 * v2
+        * (ca - ca3 - 6.0 * ca * v + 6.0 * ca3 * v + 16.0 * ca * v2
+            - 16.0 * ca3 * v2
             - 26.0 * ca * v3
             + 26.0 * ca3 * v3
             + 30.0 * ca * v4
@@ -9600,7 +10616,8 @@ pub fn struv12(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 2.0 * ca4 * v9 * w8))
         / (ca * (1.0 - v).powi(2) * v2 * w2 * (1.0 - v + v * w).powi(4));
 
-    let part12 = -(2.0 * cf
+    let part12 = -(2.0
+        * cf
         * (6.0 * ca - 18.0 * ca3 - 48.0 * ca * v + 120.0 * ca3 * v + 168.0 * ca * v2
             - 348.0 * ca3 * v2
             - 336.0 * ca * v3
@@ -9965,9 +10982,16 @@ pub fn struv12(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 12.0 * ca4 * v10 * w10
             + 12.0 * ca2 * v11 * w10
             - 12.0 * ca4 * v11 * w10))
-        / (3.0 * ca * (1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(4));
+        / (3.0
+            * ca
+            * (1.0 - v).powi(2)
+            * v2
+            * w2
+            * (1.0 - v * w).powi(2)
+            * (1.0 - v + v * w).powi(4));
 
-    let part13 = -(2.0 * cf
+    let part13 = -(2.0
+        * cf
         * lv
         * (4.0 * ca - 16.0 * ca3 - 24.0 * ca * v + 76.0 * ca3 * v + 64.0 * ca * v2
             - 164.0 * ca3 * v2
@@ -10339,7 +11363,8 @@ pub fn struv12(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 8.0 * ca4 * v11 * w10))
         / (ca * (1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(4));
 
-    let part14 = -(2.0 * cf
+    let part14 = -(2.0
+        * cf
         * l1w
         * (4.0 * ca - 12.0 * ca3 - 24.0 * ca * v + 56.0 * ca3 * v + 64.0 * ca * v2
             - 120.0 * ca3 * v2
@@ -10713,7 +11738,17 @@ pub fn struv12(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 8.0 * ca4 * v11 * w10))
         / (ca * (1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(4));
 
-    part1 + part2 + part3 + part4 + part5 + part6 + part7 + part8 + part9 + part10 + part11
+    part1
+        + part2
+        + part3
+        + part4
+        + part5
+        + part6
+        + part7
+        + part8
+        + part9
+        + part10
+        + part11
         + part12
         + part13
         + part14
@@ -10738,32 +11773,41 @@ pub fn struv13(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
     let ca3cf = ca3 * cf;
     let cf2 = cf.powi(2);
     let cacf2 = ca * cf2;
-    let (l1v, lw, lvw, l1vw, lms, l1w, lv) = (pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv);
+    let (l1v, lw, lvw, l1vw, lms, l1w, lv) =
+        (pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv);
 
-    let part1 = (8.0 * ca * cf2
+    let part1 = (8.0
+        * ca
+        * cf2
         * l1w
         * nf
         * (1.0 + v2 * w2)
         * (1.0 - 2.0 * v + 2.0 * v2 - 2.0 * v2 * w + v2 * w2))
         / ((1.0 - v) * (1.0 - v * w).powi(4));
 
-    let part2 = -(8.0 * ca * cf2
+    let part2 = -(8.0
+        * ca
+        * cf2
         * lms
         * nf
         * (1.0 + v2 * w2)
         * (1.0 - 2.0 * v + 2.0 * v2 - 2.0 * v2 * w + v2 * w2))
         / ((1.0 - v) * (1.0 - v * w).powi(4));
 
-    let part3 = (8.0 * ca * cf2
+    let part3 = (8.0
+        * ca
+        * cf2
         * lv
         * nf
         * (1.0 + v2 * w2)
         * (1.0 - 2.0 * v + 2.0 * v2 - 2.0 * v2 * w + v2 * w2))
         / ((1.0 - v) * (1.0 - v * w).powi(4));
 
-    let part4 = -(4.0 * cf
+    let part4 = -(4.0
+        * cf
         * lvw
-        * (2.0 * ca - 2.0 * ca3 - 6.0 * ca * v + 6.0 * ca3 * v + 8.0 * ca * v2 - 8.0 * ca3 * v2
+        * (2.0 * ca - 2.0 * ca3 - 6.0 * ca * v + 6.0 * ca3 * v + 8.0 * ca * v2
+            - 8.0 * ca3 * v2
             - 4.0 * ca * v3
             + 4.0 * ca3 * v3
             - 3.0 * w
@@ -10848,7 +11892,8 @@ pub fn struv13(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 2.0 * ca3 * v5 * w5))
         / (ca * (1.0 - v).powi(2) * pre.v2 * pre.w2);
 
-    let part5 = -(4.0 * cf
+    let part5 = -(4.0
+        * cf
         * l1v
         * (2.0 * ca3 - 10.0 * ca3 * v + 22.0 * ca3 * v2 - 26.0 * ca3 * v3 + 16.0 * ca3 * v4
             - 4.0 * ca3 * v5
@@ -10954,7 +11999,8 @@ pub fn struv13(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 2.0 * ca3 * v7 * w5))
         / (ca * (1.0 - v).powi(2) * pre.v2 * pre.w2 * (1.0 - v * w) * (1.0 - v + v * w));
 
-    let part6 = -(4.0 * cf
+    let part6 = -(4.0
+        * cf
         * nf
         * (-2.0 * cacf - 4.0 * v + 4.0 * ca2 * v + 7.0 * v2 - 7.0 * ca2 * v2 - 6.0 * v3
             + 6.0 * ca2 * v3
@@ -11008,9 +12054,11 @@ pub fn struv13(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + ca2 * v8 * w5))
         / (3.0 * (1.0 - v).powi(2) * pre.v2 * w * (1.0 - v * w).powi(4));
 
-    let part7 = -(4.0 * cf
+    let part7 = -(4.0
+        * cf
         * l1vw
-        * (4.0 - 2.0 * ca2 + 2.0 * ca4 - 8.0 * ca2 * cf2 - 22.0 * v + 2.0 * ca * v
+        * (4.0 - 2.0 * ca2 + 2.0 * ca4 - 8.0 * ca2 * cf2 - 22.0 * v
+            + 2.0 * ca * v
             + 9.0 * ca2 * v
             - 10.0 * ca4 * v
             - 8.0 * cacf * v
@@ -11190,7 +12238,8 @@ pub fn struv13(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 8.0 * ca3cf * v6 * w6))
         / (ca * (1.0 - v).powi(2) * pre.v2 * w * (1.0 - v + v * w).powi(2));
 
-    let part8 = -(2.0 * cf
+    let part8 = -(2.0
+        * cf
         * pre.lmss
         * (4.0 * ca2 - 28.0 * ca2 * v + 88.0 * ca2 * v2 - 160.0 * ca2 * v3 + 180.0 * ca2 * v4
             - 124.0 * ca2 * v5
@@ -11296,7 +12345,8 @@ pub fn struv13(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 2.0 * ca2 * v7 * w6))
         / ((1.0 - v).powi(2) * pre.v2 * pre.w2 * (1.0 - v + v * w).powi(2));
 
-    let part9 = -(4.0 * cf
+    let part9 = -(4.0
+        * cf
         * lw
         * (2.0 * ca - 4.0 * ca3 - 8.0 * ca * v + 22.0 * ca3 * v + 14.0 * ca * v2
             - 56.0 * ca3 * v2
@@ -11443,9 +12493,16 @@ pub fn struv13(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 4.0 * ca3 * v6 * w6
             - ca4 * v6 * w6
             - 2.0 * ca3 * v7 * w6))
-        / (ca * (1.0 - v).powi(2) * pre.v2 * (1.0 - w) * pre.w2 * (1.0 - v * w) * (1.0 - v + v * w));
+        / (ca
+            * (1.0 - v).powi(2)
+            * pre.v2
+            * (1.0 - w)
+            * pre.w2
+            * (1.0 - v * w)
+            * (1.0 - v + v * w));
 
-    let part10 = (2.0 * cf
+    let part10 = (2.0
+        * cf
         * lms
         * (4.0 * ca - 4.0 * ca3 - 12.0 * ca * v + 16.0 * ca3 * v + 16.0 * ca * v2
             - 32.0 * ca3 * v2
@@ -11646,7 +12703,8 @@ pub fn struv13(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 2.0 * ca3 * v9 * w8))
         / (ca * (1.0 - v).powi(2) * pre.v2 * pre.w2 * (1.0 - v * w).powi(4));
 
-    let part11 = -(2.0 * cf
+    let part11 = -(2.0
+        * cf
         * (12.0 * ca * v - 36.0 * ca3 * v - 48.0 * ca * v2 + 192.0 * ca3 * v2 + 72.0 * ca * v3
             - 432.0 * ca3 * v3
             - 48.0 * ca * v4
@@ -11963,9 +13021,16 @@ pub fn struv13(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 12.0 * ca4 * v10 * w10
             + 6.0 * ca * v11 * w10
             - 6.0 * ca3 * v11 * w10))
-        / (3.0 * ca * (1.0 - v).powi(2) * pre.v2 * pre.w2 * (1.0 - v * w).powi(4) * (1.0 - v + v * w).powi(2));
+        / (3.0
+            * ca
+            * (1.0 - v).powi(2)
+            * pre.v2
+            * pre.w2
+            * (1.0 - v * w).powi(4)
+            * (1.0 - v + v * w).powi(2));
 
-    let part12 = -(2.0 * cf
+    let part12 = -(2.0
+        * cf
         * lv
         * (4.0 * ca - 16.0 * ca3 - 20.0 * ca * v + 100.0 * ca3 * v + 44.0 * ca * v2
             - 284.0 * ca3 * v2
@@ -12293,9 +13358,15 @@ pub fn struv13(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 8.0 * ca4 * v10 * w10
             - 4.0 * ca * v11 * w10
             + 4.0 * ca3 * v11 * w10))
-        / (ca * (1.0 - v).powi(2) * pre.v2 * pre.w2 * (1.0 - v * w).powi(4) * (1.0 - v + v * w).powi(2));
+        / (ca
+            * (1.0 - v).powi(2)
+            * pre.v2
+            * pre.w2
+            * (1.0 - v * w).powi(4)
+            * (1.0 - v + v * w).powi(2));
 
-    let part13 = -(2.0 * cf
+    let part13 = -(2.0
+        * cf
         * l1w
         * (4.0 * ca - 12.0 * ca3 - 20.0 * ca * v + 76.0 * ca3 * v + 44.0 * ca * v2
             - 220.0 * ca3 * v2
@@ -12626,9 +13697,24 @@ pub fn struv13(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 8.0 * ca4 * v10 * w10
             - 4.0 * ca * v11 * w10
             + 4.0 * ca3 * v11 * w10))
-        / (ca * (1.0 - v).powi(2) * pre.v2 * pre.w2 * (1.0 - v * w).powi(4) * (1.0 - v + v * w).powi(2));
+        / (ca
+            * (1.0 - v).powi(2)
+            * pre.v2
+            * pre.w2
+            * (1.0 - v * w).powi(4)
+            * (1.0 - v + v * w).powi(2));
 
-    part1 + part2 + part3 + part4 + part5 + part6 + part7 + part8 + part9 + part10 + part11
+    part1
+        + part2
+        + part3
+        + part4
+        + part5
+        + part6
+        + part7
+        + part8
+        + part9
+        + part10
+        + part11
         + part12
         + part13
 }
@@ -12649,10 +13735,12 @@ pub fn struv14(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
     let ca4 = pre.ca4;
     let cacf = ca * cf;
     let ca3cf = ca3 * cf;
-    let (l1v, lw, lvw, l1vw, lms, l1w, lv, lmss) =
-        (pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv, pre.lmss);
+    let (l1v, lw, lvw, l1vw, lms, l1w, lv, lmss) = (
+        pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv, pre.lmss,
+    );
 
-    let part1 = (4.0 * cf
+    let part1 = (4.0
+        * cf
         * lvw
         * (16.0 * ca4 - 32.0 * ca4 * v + 48.0 * ca4 * v2 - 32.0 * ca4 * v3 + 16.0 * ca4 * v4
             - ca2 * v * w
@@ -12701,7 +13789,8 @@ pub fn struv14(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 4.0 * ca4 * v6 * w5))
         / (ca * (1.0 - v).powi(2) * v3 * w2);
 
-    let part2 = -(4.0 * cf
+    let part2 = -(4.0
+        * cf
         * l1v
         * (8.0 * ca4 - 32.0 * ca4 * v + 64.0 * ca4 * v2 - 80.0 * ca4 * v3 + 64.0 * ca4 * v4
             - 32.0 * ca4 * v5
@@ -12764,7 +13853,8 @@ pub fn struv14(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 4.0 * ca4 * v8 * w5))
         / (ca * (1.0 - v).powi(2) * v3 * w2 * (1.0 - v * w) * (1.0 - v + v * w));
 
-    let part3 = -(4.0 * cf
+    let part3 = -(4.0
+        * cf
         * l1vw
         * (ca2 + 4.0 * ca4 - 3.0 * ca2 * v - 12.0 * ca4 * v + 3.0 * ca2 * v2 + 12.0 * ca4 * v2
             - 3.0 * ca2 * v4
@@ -12836,7 +13926,8 @@ pub fn struv14(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 2.0 * ca2 * v6 * w6))
         / (ca * (1.0 - v) * v2 * w * (1.0 - v + v * w).powi(3));
 
-    let part4 = (4.0 * cf
+    let part4 = (4.0
+        * cf
         * lw
         * (24.0 * ca4 - 96.0 * ca4 * v + 208.0 * ca4 * v2 - 288.0 * ca4 * v3 + 272.0 * ca4 * v4
             - 176.0 * ca4 * v5
@@ -12917,7 +14008,8 @@ pub fn struv14(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 4.0 * ca4 * v8 * w6))
         / (ca * (1.0 - v).powi(2) * v3 * (1.0 - w) * w2 * (1.0 - v * w) * (1.0 - v + v * w));
 
-    let part5 = -(2.0 * cf
+    let part5 = -(2.0
+        * cf
         * lms
         * (32.0 * ca4 - 80.0 * ca4 * v + 144.0 * ca4 * v2 - 144.0 * ca4 * v3 + 112.0 * ca4 * v4
             - 48.0 * ca4 * v5
@@ -13028,7 +14120,8 @@ pub fn struv14(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 4.0 * ca4 * v9 * w7))
         / (ca * (1.0 - v).powi(2) * v3 * w2 * (1.0 - v * w).powi(3));
 
-    let part6 = -(2.0 * cf
+    let part6 = -(2.0
+        * cf
         * lmss
         * (16.0 * ca4 - 112.0 * ca4 * v + 368.0 * ca4 * v2 - 752.0 * ca4 * v3 + 1056.0 * ca4 * v4
             - 1056.0 * ca4 * v5
@@ -13416,7 +14509,8 @@ pub fn struv14(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 8.0 * ca4 * v11 * w9))
         / (ca * (1.0 - v).powi(2) * v3 * w * (1.0 - v * w).powi(3) * (1.0 - v + v * w).powi(3));
 
-    let part8 = (2.0 * cf
+    let part8 = (2.0
+        * cf
         * l1w
         * (64.0 * ca4 - 384.0 * ca4 * v + 1120.0 * ca4 * v2 - 2080.0 * ca4 * v3
             + 2688.0 * ca4 * v4
@@ -13634,7 +14728,8 @@ pub fn struv14(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 8.0 * ca4 * v12 * w10))
         / (ca * (1.0 - v).powi(2) * v3 * w2 * (1.0 - v * w).powi(3) * (1.0 - v + v * w).powi(3));
 
-    let part9 = (2.0 * cf
+    let part9 = (2.0
+        * cf
         * lv
         * (80.0 * ca4 - 480.0 * ca4 * v + 1392.0 * ca4 * v2 - 2560.0 * ca4 * v3
             + 3264.0 * ca4 * v4
@@ -13870,10 +14965,12 @@ pub fn struv15(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
         pre.w2, pre.w3, pre.w4, pre.w5, pre.w6, pre.w7, pre.w8, pre.w9, pre.w10, pre.w11, pre.w12,
     );
     let w13 = w.powi(13);
-    let (l1v, lw, lvw, l1vw, lms, l1w, lv, lmss) =
-        (pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv, pre.lmss);
+    let (l1v, lw, lvw, l1vw, lms, l1w, lv, lmss) = (
+        pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv, pre.lmss,
+    );
 
-    let part1 = (-256.0 * ca3
+    let part1 = (-256.0
+        * ca3
         * lmss
         * nf
         * (1.0 - 2.0 * v + v2 + v2 * w2)
@@ -13881,7 +14978,8 @@ pub fn struv15(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
         * (4.0 - 8.0 * v + 4.0 * v2 - v * w + v2 * w + 4.0 * v2 * w2))
         / (243.0 * (1.0 - v) * v * w * (1.0 - v + v * w).powi(4));
 
-    let part2 = (32.0 * ca3
+    let part2 = (32.0
+        * ca3
         * lvw
         * nf
         * (81.0 - 179.0 * v + 115.0 * v2 - 34.0 * v3 - 145.0 * v * w + 130.0 * v2 * w
@@ -13890,7 +14988,8 @@ pub fn struv15(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 51.0 * v3 * w2
             + 17.0 * v3 * w3))
         / (243.0 * (1.0 - v) * v2 * w)
-        - (32.0 * ca3
+        - (32.0
+            * ca3
             * l1v
             * nf
             * (18.0 - 45.0 * v + 54.0 * v2 - 44.0 * v3 + 17.0 * v4 + 16.0 * v3 * w
@@ -13905,7 +15004,8 @@ pub fn struv15(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
                 - v5 * w4))
             / (243.0 * (1.0 - v) * v2 * w * (1.0 - v * w) * (1.0 - v + v * w));
 
-    let part3 = -(32.0 * ca3
+    let part3 = -(32.0
+        * ca3
         * lw
         * nf
         * (88.0 - 176.0 * v + 104.0 * v2 - 16.0 * v3 + 13.0 * w - 26.0 * v * w + 82.0 * v2 * w
@@ -13925,7 +15025,8 @@ pub fn struv15(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 17.0 * v4 * w5))
         / (243.0 * (1.0 - v) * v * (1.0 - w) * w * (1.0 - v * w) * (1.0 - v + v * w));
 
-    let part4 = (128.0 * ca3
+    let part4 = (128.0
+        * ca3
         * lvw
         * (4.0 - 8.0 * v + 12.0 * v2 - 8.0 * v3 + 4.0 * v4 - 5.0 * v * w - 4.0 * v2 * w
             + 6.0 * v3 * w
@@ -13948,7 +15049,8 @@ pub fn struv15(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 4.0 * v6 * w6))
         / ((1.0 - v).powi(2) * v3 * w2);
 
-    let part5 = -(128.0 * ca3
+    let part5 = -(128.0
+        * ca3
         * l1v
         * (2.0 - 8.0 * v + 16.0 * v2 - 20.0 * v3 + 16.0 * v4 - 8.0 * v5 + 2.0 * v6 + 2.0 * w
             - 8.0 * v * w
@@ -13983,7 +15085,8 @@ pub fn struv15(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 2.0 * v8 * w6))
         / ((1.0 - v).powi(2) * v3 * w2 * (1.0 - v * w) * (1.0 - v + v * w));
 
-    let part6 = -(256.0 * ca3
+    let part6 = -(256.0
+        * ca3
         * lms
         * nf
         * (18.0 - 36.0 * v + 39.0 * v2 - 25.0 * v3 + 12.0 * v4 - 36.0 * w + 74.0 * v2 * w
@@ -14024,7 +15127,8 @@ pub fn struv15(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 12.0 * v8 * w6))
         / (243.0 * (1.0 - v) * v3 * w * (1.0 - v * w).powi(4));
 
-    let part7 = (32.0 * ca3
+    let part7 = (32.0
+        * ca3
         * l1vw
         * nf
         * (81.0 - 324.0 * v + 486.0 * v2 - 243.0 * v3 - 243.0 * v4 + 486.0 * v5 - 324.0 * v6
@@ -14059,9 +15163,11 @@ pub fn struv15(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 81.0 * v7 * w7))
         / (243.0 * (1.0 - v) * v2 * w * (1.0 - v + v * w).powi(4));
 
-    let part8 = -(128.0 * ca3
+    let part8 = -(128.0
+        * ca3
         * l1vw
-        * (1.0 - 4.0 * v + 6.0 * v2 - 3.0 * v3 - 3.0 * v4 + 6.0 * v5 - 4.0 * v6 + v7
+        * (1.0 - 4.0 * v + 6.0 * v2 - 3.0 * v3 - 3.0 * v4 + 6.0 * v5 - 4.0 * v6
+            + v7
             + 2.0 * v * w
             - 10.0 * v2 * w
             + 17.0 * v3 * w
@@ -14092,9 +15198,11 @@ pub fn struv15(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - v7 * w7))
         / ((1.0 - v) * v2 * w * (1.0 - v + v * w).powi(4));
 
-    let part9 = (128.0 * ca3
+    let part9 = (128.0
+        * ca3
         * lw
-        * (6.0 - 24.0 * v + 52.0 * v2 - 72.0 * v3 + 68.0 * v4 - 44.0 * v5 + 18.0 * v6 - 4.0 * v7
+        * (6.0 - 24.0 * v + 52.0 * v2 - 72.0 * v3 + 68.0 * v4 - 44.0 * v5 + 18.0 * v6
+            - 4.0 * v7
             - 2.0 * w
             + 8.0 * v * w
             - 32.0 * v2 * w
@@ -14136,7 +15244,8 @@ pub fn struv15(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 2.0 * v8 * w7))
         / ((1.0 - v).powi(2) * v3 * (1.0 - w) * w2 * (1.0 - v * w) * (1.0 - v + v * w));
 
-    let part10 = -(256.0 * ca3
+    let part10 = -(256.0
+        * ca3
         * lms
         * (2.0 - 5.0 * v + 9.0 * v2 - 9.0 * v3 + 7.0 * v4 - 3.0 * v5 + v6 - 8.0 * v * w
             + 15.0 * v2 * w
@@ -14201,7 +15310,8 @@ pub fn struv15(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - v10 * w9))
         / ((1.0 - v).powi(2) * v3 * w2 * (1.0 - v * w).powi(4));
 
-    let part11 = -(256.0 * ca3
+    let part11 = -(256.0
+        * ca3
         * lmss
         * (1.0 - 8.0 * v + 30.0 * v2 - 70.0 * v3 + 113.0 * v4 - 132.0 * v5 + 113.0 * v6
             - 70.0 * v7
@@ -14265,11 +15375,11 @@ pub fn struv15(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - v10 * w9))
         / ((1.0 - v).powi(2) * v3 * w2 * (1.0 - v + v * w).powi(4));
 
-    let part12 = (64.0 * ca3
+    let part12 = (64.0
+        * ca3
         * lv
         * nf
-        * (72.0 - 432.0 * v + 1180.0 * v2 - 1940.0 * v3 + 2136.0 * v4 - 1656.0 * v5
-            + 908.0 * v6
+        * (72.0 - 432.0 * v + 1180.0 * v2 - 1940.0 * v3 + 2136.0 * v4 - 1656.0 * v5 + 908.0 * v6
             - 324.0 * v7
             + 56.0 * v8
             - 144.0 * w
@@ -14358,7 +15468,8 @@ pub fn struv15(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 64.0 * v12 * w10))
         / (243.0 * (1.0 - v) * v3 * w * (1.0 - v * w).powi(4) * (1.0 - v + v * w).powi(4));
 
-    let part13 = (32.0 * ca3
+    let part13 = (32.0
+        * ca3
         * l1w
         * nf
         * (144.0 - 864.0 * v + 2369.0 * v2 - 3925.0 * v3 + 4361.0 * v4 - 3398.0 * v5
@@ -14451,7 +15562,8 @@ pub fn struv15(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 111.0 * v12 * w10))
         / (243.0 * (1.0 - v) * v3 * w * (1.0 - v * w).powi(4) * (1.0 - v + v * w).powi(4));
 
-    let part14 = -(64.0 * ca3
+    let part14 = -(64.0
+        * ca3
         * nf
         * (126.0 - 882.0 * v + 2882.0 * v2 - 5842.0 * v3 + 8172.0 * v4 - 8236.0 * v5
             + 6002.0 * v6
@@ -14558,7 +15670,8 @@ pub fn struv15(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 142.0 * v13 * w10))
         / (243.0 * (1.0 - v).powi(2) * v3 * w * (1.0 - v * w).powi(4) * (1.0 - v + v * w).powi(4));
 
-    let part15 = (64.0 * ca3
+    let part15 = (64.0
+        * ca3
         * (17.0 - 119.0 * v + 391.0 * v2 - 799.0 * v3 + 1122.0 * v4 - 1122.0 * v5 + 799.0 * v6
             - 391.0 * v7
             + 119.0 * v8
@@ -14663,7 +15776,8 @@ pub fn struv15(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 17.0 * v13 * w10))
         / (3.0 * (1.0 - v).powi(2) * v3 * w * (1.0 - v * w).powi(4) * (1.0 - v + v * w).powi(4));
 
-    let part16 = (128.0 * ca3
+    let part16 = (128.0
+        * ca3
         * l1w
         * (8.0 - 56.0 * v + 188.0 * v2 - 400.0 * v3 + 596.0 * v4 - 648.0 * v5 + 520.0 * v6
             - 304.0 * v7
@@ -14795,7 +15909,8 @@ pub fn struv15(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 4.0 * v14 * w13))
         / ((1.0 - v).powi(2) * v3 * w2 * (1.0 - v * w).powi(4) * (1.0 - v + v * w).powi(4));
 
-    let part17 = (128.0 * ca3
+    let part17 = (128.0
+        * ca3
         * lv
         * (10.0 - 70.0 * v + 234.0 * v2 - 494.0 * v3 + 728.0 * v4 - 780.0 * v5 + 614.0 * v6
             - 350.0 * v7
@@ -14962,10 +16077,12 @@ pub fn struv16(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
     let ca3cf = ca3 * cf;
     let cf2 = cf.powi(2);
     let cacf2 = ca * cf2;
-    let (l1v, lw, lvw, l1vw, lms, l1w, lv, lmss) =
-        (pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv, pre.lmss);
+    let (l1v, lw, lvw, l1vw, lms, l1w, lv, lmss) = (
+        pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv, pre.lmss,
+    );
 
-    let part1 = (-4.0 * cf
+    let part1 = (-4.0
+        * cf
         * lvw
         * (4.0 * ca2 - 4.0 * ca4 - 12.0 * ca2 * v + 12.0 * ca4 * v + 16.0 * ca2 * v2
             - 16.0 * ca4 * v2
@@ -15019,7 +16136,8 @@ pub fn struv16(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 16.0 * ca4 * v5 * w6))
         / (ca * (1.0 - v).powi(2) * v2 * w2);
 
-    let part2 = -(4.0 * cf
+    let part2 = -(4.0
+        * cf
         * l1vw
         * (3.0 - 2.0 * ca2 + 3.0 * ca4 - 8.0 * ca2 * cf2 - 14.0 * v + 11.0 * ca2 * v
             - 15.0 * ca4 * v
@@ -15167,7 +16285,8 @@ pub fn struv16(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 2.0 * ca3cf * v6 * w6))
         / (ca * (1.0 - v) * v2 * w * (1.0 - v + v * w).powi(3));
 
-    let part3 = -(4.0 * cf
+    let part3 = -(4.0
+        * cf
         * l1v
         * (4.0 * ca4 - 20.0 * ca4 * v + 44.0 * ca4 * v2 - 52.0 * ca4 * v3 + 32.0 * ca4 * v4
             - 8.0 * ca4 * v5
@@ -15239,7 +16358,8 @@ pub fn struv16(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 8.0 * ca4 * v7 * w6))
         / (ca * (1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w) * (1.0 - v + v * w));
 
-    let part4 = -(4.0 * cf
+    let part4 = -(4.0
+        * cf
         * lw
         * (4.0 * ca2 - 8.0 * ca4 - 16.0 * ca2 * v + 44.0 * ca4 * v + 28.0 * ca2 * v2
             - 112.0 * ca4 * v2
@@ -15329,7 +16449,8 @@ pub fn struv16(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 8.0 * ca4 * v7 * w7))
         / (ca * (1.0 - v).powi(2) * v2 * (1.0 - w) * w2 * (1.0 - v * w) * (1.0 - v + v * w));
 
-    let part5 = -(4.0 * cf
+    let part5 = -(4.0
+        * cf
         * lmss
         * (4.0 * ca3 - 32.0 * ca3 * v + 116.0 * ca3 * v2 - 248.0 * ca3 * v3 + 340.0 * ca3 * v4
             - 304.0 * ca3 * v5
@@ -15452,7 +16573,8 @@ pub fn struv16(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 8.0 * ca3 * v8 * w8))
         / ((1.0 - v).powi(2) * v2 * w2 * (1.0 - v + v * w).powi(3));
 
-    let part6 = (2.0 * cf
+    let part6 = (2.0
+        * cf
         * lms
         * (8.0 * ca2 - 8.0 * ca4 - 24.0 * ca2 * v + 32.0 * ca4 * v + 32.0 * ca2 * v2
             - 64.0 * ca4 * v2
@@ -15583,7 +16705,9 @@ pub fn struv16(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
         / (ca * (1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(3));
 
     let part7 = -(cf
-        * (16.0 * ca2 * v - 48.0 * ca4 * v - 80.0 * ca2 * v2 + 304.0 * ca4 * v2 + 160.0 * ca2 * v3
+        * (16.0 * ca2 * v - 48.0 * ca4 * v - 80.0 * ca2 * v2
+            + 304.0 * ca4 * v2
+            + 160.0 * ca2 * v3
             - 832.0 * ca4 * v3
             - 160.0 * ca2 * v4
             + 1280.0 * ca4 * v4
@@ -15818,7 +16942,8 @@ pub fn struv16(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 32.0 * ca4 * v11 * w11))
         / (ca * (1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(3) * (1.0 - v + v * w).powi(3));
 
-    let part8 = -(2.0 * cf
+    let part8 = -(2.0
+        * cf
         * lv
         * (8.0 * ca2 - 32.0 * ca4 - 48.0 * ca2 * v + 232.0 * ca4 * v + 128.0 * ca2 * v2
             - 768.0 * ca4 * v2
@@ -16050,7 +17175,8 @@ pub fn struv16(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 32.0 * ca4 * v11 * w11))
         / (ca * (1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(3) * (1.0 - v + v * w).powi(3));
 
-    let part9 = -(2.0 * cf
+    let part9 = -(2.0
+        * cf
         * l1w
         * (8.0 * ca2 - 24.0 * ca4 - 48.0 * ca2 * v + 176.0 * ca4 * v + 128.0 * ca2 * v2
             - 592.0 * ca4 * v2
@@ -16306,9 +17432,8 @@ pub fn stru(
         (a.up, a.upb, a.down, a.downb, a.strange, a.charm, a.gluon);
     let (xuhb, xubhb, xdhb, xdbhb, xshb, xchb, xgprob) =
         (b.up, b.upb, b.down, b.downb, b.strange, b.charm, b.gluon);
-    let (xdup, xdubp, xddp, xddbp, xdsp, xdsbp, xdcp, xdcbp, xdgp) = (
-        ff.u, ff.ub, ff.d, ff.db, ff.s, ff.sb, ff.c, ff.cb, ff.g,
-    );
+    let (xdup, xdubp, xddp, xddbp, xdsp, xdsbp, xdcp, xdcbp, xdgp) =
+        (ff.u, ff.ub, ff.d, ff.db, ff.s, ff.sb, ff.c, ff.cb, ff.g);
 
     let mut gppv = [0.0_f64; 16];
     let mut gppc = [0.0_f64; 16];
@@ -16468,13 +17593,19 @@ pub fn stru(
         + (xubhb + xdbhb + xshb) * xdcp)
         * xgproa;
 
-    gppv[9] = (xuha * xdubp + xdha * xddbp + xsha * xdsbp + xcha * xdcbp
+    gppv[9] = (xuha * xdubp
+        + xdha * xddbp
+        + xsha * xdsbp
+        + xcha * xdcbp
         + xubha * xdup
         + xdbha * xddp
         + xsha * xdsp
         + xcha * xdcp)
         * xgprob;
-    gppc[9] = (xuhb * xdubp + xdhb * xddbp + xshb * xdsbp + xchb * xdcbp
+    gppc[9] = (xuhb * xdubp
+        + xdhb * xddbp
+        + xshb * xdsbp
+        + xchb * xdcbp
         + xubhb * xdup
         + xdbhb * xddp
         + xshb * xdsp
@@ -16526,10 +17657,8 @@ pub fn stru(
     gppv[14] = xgproa * xgprob * xdgp / 2.0;
     gppc[14] = xgprob * xgproa * xdgp / 2.0;
 
-    gppv[15] =
-        xgproa * xgprob * (xdup + xdubp + xddp + xddbp + xdsp + xdsbp + xdcp + xdcbp) / 2.0;
-    gppc[15] =
-        xgprob * xgproa * (xdup + xdubp + xddp + xddbp + xdsp + xdsbp + xdcp + xdcbp) / 2.0;
+    gppv[15] = xgproa * xgprob * (xdup + xdubp + xddp + xddbp + xdsp + xdsbp + xdcp + xdcbp) / 2.0;
+    gppc[15] = xgprob * xgproa * (xdup + xdubp + xddp + xddbp + xdsp + xdsbp + xdcp + xdcbp) / 2.0;
 
     (gppv, gppc)
 }
