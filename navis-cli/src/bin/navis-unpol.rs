@@ -64,10 +64,8 @@ fn main() -> anyhow::Result<()> {
     let edges = card.bin_edges();
     let grid_config = GridConfig::new(order, convolutions, &edges);
 
-    let bcc = 1.0e-6;
-    let ncall = card.ncalls_vegas as i64;
-    let itmx = card.iter_max as usize;
-    let iter_max = card.iter_max as f64;
+    let n_iter = card.iter_max as usize;
+    let n_eval = card.ncalls_vegas as usize;
 
     println!();
     println!("Predictions:");
@@ -96,15 +94,21 @@ fn main() -> anyhow::Result<()> {
                 .expect("failed to build per-bin grid");
 
             let outcome = vegas(
-                |xx, wgt, calls| {
+                |xx, fill_weight| {
                     dplus(
-                        xx, wgt, calls, &bin, &run, &params, order, targets, &pdf_ff, bin_width,
-                        iter_max,
+                        xx,
+                        fill_weight,
+                        &bin,
+                        &run,
+                        &params,
+                        order,
+                        targets,
+                        &pdf_ff,
+                        bin_width,
                     )
                 },
-                bcc,
-                ncall,
-                itmx,
+                n_iter,
+                n_eval,
                 seed,
                 &mut grid,
             );

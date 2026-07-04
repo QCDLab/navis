@@ -28,18 +28,17 @@ const IA2: [usize; 6] = [0, 2, 4, 10, 12, 13];
 /// Channel indices touched by `FHOREST2`'s extra terms (`DATA IA3`), 0-indexed.
 const IA3: [usize; 9] = [0, 2, 4, 7, 8, 9, 10, 12, 13];
 
-/// One evaluation of the `DPLUS` integrand at VEGAS point `xx`, with point
-/// weight `wgt` and total per-iteration call count `calls` (both needed to
-/// reproduce `DPLUS`'s `/calls*wgt` grid-fill normalization -- see
-/// `navis_core::vegas::vegas`'s doc comment for the calling convention).
+/// One evaluation of the `DPLUS` integrand at VEGAS point `xx`, with this
+/// point's total Monte Carlo weight `fill_weight` (see
+/// `navis_core::vegas::vegas`'s doc comment for the calling convention --
+/// it replaces the Fortran's separate `/calls*wgt/iter_max` grid-fill
+/// normalization with one pre-combined factor).
 ///
-/// `bin_width` is `PTUP - PTDO` for this bin; `iter_max` is `ITMX`, the
-/// total VEGAS iteration count for this bin (`COMMON /pineappl_block/`).
+/// `bin_width` is `PTUP - PTDO` for this bin.
 #[allow(clippy::too_many_arguments)]
 pub fn dplus(
     xx: &[f64; 5],
-    wgt: f64,
-    calls: f64,
+    fill_weight: f64,
     bin: &BinInputs,
     run: &RunParams,
     params: &Params,
@@ -47,7 +46,6 @@ pub fn dplus(
     targets: Targets,
     pdf_ff: &PdfFf,
     bin_width: f64,
-    iter_max: f64,
 ) -> (f64, Vec<GridFill>) {
     let ps = map_phase_space(xx, bin, run, false);
 
@@ -77,20 +75,14 @@ pub fn dplus(
             observable: ps.pt,
             channel: j0,
             ntuple: [ps.q2mu, ps.bx1, ps.bx2, ps.x3],
-            weight: f01[j0] / calls * wgt * ps.bx1 * ps.bx2 / iter_max
-                * ps.bxjac
-                * ps.phase_space
-                * bin_width,
+            weight: f01[j0] * fill_weight * ps.bx1 * ps.bx2 * ps.bxjac * ps.phase_space * bin_width,
         });
         fills.push(GridFill {
             order: PertOrder::born_index(),
             observable: ps.pt,
             channel: j0,
             ntuple: [ps.q2mu, ps.bx2, ps.bx1, ps.x3],
-            weight: f02[j0] / calls * wgt * ps.bx1 * ps.bx2 / iter_max
-                * ps.bxjac
-                * ps.phase_space
-                * bin_width,
+            weight: f02[j0] * fill_weight * ps.bx1 * ps.bx2 * ps.bxjac * ps.phase_space * bin_width,
         });
         born[j0] = (f01[j0] * grrt[j0] + f02[j0] * grrc[j0]) * ps.bxjac;
     }
@@ -183,36 +175,28 @@ pub fn dplus(
                 observable: ps.pt,
                 channel: j0,
                 ntuple: [ps.q2mu, ps.bx1, ps.bx2, ps.x3],
-                weight: fhodel1[j0] / calls * wgt * ps.bx1 * ps.x2 / iter_max
-                    * ps.phase_space
-                    * bin_width,
+                weight: fhodel1[j0] * fill_weight * ps.bx1 * ps.x2 * ps.phase_space * bin_width,
             });
             fills.push(GridFill {
                 order: PertOrder::nlo_index(),
                 observable: ps.pt,
                 channel: j0,
                 ntuple: [ps.q2mu, ps.bx2, ps.bx1, ps.x3],
-                weight: fhodel2[j0] / calls * wgt * ps.bx1 * ps.x2 / iter_max
-                    * ps.phase_space
-                    * bin_width,
+                weight: fhodel2[j0] * fill_weight * ps.bx1 * ps.x2 * ps.phase_space * bin_width,
             });
             fills.push(GridFill {
                 order: PertOrder::nlo_index(),
                 observable: ps.pt,
                 channel: j0,
                 ntuple: [ps.q2mu, ps.x1, ps.x2, ps.x3],
-                weight: fhorest1[j0] / calls * wgt * ps.x1 * ps.x2 / iter_max
-                    * ps.phase_space
-                    * bin_width,
+                weight: fhorest1[j0] * fill_weight * ps.x1 * ps.x2 * ps.phase_space * bin_width,
             });
             fills.push(GridFill {
                 order: PertOrder::nlo_index(),
                 observable: ps.pt,
                 channel: j0,
                 ntuple: [ps.q2mu, ps.x2, ps.x1, ps.x3],
-                weight: fhorest2[j0] / calls * wgt * ps.x1 * ps.x2 / iter_max
-                    * ps.phase_space
-                    * bin_width,
+                weight: fhorest2[j0] * fill_weight * ps.x1 * ps.x2 * ps.phase_space * bin_width,
             });
 
             ghd += (fhodel1[j0] * grrt[j0] + fhodel2[j0] * grrc[j0]) * alpasho + born[j0];

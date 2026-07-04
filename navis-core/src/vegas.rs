@@ -1,39 +1,40 @@
-//! Port of G.P. Lepage's adaptive Monte Carlo integrator from `intvegas.f`
+//! Monte Carlo integration backend, wrapping `mchep`'s VEGAS+ integrator
+//! (adaptive stratified sampling + importance sampling).
 //!
-//! Differences from the Fortran source, all deliberate:
+//! `mchep`'s `Integrand` trait is a plain `fn eval(&self, x: &[f64]) -> f64`
+//! with no side channel, but every Monte Carlo point here also needs to
+//! emit PineAPPL grid fills (one per channel/order, not just contribute to
+//! a single running total) -- exactly the same requirement the Fortran's
+//! `DPLUS` has, calling `pineappl_grid_fill2` on every point rather than
+//! only at the end. To support that, `mchep` gained a small additive
+//! `ObservableIntegrand` trait (see `mchep::integrand`) that hands back a
+//! `fill_weight` per point -- the VEGAS+ jacobian already normalized by
+//! this point's share of its hypercube's sample count and by the number of
+//! iterations counted in the final result -- so callers can scale their own
+//! per-channel weights by it directly instead of re-deriving VEGAS's
+//! internal bookkeeping.
 //!
-//! - Every call starts from a fresh, uniform grid. In the Fortran code this
-//!   is also true in practice (the main programs always invoke the `vegas`
-//!   entry point, never `vegas1`/`vegas2`/`vegas3` directly, and `ndo`
-//!   starts at 1 on a fresh call), which lets the general "regrid an
-//!   existing non-trivial grid" routine collapse to simply placing `nd`
-//!   equal-width bins — this is proven by hand-simulating the Fortran
-//!   rebin loop starting from `ndo = 1`.
-//! - `xjac` is hardcoded to `1.0`: the integration domain is always the
-//!   unit hypercube (`xl = 0`, `xu = 1` for every dimension in the Fortran
-//!   `DATA xl,xu/10*0.,10*1./`), so the Jacobian of that domain is trivially 1.
-//! - Random numbers come from `rand`'s `SmallRng`, not Fortran's `ranf`;
-//!   only statistical equivalence is required (see project plan).
-//! - Point evaluations within one iteration are independent aside from
-//!   accumulating into shared reduction state, so they're parallelized with
-//!   `rayon` (fold-per-task, then reduce). PineAPPL grid fills — a side
-//!   effect of the integrand on *every* point, not just the final average —
-//!   are collected the same way and applied to the `Grid` once per
-//!   iteration (bounding memory to one iteration's worth rather than the
-//!   whole run).
+//! The `xx` coordinates handed to the wrapped integrand are still uniform
+//! points in `[0, 1]^5` after VEGAS+'s own importance-sampling remap (the
+//! `boundaries` passed to `VegasPlus::new` are always `[(0, 1); 5]`), so
+//! `navis_core::kinematics::map_phase_space` and everything downstream of
+//! it is unchanged from the previous VEGAS backend.
 
+use mchep::integrand::ObservableIntegrand;
+use mchep::vegasplus::VegasPlus;
 use pineappl::grid::Grid;
-use rand::rngs::SmallRng;
-use rand::{Rng, SeedableRng};
 use rayon::prelude::*;
 
-/// VEGAS always integrates in 5 dimensions in `sihp-pp`
-/// (`CALL VEGAS(DPLUS,1.D-6,5,NCALLS,ITMAX,0,0,GRID)`): `W`, `V`, `X3`, and
+/// VEGAS always integrates in 5 dimensions in `sihp-pp`: `W`, `V`, `X3`, and
 /// up to two more for the rapidity/pT integration.
 pub const VEGAS_NDIM: usize = 5;
 
-const NDMX: usize = 50;
-const ALPH: f64 = 1.5;
+/// Number of bins per dimension in VEGAS+'s adaptive grid.
+const N_BINS: usize = 50;
+/// Grid-refinement damping factor.
+const ALPHA: f64 = 1.5;
+/// Hypercube-resampling damping factor.
+const BETA: f64 = 0.75;
 
 /// One PineAPPL grid-fill record, the side effect an integrand emits per
 /// Monte Carlo point (mirrors a single `pineappl_grid_fill2` call in
@@ -47,9 +48,9 @@ pub struct GridFill {
     pub weight: f64,
 }
 
-/// Final result of a VEGAS run: the weighted-average integral estimate,
-/// its standard deviation, and the chi-squared per iteration, matching
-/// `ERG1`/`ERG2`/`ERG3` (`COMMON /RESULT/`) as read by `FUNCDG` in
+/// Final result of a VEGAS+ run: the weighted-average integral estimate,
+/// its standard deviation, and the chi-squared per degree of freedom,
+/// matching `ERG1`/`ERG2`/`ERG3` (`COMMON /RESULT/`) as read by `FUNCDG` in
 /// `hadrive-ms.f`.
 #[derive(Debug, Clone, Copy)]
 pub struct VegasOutcome {
@@ -58,267 +59,124 @@ pub struct VegasOutcome {
     pub chi2_per_it: f64,
 }
 
-#[derive(Clone)]
-struct CellAccum {
-    ti: f64,
-    tsi: f64,
-    d: Vec<[f64; VEGAS_NDIM]>,
-    di: Vec<[f64; VEGAS_NDIM]>,
-    nxi: Vec<[u32; VEGAS_NDIM]>,
-    fills: Vec<GridFill>,
+/// Adapts a `Fn(&[f64; VEGAS_NDIM], f64) -> (f64, Vec<GridFill>)` closure
+/// (point, this-point's `fill_weight`) into `mchep`'s `ObservableIntegrand`.
+struct ClosureIntegrand<F> {
+    eval: F,
 }
 
-impl CellAccum {
-    fn new(nd: usize) -> Self {
-        Self {
-            ti: 0.0,
-            tsi: 0.0,
-            d: vec![[0.0; VEGAS_NDIM]; nd],
-            di: vec![[0.0; VEGAS_NDIM]; nd],
-            nxi: vec![[0; VEGAS_NDIM]; nd],
-            fills: Vec::new(),
-        }
+impl<F> ObservableIntegrand for ClosureIntegrand<F>
+where
+    F: Fn(&[f64; VEGAS_NDIM], f64) -> (f64, Vec<GridFill>) + Sync,
+{
+    type Observation = GridFill;
+
+    fn dim(&self) -> usize {
+        VEGAS_NDIM
     }
 
-    fn merge(mut self, mut other: Self) -> Self {
-        self.ti += other.ti;
-        self.tsi += other.tsi;
-        for i in 0..self.d.len() {
-            for j in 0..VEGAS_NDIM {
-                self.d[i][j] += other.d[i][j];
-                self.di[i][j] += other.di[i][j];
-                self.nxi[i][j] += other.nxi[i][j];
-            }
-        }
-        self.fills.append(&mut other.fills);
-        self
+    fn eval(&self, x: &[f64], fill_weight: f64) -> (f64, Vec<GridFill>) {
+        let mut xx = [0.0_f64; VEGAS_NDIM];
+        xx.copy_from_slice(x);
+        (self.eval)(&xx, fill_weight)
     }
 }
 
-/// Run VEGAS on `integrand`, filling `grid` as a side effect (once per
-/// iteration) and returning the final estimate.
+/// Picks a safe number of stratification bins per dimension for VEGAS+'s
+/// hypercubes.
+fn choose_n_strat(n_eval: usize, dim: usize) -> usize {
+    let mut n_strat = ((n_eval as f64 / 2.0).powf(1.0 / dim as f64))
+        .floor()
+        .max(1.0) as usize;
+    while n_strat > 1 && 2 * n_strat.pow(dim as u32) > n_eval {
+        n_strat -= 1;
+    }
+    n_strat.max(1)
+}
+
+/// Runs VEGAS+ on `integrand`, filling `grid` as a side effect (once per
+/// counted iteration -- the first, "warm-up" iteration is excluded from
+/// both the reported result and the grid fills, matching `mchep`'s own
+/// convention) and returning the final estimate.
 ///
-/// `integrand(xx, wgt, calls)` mirrors `DPLUS(XX,grid,calls,wgt)`: it
-/// receives the mapped point `xx` together with the VEGAS point weight and
-/// the total number of calls for the iteration (both needed to reproduce
-/// `DPLUS`'s own `/calls*wgt` grid-fill normalization), and must return the
-/// *unscaled* integrand value — VEGAS itself multiplies by `wgt` to form the
-/// Monte Carlo estimator — plus any grid-fill records for that point.
+/// `integrand(xx, fill_weight)` mirrors `DPLUS(XX,grid,calls,wgt)`'s role:
+/// it receives a point `xx` in `[0, 1]^5` together with this point's total
+/// Monte Carlo weight, and must return the *unscaled* integrand value (used
+/// to drive VEGAS+'s own importance-sampling estimator) plus any grid-fill
+/// records for that point, already scaled by `fill_weight` where
+/// appropriate.
 #[allow(clippy::too_many_arguments)]
 pub fn vegas<F>(
     integrand: F,
-    bcc: f64,
-    ncall: i64,
-    itmx: usize,
+    n_iter: usize,
+    n_eval: usize,
     seed: u64,
     grid: &mut Grid,
 ) -> VegasOutcome
 where
-    F: Fn(&[f64; VEGAS_NDIM], f64, f64) -> (f64, Vec<GridFill>) + Sync,
+    F: Fn(&[f64; VEGAS_NDIM], f64) -> (f64, Vec<GridFill>) + Sync,
 {
-    let ndim = VEGAS_NDIM;
+    let boundaries = [(0.0_f64, 1.0_f64); VEGAS_NDIM];
+    let n_strat = choose_n_strat(n_eval, VEGAS_NDIM);
 
-    // --- one-time grid setup (Fortran labels before `9  it=it+1`) ---
-    let ng_formula = ((ncall as f64 * 0.5).powf(1.0 / ndim as f64)) as i64;
-    let (ng, nd, mds_ge_zero) = if 2 * ng_formula - NDMX as i64 >= 0 {
-        let npg0 = ng_formula / NDMX as i64 + 1;
-        let nd0 = (ng_formula / npg0).max(1);
-        (npg0 * nd0, nd0, false)
-    } else {
-        (ng_formula.max(1), NDMX as i64, true)
-    };
-    let ng = ng as usize;
-    let nd = nd as usize;
+    let mut integrator = VegasPlus::new(n_iter, n_eval, N_BINS, ALPHA, n_strat, BETA, &boundaries);
+    integrator.set_seed(seed);
 
-    let total_cells: usize = ng.pow(ndim as u32);
-    let npg = ((ncall / total_cells as i64).max(2)) as usize;
-    let calls = (npg * total_cells) as f64;
+    // `grid` is guaranteed empty here (every call site builds a fresh
+    // per-bin grid immediately before calling `vegas`), so this clone is a
+    // cheap structural template -- no filled subgrids to copy -- used below
+    // to give each parallel fill task its own accumulator.
+    let empty_template = grid.clone();
 
-    let dxg_initial = 1.0 / ng as f64;
-    let dv2g = dxg_initial.powi(2 * ndim as i32) / (npg as f64) / (npg as f64) / (npg as f64 - 1.0);
-    let xnd = nd as f64;
-    let ndm = nd - 1;
-    let dxg = dxg_initial * xnd;
-
-    // xi[0][j] = 0.0 is a padding entry standing in for the Fortran code's
-    // implicit `xi(0,j) = 0`; xi[1..=nd][j] are the real grid edges,
-    // initially `nd` equal-width bins (see module docs).
-    let mut xi = vec![[0.0_f64; VEGAS_NDIM]; nd + 1];
-    for j in 0..ndim {
-        for (i, row) in xi.iter_mut().enumerate().take(nd + 1).skip(1) {
-            row[j] = i as f64 / xnd;
-        }
-    }
-
-    let mut si = 0.0_f64;
-    let mut si2 = 0.0_f64;
-    let mut swgt = 0.0_f64;
-    let mut schi = 0.0_f64;
-
-    let mut avgi = 0.0_f64;
-    let mut sd = 0.0_f64;
-    let mut chi2a = 0.0_f64;
-
-    for it in 1..=itmx {
-        let xi_ref = &xi;
-        let mut result: CellAccum = (0..total_cells)
-            .into_par_iter()
-            .fold(
-                || CellAccum::new(nd),
-                |mut acc, cell_idx| {
-                    // Decode the cell's multi-index. The Fortran odometer
-                    // increments the last dimension fastest; cell
-                    // enumeration order doesn't affect the Monte Carlo
-                    // result (only RNG consumption order, which we don't
-                    // need to match), so any decoding works.
-                    let mut kg = [0usize; VEGAS_NDIM];
-                    let mut rem = cell_idx;
-                    for j in (0..ndim).rev() {
-                        kg[j] = rem % ng;
-                        rem /= ng;
+    let wrapped = ClosureIntegrand { eval: integrand };
+    let result = integrator.integrate_with_observations(&wrapped, None, |fills| {
+        // `grid.fill` runs real interpolation-kernel work per call (it
+        // touches every node touched by the interpolation order in each
+        // dimension), and at NLO there are dozens of fills per Monte Carlo
+        // point -- cheap per call but this loop dominates wall time if run
+        // serially. Fan it out across a small, fixed number of chunks (one
+        // per thread, not one per rayon fold/reduce split -- letting rayon's
+        // generic fold/reduce pick its own granularity here produced
+        // thousands of `Grid::clone`/`merge` calls, whose constant overhead
+        // dwarfed the savings), each accumulating into its own partial grid
+        // (cloned from `empty_template`, so still empty at chunk-start),
+        // then merged back sequentially; `Grid::merge` just sums overlapping
+        // bins, far cheaper than re-deriving interpolation weights from
+        // scratch.
+        let n_chunks = rayon::current_num_threads().max(1);
+        let chunk_len = fills.len().div_ceil(n_chunks).max(1);
+        let partials: Vec<Grid> = fills
+            .par_chunks(chunk_len)
+            .map(|chunk| {
+                let mut acc = empty_template.clone();
+                for fill in chunk {
+                    if fill.weight.is_finite() {
+                        acc.fill(
+                            fill.order,
+                            fill.observable,
+                            fill.channel,
+                            &fill.ntuple,
+                            fill.weight,
+                        );
                     }
-
-                    let mut rng =
-                        SmallRng::seed_from_u64(seed ^ ((it as u64) << 48) ^ (cell_idx as u64));
-
-                    let mut fb = 0.0_f64;
-                    let mut f2b = 0.0_f64;
-                    let mut ia = [1usize; VEGAS_NDIM];
-
-                    for _ in 0..npg {
-                        let mut x = [0.0_f64; VEGAS_NDIM];
-                        let mut wgt = 1.0_f64; // xjac = 1
-                        for j in 0..ndim {
-                            let qran: f64 = rng.gen();
-                            let xn = (kg[j] as f64 + 1.0 - qran) * dxg + 1.0;
-                            let iaj = (xn as i64).clamp(1, nd as i64) as usize;
-                            ia[j] = iaj;
-                            let xo = xi_ref[iaj][j] - xi_ref[iaj - 1][j];
-                            let rc = xi_ref[iaj - 1][j] + (xn - iaj as f64) * xo;
-                            x[j] = rc; // xl = 0, dx = 1
-                            wgt *= xo * xnd;
-                        }
-
-                        let (raw, fills) = integrand(&x, wgt, calls);
-                        let f = raw * wgt;
-                        let f2 = f * f;
-                        fb += f;
-                        f2b += f2;
-
-                        (0..ndim).for_each(|j| {
-                            let i0 = ia[j] - 1;
-                            acc.di[i0][j] += f / calls;
-                            acc.nxi[i0][j] += 1;
-                            if mds_ge_zero {
-                                acc.d[i0][j] += f2;
-                            }
-                        });
-                        acc.fills.extend(fills);
-                    }
-
-                    let mut f2b_var = (f2b * npg as f64).sqrt();
-                    f2b_var = (f2b_var - fb) * (f2b_var + fb);
-
-                    acc.ti += fb;
-                    acc.tsi += f2b_var;
-
-                    if !mds_ge_zero {
-                        (0..ndim).for_each(|j| {
-                            let i0 = ia[j] - 1;
-                            acc.d[i0][j] += f2b_var;
-                        });
-                    }
-
-                    acc
-                },
-            )
-            .reduce(|| CellAccum::new(nd), CellAccum::merge);
-
-        // Apply this iteration's grid fills, then drop them before moving
-        // on to bound peak memory to one iteration's worth.
-        for fill in result.fills.drain(..) {
-            grid.fill(
-                fill.order,
-                fill.observable,
-                fill.channel,
-                &fill.ntuple,
-                fill.weight,
-            );
-        }
-
-        let ti = result.ti / calls;
-        let tsi = result.tsi * dv2g;
-        let ti2 = ti * ti;
-        let iter_weight = ti2 / tsi;
-
-        si += ti * iter_weight;
-        si2 += ti2;
-        swgt += iter_weight;
-        schi += ti2 * iter_weight;
-
-        avgi = si / swgt;
-        sd = swgt * it as f64 / si2;
-        chi2a = if it > 1 {
-            sd * (schi / swgt - avgi * avgi) / (it as f64 - 1.0)
-        } else {
-            0.0
-        };
-        sd = (1.0 / sd).sqrt();
-
-        // --- grid refinement (Fortran labels 23..28) ---
-        let mut dt = [0.0_f64; VEGAS_NDIM];
-        (0..ndim).for_each(|j| {
-            for i in 0..nd {
-                if result.nxi[i][j] > 0 {
-                    result.d[i][j] /= f64::from(result.nxi[i][j]);
                 }
-                dt[j] += result.d[i][j];
-            }
-        });
-
-        for j in 0..ndim {
-            let mut r = vec![0.0_f64; nd];
-            let mut rc = 0.0_f64;
-            (0..nd).for_each(|i| {
-                if result.d[i][j] > 0.0 {
-                    let xo = dt[j] / result.d[i][j];
-                    r[i] = ((xo - 1.0) / xo / xo.ln()).powf(ALPH);
-                }
-                rc += r[i];
-            });
-            rc /= xnd;
-
-            let mut xin = vec![0.0_f64; ndm];
-            let mut k = 0usize;
-            let mut xn = 0.0_f64;
-            let mut xo_prev = 0.0_f64;
-            let mut dr = 0.0_f64;
-            let mut i = 0usize;
-            while i < ndm {
-                while rc > dr {
-                    k += 1;
-                    dr += r[k - 1];
-                    xo_prev = xn;
-                    xn = xi[k][j];
-                }
-                dr -= rc;
-                xin[i] = xn - (xn - xo_prev) * dr / r[k - 1];
-                i += 1;
-            }
-            for (idx, &value) in xin.iter().enumerate() {
-                xi[idx + 1][j] = value;
-            }
-            xi[nd][j] = 1.0;
+                acc
+            })
+            .collect();
+        // A plain sequential loop beat a parallel reduce-tree here: with
+        // only `n_chunks` (one per thread) partials, and this whole closure
+        // already nested under the outer per-bin `rayon` parallelism, a
+        // second layer of fine-grained scheduling added more overhead than
+        // it saved.
+        for partial in partials {
+            grid.merge(partial)
+                .expect("partial grid shares the same schema");
         }
-
-        if it >= itmx || bcc.abs() >= (sd / avgi).abs() {
-            break;
-        }
-    }
+    });
 
     VegasOutcome {
-        integral: avgi,
-        std_dev: sd,
-        chi2_per_it: chi2a,
+        integral: result.value,
+        std_dev: result.error,
+        chi2_per_it: result.chi2_dof,
     }
 }

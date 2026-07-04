@@ -8,6 +8,7 @@ license.workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
+mchep = { workspace = true }
 pineappl = { workspace = true }
 rand = { workspace = true }
 rayon = { workspace = true }
