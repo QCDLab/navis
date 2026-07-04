@@ -1,9 +1,9 @@
 [package]
 name = "navis-cli"
-description = "Command-line drivers for unpolarized and polarized single-inclusive hadron production"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
+description = "Command-line drivers for unpolarized and polarized single-inclusive hadron production"
 license.workspace = true
 
 [[bin]]
