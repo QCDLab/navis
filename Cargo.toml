@@ -16,7 +16,7 @@ license = "MIT"
 [workspace.dependencies]
 anyhow = "1.0"
 # numerics
-mchep = { path = "../mchep/mchep" }
+mchep = { version = "0.2.0" }
 neopdf = { version = "0.3.3" }
 pineappl = { version = "1.4.2" }
 rand = { version = "0.8", features = ["small_rng"] }

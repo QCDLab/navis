@@ -656,7 +656,9 @@ dependencies = [
 
 [[package]]
 name = "mchep"
-version = "0.1.1"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a2a990df30e5807c944d28edba6142e283e096cd5790436ca46910f7d14710ac"
 dependencies = [
  "bytemuck",
  "itertools 0.12.1",
