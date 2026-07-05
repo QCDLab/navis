@@ -134,15 +134,17 @@ where
         // touches every node touched by the interpolation order in each
         // dimension), and at NLO there are dozens of fills per Monte Carlo
         // point -- cheap per call but this loop dominates wall time if run
-        // serially. Fan it out across a small, fixed number of chunks (one
-        // per thread, not one per rayon fold/reduce split -- letting rayon's
-        // generic fold/reduce pick its own granularity here produced
-        // thousands of `Grid::clone`/`merge` calls, whose constant overhead
-        // dwarfed the savings), each accumulating into its own partial grid
-        // (cloned from `empty_template`, so still empty at chunk-start),
-        // then merged back sequentially; `Grid::merge` just sums overlapping
-        // bins, far cheaper than re-deriving interpolation weights from
-        // scratch.
+        // serially. Fan it out across one chunk per thread (a fine-grained
+        // rayon fold/reduce here -- both with a fixed split count and with
+        // `with_min_len`-bounded adaptive splitting -- was measured to be no
+        // better, and sometimes worse, than this simple fixed chunking, since
+        // the callers of `vegas` already run many bins concurrently via their
+        // own outer `rayon` parallelism; the dominant remaining cost in that
+        // regime is bin-to-bin load imbalance, which no fill-splitting
+        // strategy here can fix), each accumulating into its own partial grid
+        // (cloned from `empty_template`, so still empty at chunk-start), then
+        // merged back sequentially; `Grid::merge` just sums overlapping bins,
+        // far cheaper than re-deriving interpolation weights from scratch.
         let n_chunks = rayon::current_num_threads().max(1);
         let chunk_len = fills.len().div_ceil(n_chunks).max(1);
         let partials: Vec<Grid> = fills
@@ -163,11 +165,6 @@ where
                 acc
             })
             .collect();
-        // A plain sequential loop beat a parallel reduce-tree here: with
-        // only `n_chunks` (one per thread) partials, and this whole closure
-        // already nested under the outer per-bin `rayon` parallelism, a
-        // second layer of fine-grained scheduling added more overhead than
-        // it saved.
         for partial in partials {
             grid.merge(partial)
                 .expect("partial grid shares the same schema");
