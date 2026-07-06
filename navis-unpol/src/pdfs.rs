@@ -3,7 +3,7 @@
 use neopdf::pdf::PDF;
 
 /// Unpolarized parton densities at a given `(x, Q^2)`, x times the
-/// distribution (`STRUCI`'s output convention).
+/// distribution.
 #[derive(Debug, Clone, Copy)]
 pub struct PartonDensities {
     pub up: f64,
@@ -26,8 +26,6 @@ pub struct FragmentationFunctions {
     pub db: f64,
     pub s: f64,
     pub sb: f64,
-    /// Always zero: `DPC`/`DPCB` are initialized and never overwritten in
-    /// `STRUCF`, i.e. charm fragmentation is switched off.
     pub c: f64,
     pub cb: f64,
     pub g: f64,
@@ -92,12 +90,7 @@ impl PdfFf {
         }
     }
 
-    /// `STRUCF(Z,Q2,...)`. `Q2` is floored at `0.45` GeV^2, matching the
-    /// Fortran `IF(Q2.LT.0.45) Q2=0.45D0` fragmentation-scale cutoff.
-    ///
-    /// The `IF(Z.LT.ZCUT)` zeroing branch in `STRUCF` is preserved for
-    /// fidelity, but is dead in practice: `ZCUT` is always set to `0.0` per
-    /// bin in `hadrive-ms.f`, and `z >= x3min > 0` always holds physically.
+    /// `STRUCF(Z,Q2,...)`. `Q2` is floored at `0.45` GeV^2.
     #[must_use]
     pub fn strucf(&self, z: f64, q2: f64) -> FragmentationFunctions {
         const ZCUT: f64 = 0.0;

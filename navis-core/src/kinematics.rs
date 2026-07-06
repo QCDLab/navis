@@ -36,9 +36,7 @@ impl CrossSectionType {
     }
 }
 
-/// Per-bin kinematic inputs, computed once per pT bin (mirrors `PT0`,
-/// `ETA0`, `PTDO`, `PTUP`, `YDO`, `YUP`, `IPT`, `IY` common-block state set
-/// up in the `hadrive-ms.f` main-program bin loop).
+/// Per-bin kinematic inputs, computed once per pT bin.
 #[derive(Debug, Clone, Copy)]
 pub struct BinInputs {
     /// `PT0`: the bin-center pT, used when `integrate_pt` is `false`.
@@ -56,7 +54,7 @@ pub struct BinInputs {
     pub integrate_pt: bool,
 }
 
-/// Run-wide kinematic inputs (mirrors `COMMON /KINVAR/`, `/SCALESF/`, etc).
+/// Run-wide kinematic inputs.
 #[derive(Debug, Clone, Copy)]
 pub struct RunParams {
     pub sqs: f64,
@@ -76,9 +74,7 @@ pub struct PhaseSpace {
     pub pt: f64,
     pub eta: f64,
     /// `GV = 1 - PT/SQS*exp(-ETA)`, needed (together with [`Self::gw`]) by
-    /// the `FDEL*`/`FVWPL*`/`FVLO*`/`FRESC*` helper functions, which
-    /// recompute `BX1`/`X1` from `GV*GW` the same way `DPLUS` does via its
-    /// `COMMON /CONS/` globals.
+    /// the `FDEL*`/`FVWPL*`/`FVLO*`/`FRESC*`.
     pub gv: f64,
     /// `GW = PT^2/S/GV/(1-GV)`.
     pub gw: f64,

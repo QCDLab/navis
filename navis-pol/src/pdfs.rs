@@ -4,11 +4,6 @@ use neopdf::pdf::PDF;
 
 /// Polarized parton densities at a given `(x, Q^2)`, x times the
 /// distribution (`STRUCI`'s output convention).
-///
-/// `charm`/`bottom` are always zero: the Fortran subroutine hardcodes
-/// `CH=0.D0`, `BO=0.D0` rather than reading them off the PDF set (marked
-/// `TODO: Check why are these set to ZERO` in the source, but preserved
-/// here for fidelity).
 #[derive(Debug, Clone, Copy)]
 pub struct PartonDensities {
     pub up: f64,
@@ -31,8 +26,6 @@ pub struct FragmentationFunctions {
     pub db: f64,
     pub s: f64,
     pub sb: f64,
-    /// Always zero: `DPC`/`DPCB` are initialized and never overwritten in
-    /// `STRUCF`, i.e. charm fragmentation is switched off.
     pub c: f64,
     pub cb: f64,
     pub g: f64,
@@ -61,8 +54,7 @@ impl PdfFf {
 
     /// `STRUCI(X,Q2,ITAR,...)`. `itar` is accepted for API symmetry with
     /// the unpolarized crate but is unused, matching the Fortran: the
-    /// polarized `STRUCI` never reads its `ITAR` argument (no
-    /// target-switching branch exists in `polarized/part-pol-ms.f`).
+    /// polarized `STRUCI` never reads its `ITAR`.
     #[must_use]
     pub fn struci(&self, x: f64, q2: f64, _itar: i32) -> PartonDensities {
         let up = self.pdf.xfxq2(2, &[x, q2]);
@@ -84,11 +76,7 @@ impl PdfFf {
         }
     }
 
-    /// `STRUCF(Z,Q2,...)`. `Q2` is floored at `0.45` GeV^2, matching the
-    /// Fortran `IF(Q2.LT.0.45) Q2=0.45D0` fragmentation-scale cutoff.
-    ///
-    /// Unlike the unpolarized `STRUCF`, there is no `ZCUT` zeroing branch
-    /// here at all (confirmed absent from `polarized/part-pol-ms.f`).
+    /// `STRUCF(Z,Q2,...)`. `Q2` is floored at `0.45` GeV^2.
     #[must_use]
     pub fn strucf(&self, z: f64, q2: f64) -> FragmentationFunctions {
         let q2 = q2.max(0.45);

@@ -40,7 +40,7 @@ impl Params {
 }
 
 /// Per-channel color prefactor `CC(J0)`, `J0 = 1..16`, computed in the `DO 2
-/// J0=1,16` loop of `hadrive-ms.f`.
+/// J0=1,16`.
 ///
 /// Channels 15/16 get `8*VC^2`; channels 8,9,10,13,14 get `8*VC*NC`; all
 /// others get `8*NC^2`.

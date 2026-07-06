@@ -11,8 +11,7 @@ use crate::mes::{
 };
 use crate::pdfs::PdfFf;
 
-/// Target-hadron selectors for `STRUCI`'s `ITAR` argument (`IH1`/`IH2` in
-/// the Fortran `COMMON /HADR/`).
+/// Target-hadron selectors for `STRUCI`'s `ITAR` argument.
 #[derive(Debug, Clone, Copy)]
 pub struct Targets {
     pub ih1: i32,
@@ -47,10 +46,6 @@ pub fn dplus(
 ) -> (f64, Vec<GridFill>) {
     let ps = map_phase_space(xx, bin, run, true);
 
-    // `ALPORD=4*PI*ALPHAS(Q2MU)` in Fortran, where the Fortran `ALPHAS` helper
-    // itself divides by `4*PI` (`ALPHASPDFM(...)/4/PI`) -- the two cancel, so
-    // `ALPORD` is just the standard `alpha_s(Q2MU)` that `alphas_q2` already
-    // returns; multiplying by `4*PI` again would be a spurious extra factor.
     let alpord = pdf_ff.alphas_q2(ps.q2mu);
     let alpasho = alpord * if order.is_nlo() { 1.0 } else { 0.0 };
 
@@ -87,12 +82,6 @@ pub fn dplus(
     let mut ghd = 0.0_f64;
     let mut ghe = 0.0_f64;
 
-    // The Fortran computes the (expensive) NLO STRUV/FHODEL/FHOREST pieces
-    // unconditionally and relies on `ALPASHO = ALPORD*IORD` to zero them
-    // out of the final sum at LO. This port instead skips the work
-    // entirely at LO, adopting the polarized package's early-exit
-    // optimization (`IF(IORD.EQ.0) GOTO 999`) for both packages -- see the
-    // project's validation notes: physically equivalent, strictly faster.
     if order.is_nlo() {
         let ctx = MeContext {
             ca: params.ca,
