@@ -27,3 +27,6 @@ for lha in "${NEOPDF_SETS[@]}"; do
   # TODO: edit info file fot the FF set
   curl "https://lhapdfsets.web.cern.ch/current/${lha}.tar.gz" | tar xzf - --no-same-owner -C navis-cli/tests/fixtures/
 done
+
+# Fix FF set metadata: fragfn -> timelike
+sed -i 's/SetType: fragfn/SetType: timelike/g' navis-cli/tests/fixtures/NNFF10_PIsum_lo/NNFF10_PIsum_lo.info
