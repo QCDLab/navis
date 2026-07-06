@@ -1,0 +1,44 @@
+name: Run the Rust tests 🦀
+
+on:
+  push:
+  pull_request:
+
+env:
+  NEOPDF_DATA_PATH: ${{ github.workspace }}/navis-cli/tests/fixtures
+
+jobs:
+  test:
+    name: Build and test navis
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/nnpdf/lhapdf:v2
+      credentials:
+        username: ${{ github.repository_owner }}
+        password: ${{ github.token }}
+    defaults:
+      run:
+        shell: bash --login {0}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get data
+        uses: ./.github/actions/cache-data
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - name: Cache cargo registry and build artifacts
+        uses: Swatinem/rust-cache@v2
+
+      - name: Lint (clippy)
+        run: cargo clippy --workspace --all-targets
+
+      - name: Build
+        run: cargo build --workspace --release
+
+      - name: Run regression tests
+        run: cargo test --workspace --release
