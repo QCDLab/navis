@@ -1,0 +1,19 @@
+# .github/actions/cache-data/action.yml
+
+name: Cache Data for the Tests
+description: Caches and downloads data
+runs:
+  using: "composite"
+  steps:
+    - name: Cache data
+      id: cache-data
+      uses: actions/cache@v4
+      with:
+        path: navis-cli/tests/fixtures/
+        key: data-v1
+    - name: Download data if cache miss
+      if: steps.cache-data.outputs.cache-hit != 'true'
+      run: |
+        wget --no-verbose --no-clobber -P navis-cli/tests/fixtures/ "https://data.nnpdf.science/neopdf/navis/SIHP-PP-POLARIZED-STAR-2006-LO.pineappl.lz4"
+        wget --no-verbose --no-clobber -P navis-cli/tests/fixtures/ "https://data.nnpdf.science/neopdf/navis/SIHP-PP-UNPOLARIZED-STAR-2006-LO.pineappl.lz4"
+      shell: bash
