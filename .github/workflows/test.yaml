@@ -1,8 +1,6 @@
 name: Run the Rust tests 🦀
 
-on:
-  push:
-  pull_request:
+on: [push]
 
 env:
   NEOPDF_DATA_PATH: ${{ github.workspace }}/navis-cli/tests/fixtures
