@@ -12,7 +12,8 @@
 
 ## Installation
 
-To compile the code, you only need [cargo](https://doc.rust-lang.org/cargo/) and then run the following command:
+To compile the code, you only need [cargo](https://doc.rust-lang.org/cargo/) and then
+run the following command:
 
 ```sh
 cargo install --path navis-cli
@@ -24,3 +25,50 @@ a YAML card containing the input settings. For example:
 ```sh
 navis-unpol example.yml
 ```
+
+## Citation
+
+If you use **ηaνis**, please cite the following:
+
+<table>
+  <tr>
+  <td valign="middle"><b>MCHEP</b> for the MC integration</td>
+  <td valign="middle">
+    <a href="https://doi.org/10.5281/zenodo.21206363"><img
+          alt="Crates.io"
+          src="https://zenodo.org/badge/DOI/10.5281/zenodo.21206363.svg?style=for-the-badge&logo=zenodo"
+          height="20"
+    /></a>
+  </td>
+  </tr>
+  <tr>
+  <td valign="middle"><b>NeoPDF</b> for the PDF/FF interpolation</td>
+  <td valign="middle">
+    <a href="https://doi.org/10.5281/zenodo.17286769"><img
+          alt="Crates.io"
+          src="https://zenodo.org/badge/DOI/10.5281/zenodo.17286769.svg?style=for-the-badge&logo=zenodo"
+          height="20"
+    /></a>
+    <a href="https://arxiv.org/abs/2606.17134"><img
+          alt="Crates.io"
+          src="http://img.shields.io/badge/hep.ph-2606.17134-B31B1B.svg?logo=arxiv&logoColor=red"
+          height="25"
+    /></a>
+  </td>
+  </tr>
+  <tr>
+  <td valign="middle"><b>PineAPPL</b> for the fast interpolation grid</td>
+  <td valign="middle">
+    <a href="https://doi.org/10.5281/zenodo.15635174"><img
+          alt="Crates.io"
+          src="https://zenodo.org/badge/DOI/10.5281/zenodo.15635174.svg?style=for-the-badge&logo=zenodo"
+          height="20"
+    /></a>
+    <a href="https://arxiv.org/abs/2510.05079"><img
+          alt="Crates.io"
+          src="http://img.shields.io/badge/hep.ph-2510.05079-B31B1B.svg?logo=arxiv&logoColor=red"
+          height="25"
+    /></a>
+  </td>
+  </tr>
+</table>
