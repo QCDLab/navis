@@ -1,0 +1,124 @@
+# Choice of experiment
+#    STAR or PHENIX
+experiment: "STAR"
+
+# Append string to the experiment name
+expname_suffix: "-2013-HIGHRAP"
+
+# Choice of initial hadrons
+#    0 for proton
+#    1 for anti-proton
+#    2 for nuclear isoscalar target
+ih1: 0
+ih2: 0
+
+# Charge of the final state hadron
+#    0 average of + and -
+#    1 positivily charged
+#    -1 negatively charged
+ih3_charge: 0
+
+# Choice of the PDF set
+unpolarized_pdf   : "NNPDF40_nnlo_as_01180"
+polarized_pdf     : "NNPDFpol11_100"
+fragmentation_pdf : "NNFF10_PIsum_lo"
+
+# Choice of Replica ID for each PDF set
+irep_unpol: 0
+irep_pol  : 0
+irep_frag : 0
+
+# Choice of cross-sectio type
+#    1 FOR DSIGMA/DY/DPT2
+#    2 FOR E*DSIGMA/D3P
+#    3 FOR DSIGMA/DY/DPT
+#    4 FOR PT**3*DSIGMA/DY/DPT
+isigm: 3
+
+# Perturbative order
+#    0 for LO
+#    1 for NLO
+iord: 1
+
+# Integrate over the pT
+#    0 for NO
+#    1 for YES
+ipt: 0
+
+# Integrate over the Rapidity Y
+#    0 for NO
+#    1 for YES
+iy: 1
+
+# Number of active flavors
+nf: 4
+
+# Vegas-specific parameters
+iter_max    : 20
+ncalls_vegas: 50000
+
+# Center of mass energy
+sqs: 510.0
+
+# Factorization, Renormalization, and Fragmentation scale
+scfac : 1.0
+scmu  : 1.0
+scfrag: 1.0
+
+######## STAR-2013 LOWRAP experiment ########
+# # Bin configurations
+# n_bins: 4
+# center_bins:
+# - 3.91
+# - 4.73
+# - 5.62
+# - 7.08
+
+# # Rapidity cuts
+# ydo : 2.65
+# yup : 3.15
+# ydum: 0.0
+#############################################
+
+######## STAR-2013 HIGHRAP experiment #######
+# Bin configurations
+n_bins: 4
+center_bins:
+- 2.50
+- 3.33
+- 4.11
+- 5.37
+
+# Rapidity cuts
+ydo : 3.15
+yup : 3.90
+ydum: 0.0
+#############################################
+
+########### STAR-2006 experiment ############
+# n_bins: 6
+# center_bins:
+# - 5.57692
+# - 6.51397
+# - 7.48737
+# - 8.47650
+# - 9.44489
+# - 10.7949
+#############################################
+
+########## PHENIX-2009 experiment ###########
+# n_bins: 12
+# center_bins:
+# - 1.30
+# - 1.75
+# - 2.23
+# - 2.72
+# - 3.22
+# - 3.72
+# - 4.39
+# - 5.40
+# - 6.41
+# - 7.74
+# - 10.0
+# - 13.1
+#############################################
