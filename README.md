@@ -36,8 +36,8 @@ If you use **ηaνis**, please cite the following:
   <td valign="middle">
     <a href="https://doi.org/10.5281/zenodo.21206363"><img
           alt="zenodo"
-          src="https://zenodo.org/badge/DOI/10.5281/zenodo.21206363.svg?style=for-the-badge&logo=zenodo"
-          height="20"
+          src="https://img.shields.io/badge/DOI-10.5281%2Fzenodo.21206363-blue.svg?style=for-the-badge&logo=zenodo"
+          height="25"
     /></a>
   </td>
   </tr>
@@ -46,12 +46,12 @@ If you use **ηaνis**, please cite the following:
   <td valign="middle">
     <a href="https://doi.org/10.5281/zenodo.17286769"><img
           alt="zenodo"
-          src="https://zenodo.org/badge/DOI/10.5281/zenodo.17286769.svg?style=for-the-badge&logo=zenodo"
-          height="20"
+          src="https://img.shields.io/badge/DOI-10.5281%2Fzenodo.17286769-blue.svg?style=for-the-badge&logo=zenodo"
+          height="25"
     /></a>
     <a href="https://arxiv.org/abs/2606.17134"><img
           alt="arXiv"
-          src="http://img.shields.io/badge/hep.ph-2606.17134-B31B1B.svg?logo=arxiv&logoColor=red"
+          src="http://img.shields.io/badge/hep.ph-2606.17134-B31B1B.svg?style=for-the-badge&logo=arxiv&logoColor=red"
           height="25"
     /></a>
   </td>
@@ -61,12 +61,12 @@ If you use **ηaνis**, please cite the following:
   <td valign="middle">
     <a href="https://doi.org/10.5281/zenodo.15635174"><img
           alt="zenodo"
-          src="https://zenodo.org/badge/DOI/10.5281/zenodo.15635174.svg?style=for-the-badge&logo=zenodo"
-          height="20"
+          src="https://img.shields.io/badge/DOI-10.5281%2Fzenodo.15635174-blue.svg?style=for-the-badge&logo=zenodo"
+          height="25"
     /></a>
     <a href="https://arxiv.org/abs/2510.05079"><img
           alt="arXiv"
-          src="http://img.shields.io/badge/hep.ph-2510.05079-B31B1B.svg?logo=arxiv&logoColor=red"
+          src="http://img.shields.io/badge/hep.ph-2510.05079-B31B1B.svg?style=for-the-badge&logo=arxiv&logoColor=red"
           height="25"
     /></a>
   </td>
