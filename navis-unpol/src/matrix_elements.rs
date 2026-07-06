@@ -12,7 +12,27 @@ pub struct MeContext {
 }
 
 /// `FBOR(V,SHD,F0)`: Born cross sections (including the `1/v/(1-v)` phase
-/// space factor), one entry per of the 16 channels.
+/// space factor), one entry per of the 16 channels shared by this
+/// function, [`avwpl`], [`avdel`], [`avlo`], and [`struv`] (1-indexed,
+/// matching the Fortran `J0`), identified from the flavor bookkeeping in
+/// [`stru`]:
+///
+/// 01. `qq' -> qq'`.
+/// 02. `qq' -> qq'`.
+/// 03. `qqbar' -> qqbar'`.
+/// 04. `qqbar' -> qqbar'`.
+/// 05. `qqbar -> q'qbar'`.
+/// 06. `qq -> qq`.
+/// 07. `qq -> qq`.
+/// 08. `qg -> q q'qbar'`.
+/// 09. `qg -> q q'qbar'`.
+/// 10. `qg -> q qqbar`.
+/// 11. `qqbar -> qqbar`.
+/// 12. `qqbar -> gg`.
+/// 13. `qg -> qg`.
+/// 14. `qg -> qg`.
+/// 15. `gg -> gg`.
+/// 16. `gg -> qqbar`.
 #[must_use]
 pub fn fbor(v: f64, shd: f64, nc: f64, cf: f64) -> [f64; 16] {
     let v2 = v.powi(2);
@@ -314,8 +334,8 @@ pub fn fresc2(
     rrescc / sh
 }
 
-/// `AVWPL(W,V,S)`: all `1/(1-W)+` pieces, selected by channel `j0`
-/// (1-indexed, matching Fortran `J0`).
+/// `AVWPL(W,V,S)`: all `1/(1-W)+` pieces, selected by channel `j0`. See
+/// the channel table on [`fbor`] for what each index physically represents.
 #[must_use]
 pub fn avwpl(j0: usize, _w: f64, v: f64, s: f64, ctx: &MeContext) -> f64 {
     let ca = ctx.ca;
@@ -330,53 +350,59 @@ pub fn avwpl(j0: usize, _w: f64, v: f64, s: f64, ctx: &MeContext) -> f64 {
     let nf = 2.0 * (ctx.nf / 2.0);
 
     match j0 {
+        // 1: qq' -> qq' (unlike flavor, elastic), hadron from quark
         1 => {
-            (-6.0 * ca * cf.powi(2) * (1.0 + v.powi(2))) / ((1.0 - v).powi(2) * v)
-                - (8.0 * (1.0 + ca.powi(2)) * cf * l1v * (1.0 + v.powi(2)))
-                    / ((1.0 - v).powi(2) * v)
-                - (16.0 * ca * cf.powi(2) * lms * (1.0 + v.powi(2))) / ((1.0 - v).powi(2) * v)
-                - (8.0 * ca * cf.powi(2) * lmss * (1.0 + v.powi(2))) / ((1.0 - v).powi(2) * v)
-                - (4.0 * (11.0 - 7.0 * ca.powi(2)) * cf * lv * (1.0 + v.powi(2)))
-                    / ((1.0 - v).powi(2) * v)
+            let t1 = (1.0 - v).powi(2) * v;
+            (-6.0 * ca * cf.powi(2) * (1.0 + v.powi(2))) / (t1)
+                - (8.0 * (1.0 + ca.powi(2)) * cf * l1v * (1.0 + v.powi(2))) / (t1)
+                - (16.0 * ca * cf.powi(2) * lms * (1.0 + v.powi(2))) / (t1)
+                - (8.0 * ca * cf.powi(2) * lmss * (1.0 + v.powi(2))) / (t1)
+                - (4.0 * (11.0 - 7.0 * ca.powi(2)) * cf * lv * (1.0 + v.powi(2))) / (t1)
         }
+        // 2: qq' -> qq' + extra gluon, hadron from gluon
         2 => 0.0,
+        // 3: qqbar' -> qqbar' (unlike flavor, elastic), hadron from quark
         3 => {
-            (-6.0 * ca * cf.powi(2) * (1.0 + v.powi(2))) / ((1.0 - v).powi(2) * v)
-                - (8.0 * (1.0 + ca.powi(2)) * cf * l1v * (1.0 + v.powi(2)))
-                    / ((1.0 - v).powi(2) * v)
-                - (16.0 * ca * cf.powi(2) * lms * (1.0 + v.powi(2))) / ((1.0 - v).powi(2) * v)
-                - (8.0 * ca * cf.powi(2) * lmss * (1.0 + v.powi(2))) / ((1.0 - v).powi(2) * v)
-                + (4.0 * (5.0 + 3.0 * ca.powi(2)) * cf * lv * (1.0 + v.powi(2)))
-                    / ((1.0 - v).powi(2) * v)
+            let t1 = (1.0 - v).powi(2) * v;
+            (-6.0 * ca * cf.powi(2) * (1.0 + v.powi(2))) / (t1)
+                - (8.0 * (1.0 + ca.powi(2)) * cf * l1v * (1.0 + v.powi(2))) / (t1)
+                - (16.0 * ca * cf.powi(2) * lms * (1.0 + v.powi(2))) / (t1)
+                - (8.0 * ca * cf.powi(2) * lmss * (1.0 + v.powi(2))) / (t1)
+                + (4.0 * (5.0 + 3.0 * ca.powi(2)) * cf * lv * (1.0 + v.powi(2))) / (t1)
         }
+        // 4: qqbar' -> qqbar' + extra gluon, hadron from gluon
         4 => 0.0,
+        // 5: qqbar -> q'qbar' (annihilation, unlike flavor), hadron from quark
         5 => {
-            (-6.0 * ca * cf.powi(2) * (1.0 - 2.0 * v + 2.0 * v.powi(2))) / v
-                - (8.0 * (3.0 - ca.powi(2)) * cf * l1v * (1.0 - 2.0 * v + 2.0 * v.powi(2))) / v
-                - (16.0 * ca * cf.powi(2) * lms * (1.0 - 2.0 * v + 2.0 * v.powi(2))) / v
-                - (8.0 * ca * cf.powi(2) * lmss * (1.0 - 2.0 * v + 2.0 * v.powi(2))) / v
-                + (4.0 * (5.0 + 3.0 * ca.powi(2)) * cf * lv * (1.0 - 2.0 * v + 2.0 * v.powi(2))) / v
+            let t1 = 1.0 - 2.0 * v + 2.0 * v.powi(2);
+            (-6.0 * ca * cf.powi(2) * (t1)) / v
+                - (8.0 * (3.0 - ca.powi(2)) * cf * l1v * (t1)) / v
+                - (16.0 * ca * cf.powi(2) * lms * (t1)) / v
+                - (8.0 * ca * cf.powi(2) * lmss * (t1)) / v
+                + (4.0 * (5.0 + 3.0 * ca.powi(2)) * cf * lv * (t1)) / v
         }
+        // 6: qq -> qq (identical flavor, elastic), hadron from quark
         6 => {
+            let t1 = (1.0 - v).powi(2) * v.powi(3);
             (-12.0
                 * cf.powi(2)
                 * (ca - v - 3.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2) - 2.0 * ca * v.powi(3)
                     + ca * v.powi(4)))
-                / ((1.0 - v).powi(2) * v.powi(3))
+                / (t1)
                 - (32.0
                     * cf.powi(2)
                     * lms
                     * (ca - v - 3.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2)
                         - 2.0 * ca * v.powi(3)
                         + ca * v.powi(4)))
-                    / ((1.0 - v).powi(2) * v.powi(3))
+                    / (t1)
                 - (16.0
                     * cf.powi(2)
                     * lmss
                     * (ca - v - 3.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2)
                         - 2.0 * ca * v.powi(3)
                         + ca * v.powi(4)))
-                    / ((1.0 - v).powi(2) * v.powi(3))
+                    / (t1)
                 - (16.0
                     * cf
                     * l1v
@@ -389,7 +415,7 @@ pub fn avwpl(j0: usize, _w: f64, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         - 6.0 * ca * v.powi(3)
                         + 2.0 * ca.powi(3) * v.powi(3)
                         + 2.0 * ca * v.powi(4)))
-                    / (ca * (1.0 - v).powi(2) * v.powi(3))
+                    / (ca * t1)
                 - (8.0
                     * cf
                     * lv
@@ -404,20 +430,26 @@ pub fn avwpl(j0: usize, _w: f64, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         + 6.0 * ca.powi(3) * v.powi(3)
                         + 9.0 * ca * v.powi(4)
                         - 5.0 * ca.powi(3) * v.powi(4)))
-                    / (ca * (1.0 - v).powi(2) * v.powi(3))
+                    / (ca * t1)
         }
+        // 7: qq -> qq + extra gluon, hadron from gluon
         7 => 0.0,
+        // 8: qg -> q q'qbar' (unlike-flavor sea pair), hadron from quark
         8 => 0.0,
+        // 9: qg -> q q'qbar' (unlike-flavor sea pair), hadron from antiquark
         9 => 0.0,
+        // 10: qg -> q qqbar (same-flavor sea pair), hadron from quark/antiquark
         10 => 0.0,
+        // 11: qqbar -> qqbar (same flavor, elastic + annihilation), hadron from quark
         11 => {
+            let t1 = (1.0 - v).powi(2) * v;
             (-12.0
                 * cf.powi(2)
                 * (ca - 2.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2)
                     - v.powi(3)
                     - 3.0 * ca * v.powi(3)
                     + ca * v.powi(4)))
-                / ((1.0 - v).powi(2) * v)
+                / (t1)
                 - (32.0
                     * cf.powi(2)
                     * lms
@@ -425,7 +457,7 @@ pub fn avwpl(j0: usize, _w: f64, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         - v.powi(3)
                         - 3.0 * ca * v.powi(3)
                         + ca * v.powi(4)))
-                    / ((1.0 - v).powi(2) * v)
+                    / (t1)
                 - (16.0
                     * cf.powi(2)
                     * lmss
@@ -433,7 +465,7 @@ pub fn avwpl(j0: usize, _w: f64, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         - v.powi(3)
                         - 3.0 * ca * v.powi(3)
                         + ca * v.powi(4)))
-                    / ((1.0 - v).powi(2) * v)
+                    / (t1)
                 - (16.0
                     * cf
                     * l1v
@@ -449,7 +481,7 @@ pub fn avwpl(j0: usize, _w: f64, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         + 3.0 * ca.powi(3) * v.powi(3)
                         + 3.0 * ca * v.powi(4)
                         - ca.powi(3) * v.powi(4)))
-                    / (ca * (1.0 - v).powi(2) * v)
+                    / (ca * t1)
                 + (8.0
                     * cf
                     * lv
@@ -464,38 +496,35 @@ pub fn avwpl(j0: usize, _w: f64, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         - 9.0 * ca.powi(3) * v.powi(3)
                         + 5.0 * ca * v.powi(4)
                         + 3.0 * ca.powi(3) * v.powi(4)))
-                    / (ca * (1.0 - v).powi(2) * v)
+                    / (ca * t1)
         }
+        // 12: qqbar -> gg (same-flavor annihilation), hadron from gluon
         12 => {
-            (-16.0
-                * ca.powi(2)
-                * cf
-                * lmss
-                * (1.0 - 2.0 * v + 2.0 * v.powi(2))
-                * (cf - ca * v + ca * v.powi(2)))
+            let t1 = 1.0 - 2.0 * v + 2.0 * v.powi(2);
+            (-16.0 * ca.powi(2) * cf * lmss * (t1) * (cf - ca * v + ca * v.powi(2)))
                 / ((1.0 - v) * v.powi(2))
                 + (22.0
                     * ca
                     * cf
-                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
+                    * (t1)
                     * (-2.0 * ca * cf + 2.0 * ca.powi(2) * v - 2.0 * ca.powi(2) * v.powi(2)))
                     / (3.0 * (1.0 - v) * v.powi(2))
                 + (16.0
                     * cf.powi(2)
                     * lms
-                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
+                    * (t1)
                     * (-2.0 * ca * cf + 2.0 * ca.powi(2) * v - 2.0 * ca.powi(2) * v.powi(2)))
                     / ((1.0 - v) * v.powi(2))
                 - (4.0
                     * cf
                     * nf
-                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
+                    * (t1)
                     * (-2.0 * ca * cf + 2.0 * ca.powi(2) * v - 2.0 * ca.powi(2) * v.powi(2)))
                     / (3.0 * (1.0 - v) * v.powi(2))
                 - (8.0
                     * cf
                     * l1v
-                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
+                    * (t1)
                     * (1.0 + ca.powi(4) + 2.0 * ca.powi(2) * v
                         - 2.0 * ca.powi(4) * v
                         - 2.0 * ca.powi(2) * v.powi(2)))
@@ -503,39 +532,41 @@ pub fn avwpl(j0: usize, _w: f64, v: f64, s: f64, ctx: &MeContext) -> f64 {
                 + (8.0
                     * cf
                     * lv
-                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
+                    * (t1)
                     * (1.0 - 5.0 * ca.powi(2) + 4.0 * ca.powi(4) + 2.0 * ca.powi(2) * v
                         - 8.0 * ca.powi(4) * v
                         - 2.0 * ca.powi(2) * v.powi(2)
                         + 6.0 * ca.powi(4) * v.powi(2)))
                     / (ca * (1.0 - v) * v.powi(2))
         }
+        // 13: qg -> qg (Compton), hadron from quark
         13 => {
+            let t1 = (1.0 - v).powi(2) * v.powi(2);
             (22.0
                 * ca
                 * cf
                 * (1.0 + v.powi(2))
                 * (-2.0 * ca * cf - 2.0 * v + v.powi(2) - ca.powi(2) * v.powi(2)))
-                / (3.0 * (1.0 - v).powi(2) * v.powi(2))
+                / (3.0 * t1)
                 - (4.0
                     * (1.0 - 3.0 * ca.powi(2))
                     * cf
                     * lms
                     * (1.0 + v.powi(2))
                     * (-2.0 * ca * cf - 2.0 * v + v.powi(2) - ca.powi(2) * v.powi(2)))
-                    / (ca * (1.0 - v).powi(2) * v.powi(2))
+                    / (ca * t1)
                 - (4.0
                     * cf
                     * nf
                     * (1.0 + v.powi(2))
                     * (-2.0 * ca * cf - 2.0 * v + v.powi(2) - ca.powi(2) * v.powi(2)))
-                    / (3.0 * (1.0 - v).powi(2) * v.powi(2))
+                    / (3.0 * t1)
                 - (8.0
                     * cf.powi(2)
                     * lmss
                     * (1.0 + v.powi(2))
                     * (2.0 * ca * cf + 2.0 * v - v.powi(2) + ca.powi(2) * v.powi(2)))
-                    / ((1.0 - v).powi(2) * v.powi(2))
+                    / (t1)
                 + (8.0
                     * cf
                     * l1v
@@ -544,7 +575,7 @@ pub fn avwpl(j0: usize, _w: f64, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         + v.powi(2)
                         + 2.0 * ca.powi(2) * v.powi(2)
                         - ca.powi(4) * v.powi(2)))
-                    / (ca * (1.0 - v).powi(2) * v.powi(2))
+                    / (ca * t1)
                 + (8.0
                     * cf
                     * lv
@@ -554,13 +585,15 @@ pub fn avwpl(j0: usize, _w: f64, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         + v.powi(2)
                         - 5.0 * ca.powi(2) * v.powi(2)
                         + 2.0 * ca.powi(4) * v.powi(2)))
-                    / (ca * (1.0 - v).powi(2) * v.powi(2))
+                    / (ca * t1)
         }
+        // 14: qg -> qg (Compton), hadron from gluon
         14 => {
-            (-16.0 * ca.powi(3) * cf * l1v * (1.0 - v) * (2.0 - 2.0 * v + v.powi(2))) / v.powi(3)
+            let t1 = 2.0 - 2.0 * v + v.powi(2);
+            (-16.0 * ca.powi(3) * cf * l1v * (1.0 - v) * (t1)) / v.powi(3)
                 - (6.0
                     * cf.powi(2)
-                    * (2.0 - 2.0 * v + v.powi(2))
+                    * (t1)
                     * (2.0 * ca.powi(2) - 2.0 * ca.powi(2) * v - v.powi(2)
                         + ca.powi(2) * v.powi(2)))
                     / ((1.0 - v) * v.powi(3))
@@ -568,7 +601,7 @@ pub fn avwpl(j0: usize, _w: f64, v: f64, s: f64, ctx: &MeContext) -> f64 {
                     * (1.0 - 3.0 * ca.powi(2))
                     * cf
                     * lms
-                    * (2.0 - 2.0 * v + v.powi(2))
+                    * (t1)
                     * (2.0 * ca.powi(2) - 2.0 * ca.powi(2) * v - v.powi(2)
                         + ca.powi(2) * v.powi(2)))
                     / (ca * (1.0 - v) * v.powi(3))
@@ -576,14 +609,14 @@ pub fn avwpl(j0: usize, _w: f64, v: f64, s: f64, ctx: &MeContext) -> f64 {
                     * ca
                     * cf
                     * lmss
-                    * (2.0 - 2.0 * v + v.powi(2))
+                    * (t1)
                     * (2.0 * ca.powi(2) - 2.0 * ca.powi(2) * v - v.powi(2)
                         + ca.powi(2) * v.powi(2)))
                     / ((1.0 - v) * v.powi(3))
                 - (4.0
                     * cf
                     * lv
-                    * (2.0 - 2.0 * v + v.powi(2))
+                    * (t1)
                     * (2.0 * ca.powi(2) - 18.0 * ca.powi(4) - 2.0 * ca.powi(2) * v
                         + 18.0 * ca.powi(4) * v
                         - v.powi(2)
@@ -591,42 +624,36 @@ pub fn avwpl(j0: usize, _w: f64, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         - 9.0 * ca.powi(4) * v.powi(2)))
                     / (ca * (1.0 - v) * v.powi(3))
         }
+        // 15: gg -> gg, hadron from gluon
         15 => {
+            let t1 = (1.0 - v).powi(2) * v.powi(3);
             (-256.0 * ca.powi(3) * l1v * (1.0 - v + v.powi(2)).powi(2)) / v.powi(3)
-                - (704.0 * ca.powi(3) * (1.0 - v + v.powi(2)).powi(3))
-                    / (3.0 * (1.0 - v).powi(2) * v.powi(3))
-                - (512.0 * ca.powi(3) * lms * (1.0 - v + v.powi(2)).powi(3))
-                    / ((1.0 - v).powi(2) * v.powi(3))
-                - (256.0 * ca.powi(3) * lmss * (1.0 - v + v.powi(2)).powi(3))
-                    / ((1.0 - v).powi(2) * v.powi(3))
-                + (128.0 * ca.powi(3) * nf * (1.0 - v + v.powi(2)).powi(3))
-                    / (9.0 * (1.0 - v).powi(2) * v.powi(3))
+                - (704.0 * ca.powi(3) * (1.0 - v + v.powi(2)).powi(3)) / (3.0 * t1)
+                - (512.0 * ca.powi(3) * lms * (1.0 - v + v.powi(2)).powi(3)) / (t1)
+                - (256.0 * ca.powi(3) * lmss * (1.0 - v + v.powi(2)).powi(3)) / (t1)
+                + (128.0 * ca.powi(3) * nf * (1.0 - v + v.powi(2)).powi(3)) / (9.0 * t1)
                 + (256.0
                     * ca.powi(3)
                     * lv
                     * (1.0 - v + v.powi(2)).powi(2)
                     * (5.0 - 5.0 * v + 4.0 * v.powi(2)))
-                    / ((1.0 - v).powi(2) * v.powi(3))
+                    / (t1)
         }
+        // 16: gg -> qqbar, hadron from quark
         16 => {
-            (-16.0 * ca.powi(3) * cf * l1v * (1.0 - v) * (1.0 - 2.0 * v + 2.0 * v.powi(2)))
-                / v.powi(2)
-                - (16.0
-                    * ca
-                    * cf.powi(2)
-                    * lmss
-                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
-                    * (cf - ca * v + ca * v.powi(2)))
+            let t1 = 1.0 - 2.0 * v + 2.0 * v.powi(2);
+            (-16.0 * ca.powi(3) * cf * l1v * (1.0 - v) * (t1)) / v.powi(2)
+                - (16.0 * ca * cf.powi(2) * lmss * (t1) * (cf - ca * v + ca * v.powi(2)))
                     / ((1.0 - v) * v.powi(2))
                 + (6.0
                     * cf.powi(2)
-                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
+                    * (t1)
                     * (-2.0 * ca * cf + 2.0 * ca.powi(2) * v - 2.0 * ca.powi(2) * v.powi(2)))
                     / ((1.0 - v) * v.powi(2))
                 + (4.0
                     * cf
                     * lv
-                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
+                    * (t1)
                     * (1.0 - 10.0 * ca.powi(2) + 9.0 * ca.powi(4) + 2.0 * ca.powi(2) * v
                         - 18.0 * ca.powi(4) * v
                         - 2.0 * ca.powi(2) * v.powi(2)
@@ -648,7 +675,8 @@ pub fn avwpl(j0: usize, _w: f64, v: f64, s: f64, ctx: &MeContext) -> f64 {
     }
 }
 
-/// `AVDEL(V,S)`: the `delta(1-W)` term, selected by channel `j0`.
+/// `AVDEL(V,S)`: the `delta(1-W)` term, selected by channel `j0`. See
+/// the channel table on [`fbor`] for what each index physically represents.
 #[must_use]
 pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
     let ca = ctx.ca;
@@ -666,44 +694,46 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
     let nf = 2.0 * (ctx.nf / 2.0);
 
     match j0 {
+        // 1: qq' -> qq' (unlike flavor, elastic), hadron from quark
         1 => {
-            (-12.0 * ca * cf.powi(2) * lms * (1.0 + v.powi(2))) / ((1.0 - v).powi(2) * v)
-                + (8.0 * ca * cf.powi(2) * l1v * lms * (1.0 + v.powi(2))) / ((1.0 - v).powi(2) * v)
-                - (6.0 * ca * cf.powi(2) * lmss * (1.0 + v.powi(2))) / ((1.0 - v).powi(2) * v)
-                + (44.0 * ca.powi(2) * cf * lmu * (1.0 + v.powi(2))) / (3.0 * (1.0 - v).powi(2) * v)
-                - (8.0 * ca * cf.powi(2) * lms * lv * (1.0 + v.powi(2))) / ((1.0 - v).powi(2) * v)
-                - (8.0 * ca * cf.powi(2) * lmss * lv * (1.0 + v.powi(2))) / ((1.0 - v).powi(2) * v)
-                - (40.0 * ca * cf * nf * (1.0 + v.powi(2))) / (9.0 * (1.0 - v).powi(2) * v)
-                + (8.0 * ca * cf * l1v * nf * (1.0 + v.powi(2))) / (3.0 * (1.0 - v).powi(2) * v)
-                - (8.0 * ca * cf * lmu * nf * (1.0 + v.powi(2))) / (3.0 * (1.0 - v).powi(2) * v)
+            let t1 = (1.0 - v).powi(2) * v;
+            (-12.0 * ca * cf.powi(2) * lms * (1.0 + v.powi(2))) / (t1)
+                + (8.0 * ca * cf.powi(2) * l1v * lms * (1.0 + v.powi(2))) / (t1)
+                - (6.0 * ca * cf.powi(2) * lmss * (1.0 + v.powi(2))) / (t1)
+                + (44.0 * ca.powi(2) * cf * lmu * (1.0 + v.powi(2))) / (3.0 * t1)
+                - (8.0 * ca * cf.powi(2) * lms * lv * (1.0 + v.powi(2))) / (t1)
+                - (8.0 * ca * cf.powi(2) * lmss * lv * (1.0 + v.powi(2))) / (t1)
+                - (40.0 * ca * cf * nf * (1.0 + v.powi(2))) / (9.0 * t1)
+                + (8.0 * ca * cf * l1v * nf * (1.0 + v.powi(2))) / (3.0 * t1)
+                - (8.0 * ca * cf * lmu * nf * (1.0 + v.powi(2))) / (3.0 * t1)
                 - (2.0
                     * cf
                     * lv.powi(2)
                     * (16.0 - 9.0 * ca.powi(2) + 20.0 * v.powi(2) - 11.0 * ca.powi(2) * v.powi(2)))
-                    / ((1.0 - v).powi(2) * v)
+                    / (t1)
                 + (4.0
                     * cf
                     * l1v
                     * lv
                     * (5.0 - 4.0 * ca.powi(2) + 9.0 * v.powi(2) - 6.0 * ca.powi(2) * v.powi(2)))
-                    / ((1.0 - v).powi(2) * v)
+                    / (t1)
                 - (4.0
                     * cf
                     * l1v
                     * (3.0 + 5.0 * ca.powi(2) - 3.0 * ca.powi(2) * v
                         + 15.0 * v.powi(2)
                         + 2.0 * ca.powi(2) * v.powi(2)))
-                    / (3.0 * (1.0 - v).powi(2) * v)
+                    / (3.0 * t1)
                 - (cf
                     * lv
                     * (5.0 - ca.powi(2) - 8.0 * v + 4.0 * ca.powi(2) * v - 3.0 * v.powi(2)
                         + 3.0 * ca.powi(2) * v.powi(2)))
-                    / ((1.0 - v).powi(2) * v)
+                    / (t1)
                 + (2.0
                     * cf
                     * l1v.powi(2)
                     * (5.0 + 2.0 * ca.powi(2) - 3.0 * v.powi(2) + 4.0 * ca.powi(2) * v.powi(2)))
-                    / ((1.0 - v).powi(2) * v)
+                    / (t1)
                 + (cf
                     * (225.0
                         + 115.0 * ca.powi(2)
@@ -713,47 +743,50 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         + 115.0 * ca.powi(2) * v.powi(2)
                         - 30.0 * pi2 * v.powi(2)
                         + 48.0 * ca.powi(2) * pi2 * v.powi(2)))
-                    / (9.0 * (1.0 - v).powi(2) * v)
+                    / (9.0 * t1)
         }
+        // 2: qq' -> qq' + extra gluon, hadron from gluon
         2 => 0.0,
+        // 3: qqbar' -> qqbar' (unlike flavor, elastic), hadron from quark
         3 => {
-            (-12.0 * ca * cf.powi(2) * lms * (1.0 + v.powi(2))) / ((1.0 - v).powi(2) * v)
-                + (8.0 * ca * cf.powi(2) * l1v * lms * (1.0 + v.powi(2))) / ((1.0 - v).powi(2) * v)
-                - (6.0 * ca * cf.powi(2) * lmss * (1.0 + v.powi(2))) / ((1.0 - v).powi(2) * v)
-                + (44.0 * ca.powi(2) * cf * lmu * (1.0 + v.powi(2))) / (3.0 * (1.0 - v).powi(2) * v)
-                - (8.0 * ca * cf.powi(2) * lms * lv * (1.0 + v.powi(2))) / ((1.0 - v).powi(2) * v)
-                - (8.0 * ca * cf.powi(2) * lmss * lv * (1.0 + v.powi(2))) / ((1.0 - v).powi(2) * v)
-                - (40.0 * ca * cf * nf * (1.0 + v.powi(2))) / (9.0 * (1.0 - v).powi(2) * v)
-                + (8.0 * ca * cf * l1v * nf * (1.0 + v.powi(2))) / (3.0 * (1.0 - v).powi(2) * v)
-                - (8.0 * ca * cf * lmu * nf * (1.0 + v.powi(2))) / (3.0 * (1.0 - v).powi(2) * v)
+            let t1 = (1.0 - v).powi(2) * v;
+            (-12.0 * ca * cf.powi(2) * lms * (1.0 + v.powi(2))) / (t1)
+                + (8.0 * ca * cf.powi(2) * l1v * lms * (1.0 + v.powi(2))) / (t1)
+                - (6.0 * ca * cf.powi(2) * lmss * (1.0 + v.powi(2))) / (t1)
+                + (44.0 * ca.powi(2) * cf * lmu * (1.0 + v.powi(2))) / (3.0 * t1)
+                - (8.0 * ca * cf.powi(2) * lms * lv * (1.0 + v.powi(2))) / (t1)
+                - (8.0 * ca * cf.powi(2) * lmss * lv * (1.0 + v.powi(2))) / (t1)
+                - (40.0 * ca * cf * nf * (1.0 + v.powi(2))) / (9.0 * t1)
+                + (8.0 * ca * cf * l1v * nf * (1.0 + v.powi(2))) / (3.0 * t1)
+                - (8.0 * ca * cf * lmu * nf * (1.0 + v.powi(2))) / (3.0 * t1)
                 + (cf
                     * lv
                     * (11.0 - 3.0 * ca.powi(2) - 8.0 * v + 3.0 * v.powi(2)
                         - 3.0 * ca.powi(2) * v.powi(2)))
-                    / ((1.0 - v).powi(2) * v)
+                    / (t1)
                 - (2.0
                     * cf
                     * l1v.powi(2)
                     * (3.0 - 4.0 * ca.powi(2) - 5.0 * v.powi(2) - 2.0 * ca.powi(2) * v.powi(2)))
-                    / ((1.0 - v).powi(2) * v)
+                    / (t1)
                 + (4.0
                     * cf
                     * lv.powi(2)
                     * (6.0 + ca.powi(2) + 8.0 * v.powi(2) + ca.powi(2) * v.powi(2)))
-                    / ((1.0 - v).powi(2) * v)
+                    / (t1)
                 - (4.0
                     * cf
                     * l1v
                     * lv
                     * (7.0 + ca.powi(2) + 11.0 * v.powi(2) + ca.powi(2) * v.powi(2)))
-                    / ((1.0 - v).powi(2) * v)
+                    / (t1)
                 - (4.0
                     * cf
                     * l1v
                     * (15.0 + 2.0 * ca.powi(2) - 3.0 * ca.powi(2) * v
                         + 3.0 * v.powi(2)
                         + 5.0 * ca.powi(2) * v.powi(2)))
-                    / (3.0 * (1.0 - v).powi(2) * v)
+                    / (3.0 * t1)
                 + (cf
                     * (225.0 + 115.0 * ca.powi(2) - 30.0 * pi2
                         + 30.0 * ca.powi(2) * pi2
@@ -761,23 +794,23 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         + 115.0 * ca.powi(2) * v.powi(2)
                         + 42.0 * pi2 * v.powi(2)
                         + 30.0 * ca.powi(2) * pi2 * v.powi(2)))
-                    / (9.0 * (1.0 - v).powi(2) * v)
+                    / (9.0 * t1)
         }
+        // 4: qqbar' -> qqbar' + extra gluon, hadron from gluon
         4 => 0.0,
+        // 5: qqbar -> q'qbar' (annihilation, unlike flavor), hadron from quark
         5 => {
-            -4.0 * (2.0 - ca.powi(2)) * cf * l1v
-                - (12.0 * ca * cf.powi(2) * lms * (1.0 - 2.0 * v + 2.0 * v.powi(2))) / v
-                + (8.0 * ca * cf.powi(2) * l1v * lms * (1.0 - 2.0 * v + 2.0 * v.powi(2))) / v
-                - (6.0 * ca * cf.powi(2) * lmss * (1.0 - 2.0 * v + 2.0 * v.powi(2))) / v
-                + (44.0 * ca.powi(2) * cf * lmu * (1.0 - 2.0 * v + 2.0 * v.powi(2))) / (3.0 * v)
-                - (4.0 * (7.0 - ca.powi(2)) * cf * l1v * lv * (1.0 - 2.0 * v + 2.0 * v.powi(2))) / v
-                - (8.0 * ca * cf.powi(2) * lms * lv * (1.0 - 2.0 * v + 2.0 * v.powi(2))) / v
-                - (8.0 * ca * cf.powi(2) * lmss * lv * (1.0 - 2.0 * v + 2.0 * v.powi(2))) / v
-                - (40.0 * ca * cf * nf * (1.0 - 2.0 * v + 2.0 * v.powi(2))) / (9.0 * v)
-                - (8.0 * ca * cf * lmu * nf * (1.0 - 2.0 * v + 2.0 * v.powi(2))) / (3.0 * v)
-                + (cf
-                    * (225.0 + 115.0 * ca.powi(2) - 30.0 * pi2 - 6.0 * ca.powi(2) * pi2)
-                    * (1.0 - 2.0 * v + 2.0 * v.powi(2)))
+            let t1 = 1.0 - 2.0 * v + 2.0 * v.powi(2);
+            -4.0 * (2.0 - ca.powi(2)) * cf * l1v - (12.0 * ca * cf.powi(2) * lms * (t1)) / v
+                + (8.0 * ca * cf.powi(2) * l1v * lms * (t1)) / v
+                - (6.0 * ca * cf.powi(2) * lmss * (t1)) / v
+                + (44.0 * ca.powi(2) * cf * lmu * (t1)) / (3.0 * v)
+                - (4.0 * (7.0 - ca.powi(2)) * cf * l1v * lv * (t1)) / v
+                - (8.0 * ca * cf.powi(2) * lms * lv * (t1)) / v
+                - (8.0 * ca * cf.powi(2) * lmss * lv * (t1)) / v
+                - (40.0 * ca * cf * nf * (t1)) / (9.0 * v)
+                - (8.0 * ca * cf * lmu * nf * (t1)) / (3.0 * v)
+                + (cf * (225.0 + 115.0 * ca.powi(2) - 30.0 * pi2 - 6.0 * ca.powi(2) * pi2) * (t1))
                     / (9.0 * v)
                 + (cf
                     * lv
@@ -798,7 +831,9 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         + 2.0 * ca.powi(2) * v.powi(2)))
                     / v
         }
+        // 6: qq -> qq (identical flavor, elastic), hadron from quark
         6 => {
+            let t1 = (1.0 - v).powi(2) * v.powi(3);
             (-8.0 * cf * l1v * nf * (1.0 - v - ca * v - ca * v.powi(3)))
                 / (3.0 * (1.0 - v).powi(2) * v.powi(2))
                 + (8.0
@@ -825,7 +860,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                     * (ca - v - 3.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2)
                         - 2.0 * ca * v.powi(3)
                         + ca * v.powi(4)))
-                    / ((1.0 - v).powi(2) * v.powi(3))
+                    / (t1)
                 + (16.0
                     * cf.powi(2)
                     * l1v
@@ -833,14 +868,14 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                     * (ca - v - 3.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2)
                         - 2.0 * ca * v.powi(3)
                         + ca * v.powi(4)))
-                    / ((1.0 - v).powi(2) * v.powi(3))
+                    / (t1)
                 - (12.0
                     * cf.powi(2)
                     * lmss
                     * (ca - v - 3.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2)
                         - 2.0 * ca * v.powi(3)
                         + ca * v.powi(4)))
-                    / ((1.0 - v).powi(2) * v.powi(3))
+                    / (t1)
                 + (88.0
                     * ca
                     * cf
@@ -848,7 +883,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                     * (ca - v - 3.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2)
                         - 2.0 * ca * v.powi(3)
                         + ca * v.powi(4)))
-                    / (3.0 * (1.0 - v).powi(2) * v.powi(3))
+                    / (3.0 * t1)
                 - (16.0
                     * cf.powi(2)
                     * lms
@@ -856,7 +891,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                     * (ca - v - 3.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2)
                         - 2.0 * ca * v.powi(3)
                         + ca * v.powi(4)))
-                    / ((1.0 - v).powi(2) * v.powi(3))
+                    / (t1)
                 - (16.0
                     * cf.powi(2)
                     * lmss
@@ -864,14 +899,14 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                     * (ca - v - 3.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2)
                         - 2.0 * ca * v.powi(3)
                         + ca * v.powi(4)))
-                    / ((1.0 - v).powi(2) * v.powi(3))
+                    / (t1)
                 - (80.0
                     * cf
                     * nf
                     * (ca - v - 3.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2)
                         - 2.0 * ca * v.powi(3)
                         + ca * v.powi(4)))
-                    / (9.0 * (1.0 - v).powi(2) * v.powi(3))
+                    / (9.0 * t1)
                 - (16.0
                     * cf
                     * lmu
@@ -879,7 +914,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                     * (ca - v - 3.0 * ca * v + v.powi(2) + 4.0 * ca * v.powi(2)
                         - 2.0 * ca * v.powi(3)
                         + ca * v.powi(4)))
-                    / (3.0 * (1.0 - v).powi(2) * v.powi(3))
+                    / (3.0 * t1)
                 - (2.0
                     * cf
                     * lv.powi(2)
@@ -896,7 +931,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         + 2.0 * v.powi(4)
                         + 32.0 * ca * v.powi(4)
                         - 16.0 * ca.powi(3) * v.powi(4)))
-                    / (ca * (1.0 - v).powi(2) * v.powi(3))
+                    / (ca * t1)
                 + (4.0
                     * cf
                     * l1v
@@ -914,7 +949,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         + 2.0 * v.powi(4)
                         + 14.0 * ca * v.powi(4)
                         - 8.0 * ca.powi(3) * v.powi(4)))
-                    / (ca * (1.0 - v).powi(2) * v.powi(3))
+                    / (ca * t1)
                 - (2.0
                     * cf
                     * l1v.powi(2)
@@ -931,7 +966,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         + 2.0 * v.powi(4)
                         + 6.0 * ca * v.powi(4)
                         - 6.0 * ca.powi(3) * v.powi(4)))
-                    / (ca * (1.0 - v).powi(2) * v.powi(3))
+                    / (ca * t1)
                 - (2.0
                     * cf
                     * lv
@@ -949,7 +984,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         - 22.0 * ca.powi(3) * v.powi(3)
                         + 21.0 * ca * v.powi(4)
                         + 13.0 * ca.powi(3) * v.powi(4)))
-                    / (3.0 * ca * (1.0 - v).powi(2) * v.powi(3))
+                    / (3.0 * ca * t1)
                 + (2.0
                     * cf
                     * (225.0 * ca + 115.0 * ca.powi(3) + 6.0 * ca * pi2 + 30.0 * ca.powi(3) * pi2
@@ -979,12 +1014,13 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         - 18.0 * pi2 * v.powi(4)
                         - 30.0 * ca * pi2 * v.powi(4)
                         + 48.0 * ca.powi(3) * pi2 * v.powi(4)))
-                    / (9.0 * ca * (1.0 - v).powi(2) * v.powi(3))
+                    / (9.0 * ca * t1)
         }
         7..=10 => 0.0,
+        // 11: qqbar -> qqbar (same flavor, elastic + annihilation), hadron from quark
         11 => {
-            (8.0 * cf * l1v * nf * (ca + v.powi(2) + ca * v.powi(2) - v.powi(3)))
-                / (3.0 * (1.0 - v).powi(2) * v)
+            let t1 = (1.0 - v).powi(2) * v;
+            (8.0 * cf * l1v * nf * (ca + v.powi(2) + ca * v.powi(2) - v.powi(3))) / (3.0 * t1)
                 - (4.0
                     * cf
                     * l1v
@@ -997,7 +1033,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         + 6.0 * ca * v.powi(3)
                         - 2.0 * ca.powi(2) * v.powi(3)
                         - 3.0 * ca.powi(3) * v.powi(3)))
-                    / (3.0 * ca * (1.0 - v).powi(2) * v)
+                    / (3.0 * ca * t1)
                 - (24.0
                     * cf.powi(2)
                     * lms
@@ -1005,7 +1041,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         - v.powi(3)
                         - 3.0 * ca * v.powi(3)
                         + ca * v.powi(4)))
-                    / ((1.0 - v).powi(2) * v)
+                    / (t1)
                 + (16.0
                     * cf.powi(2)
                     * l1v
@@ -1014,7 +1050,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         - v.powi(3)
                         - 3.0 * ca * v.powi(3)
                         + ca * v.powi(4)))
-                    / ((1.0 - v).powi(2) * v)
+                    / (t1)
                 - (12.0
                     * cf.powi(2)
                     * lmss
@@ -1022,7 +1058,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         - v.powi(3)
                         - 3.0 * ca * v.powi(3)
                         + ca * v.powi(4)))
-                    / ((1.0 - v).powi(2) * v)
+                    / (t1)
                 + (88.0
                     * ca
                     * cf
@@ -1031,7 +1067,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         - v.powi(3)
                         - 3.0 * ca * v.powi(3)
                         + ca * v.powi(4)))
-                    / (3.0 * (1.0 - v).powi(2) * v)
+                    / (3.0 * t1)
                 - (16.0
                     * cf.powi(2)
                     * lms
@@ -1040,7 +1076,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         - v.powi(3)
                         - 3.0 * ca * v.powi(3)
                         + ca * v.powi(4)))
-                    / ((1.0 - v).powi(2) * v)
+                    / (t1)
                 - (16.0
                     * cf.powi(2)
                     * lmss
@@ -1049,7 +1085,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         - v.powi(3)
                         - 3.0 * ca * v.powi(3)
                         + ca * v.powi(4)))
-                    / ((1.0 - v).powi(2) * v)
+                    / (t1)
                 - (80.0
                     * cf
                     * nf
@@ -1057,7 +1093,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         - v.powi(3)
                         - 3.0 * ca * v.powi(3)
                         + ca * v.powi(4)))
-                    / (9.0 * (1.0 - v).powi(2) * v)
+                    / (9.0 * t1)
                 - (16.0
                     * cf
                     * lmu
@@ -1066,7 +1102,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         - v.powi(3)
                         - 3.0 * ca * v.powi(3)
                         + ca * v.powi(4)))
-                    / (3.0 * (1.0 - v).powi(2) * v)
+                    / (3.0 * t1)
                 + (2.0
                     * cf
                     * lv
@@ -1082,7 +1118,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         + 9.0 * ca.powi(3) * v.powi(3)
                         + 3.0 * ca * v.powi(4)
                         - 3.0 * ca.powi(3) * v.powi(4)))
-                    / (ca * (1.0 - v).powi(2) * v)
+                    / (ca * t1)
                 - (2.0
                     * cf
                     * l1v.powi(2)
@@ -1098,7 +1134,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         + 8.0 * ca.powi(3) * v.powi(3)
                         + 2.0 * ca * v.powi(4)
                         - 2.0 * ca.powi(3) * v.powi(4)))
-                    / (ca * (1.0 - v).powi(2) * v)
+                    / (ca * t1)
                 - (8.0
                     * cf
                     * l1v
@@ -1115,7 +1151,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         + 3.0 * ca.powi(3) * v.powi(3)
                         + 7.0 * ca * v.powi(4)
                         - ca.powi(3) * v.powi(4)))
-                    / (ca * (1.0 - v).powi(2) * v)
+                    / (ca * t1)
                 + (8.0
                     * cf
                     * lv.powi(2)
@@ -1130,7 +1166,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         - 3.0 * ca.powi(3) * v.powi(3)
                         + 7.0 * ca * v.powi(4)
                         + ca.powi(3) * v.powi(4)))
-                    / (ca * (1.0 - v).powi(2) * v)
+                    / (ca * t1)
                 + (2.0
                     * cf
                     * (225.0 * ca + 115.0 * ca.powi(3) - 30.0 * ca * pi2 + 12.0 * ca.powi(3) * pi2
@@ -1158,92 +1194,54 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         + 115.0 * ca.powi(3) * v.powi(4)
                         - 30.0 * ca * pi2 * v.powi(4)
                         - 6.0 * ca.powi(3) * pi2 * v.powi(4)))
-                    / (9.0 * ca * (1.0 - v).powi(2) * v)
+                    / (9.0 * ca * t1)
         }
+        // 12: qqbar -> gg (same-flavor annihilation), hadron from gluon
         12 => {
+            let t1 = 1.0 - 2.0 * v + 2.0 * v.powi(2);
             (2.0 * cf
                 * l1v
                 * (2.0 + 2.0 * ca.powi(2) + v - 5.0 * ca.powi(2) * v)
                 * (1.0 - ca.powi(2) * v))
                 / (ca * (1.0 - v) * v)
-                + (16.0
-                    * ca
-                    * cf.powi(2)
-                    * l1v
-                    * lms
-                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
-                    * (cf - ca * v + ca * v.powi(2)))
+                + (16.0 * ca * cf.powi(2) * l1v * lms * (t1) * (cf - ca * v + ca * v.powi(2)))
                     / ((1.0 - v) * v.powi(2))
-                - (44.0
-                    * ca.powi(2)
-                    * cf
-                    * lmss
-                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
-                    * (cf - ca * v + ca * v.powi(2)))
+                - (44.0 * ca.powi(2) * cf * lmss * (t1) * (cf - ca * v + ca * v.powi(2)))
                     / (3.0 * (1.0 - v) * v.powi(2))
-                + (88.0
-                    * ca.powi(2)
-                    * cf
-                    * lmu
-                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
-                    * (cf - ca * v + ca * v.powi(2)))
+                + (88.0 * ca.powi(2) * cf * lmu * (t1) * (cf - ca * v + ca * v.powi(2)))
                     / (3.0 * (1.0 - v) * v.powi(2))
-                - (16.0
-                    * ca
-                    * cf.powi(2)
-                    * lms
-                    * lv
-                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
-                    * (cf - ca * v + ca * v.powi(2)))
+                - (16.0 * ca * cf.powi(2) * lms * lv * (t1) * (cf - ca * v + ca * v.powi(2)))
                     / ((1.0 - v) * v.powi(2))
-                - (16.0
-                    * ca.powi(2)
-                    * cf
-                    * lmss
-                    * lv
-                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
-                    * (cf - ca * v + ca * v.powi(2)))
+                - (16.0 * ca.powi(2) * cf * lmss * lv * (t1) * (cf - ca * v + ca * v.powi(2)))
                     / ((1.0 - v) * v.powi(2))
-                + (8.0
-                    * ca
-                    * cf
-                    * lmss
-                    * nf
-                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
-                    * (cf - ca * v + ca * v.powi(2)))
+                + (8.0 * ca * cf * lmss * nf * (t1) * (cf - ca * v + ca * v.powi(2)))
                     / (3.0 * (1.0 - v) * v.powi(2))
-                - (16.0
-                    * ca
-                    * cf
-                    * lmu
-                    * nf
-                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
-                    * (cf - ca * v + ca * v.powi(2)))
+                - (16.0 * ca * cf * lmu * nf * (t1) * (cf - ca * v + ca * v.powi(2)))
                     / (3.0 * (1.0 - v) * v.powi(2))
                 + (12.0
                     * cf.powi(2)
                     * lms
-                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
+                    * (t1)
                     * (-2.0 * ca * cf + 2.0 * ca.powi(2) * v - 2.0 * ca.powi(2) * v.powi(2)))
                     / ((1.0 - v) * v.powi(2))
                 + (20.0
                     * cf
                     * nf
-                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
+                    * (t1)
                     * (-2.0 * ca * cf + 2.0 * ca.powi(2) * v - 2.0 * ca.powi(2) * v.powi(2)))
                     / (9.0 * (1.0 - v) * v.powi(2))
                 - (4.0
                     * cf
                     * lv
                     * nf
-                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
+                    * (t1)
                     * (-2.0 * ca * cf + 2.0 * ca.powi(2) * v - 2.0 * ca.powi(2) * v.powi(2)))
                     / (3.0 * (1.0 - v) * v.powi(2))
                 - (4.0
                     * cf
                     * l1v
                     * lv
-                    * (1.0 - 2.0 * v + 2.0 * v.powi(2))
+                    * (t1)
                     * (1.0 - 4.0 * ca.powi(2) + 3.0 * ca.powi(4) + 2.0 * ca.powi(2) * v
                         - 6.0 * ca.powi(4) * v
                         - 2.0 * ca.powi(2) * v.powi(2)
@@ -1315,33 +1313,35 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         - 12.0 * ca.powi(4) * pi2 * v.powi(4)))
                     / (9.0 * ca * (1.0 - v) * v.powi(2))
         }
+        // 13: qg -> qg (Compton), hadron from quark
         13 => {
+            let t1 = (1.0 - v).powi(2) * v.powi(2);
             -((9.0 - 31.0 * ca.powi(2))
                 * cf
                 * lms
                 * (1.0 + v.powi(2))
                 * (-2.0 * ca * cf - 2.0 * v + v.powi(2) - ca.powi(2) * v.powi(2)))
-                / (3.0 * ca * (1.0 - v).powi(2) * v.powi(2))
+                / (3.0 * ca * t1)
                 + (20.0
                     * cf
                     * nf
                     * (1.0 + v.powi(2))
                     * (-2.0 * ca * cf - 2.0 * v + v.powi(2) - ca.powi(2) * v.powi(2)))
-                    / (9.0 * (1.0 - v).powi(2) * v.powi(2))
+                    / (9.0 * t1)
                 - (4.0
                     * cf
                     * lms
                     * nf
                     * (1.0 + v.powi(2))
                     * (-2.0 * ca * cf - 2.0 * v + v.powi(2) - ca.powi(2) * v.powi(2)))
-                    / (3.0 * (1.0 - v).powi(2) * v.powi(2))
+                    / (3.0 * t1)
                 - (4.0
                     * cf
                     * lv
                     * nf
                     * (1.0 + v.powi(2))
                     * (-2.0 * ca * cf - 2.0 * v + v.powi(2) - ca.powi(2) * v.powi(2)))
-                    / (3.0 * (1.0 - v).powi(2) * v.powi(2))
+                    / (3.0 * t1)
                 + (8.0
                     * ca
                     * cf
@@ -1349,20 +1349,20 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                     * lms
                     * (1.0 + v.powi(2))
                     * (2.0 * ca * cf + 2.0 * v - v.powi(2) + ca.powi(2) * v.powi(2)))
-                    / ((1.0 - v).powi(2) * v.powi(2))
+                    / (t1)
                 - (6.0
                     * cf.powi(2)
                     * lmss
                     * (1.0 + v.powi(2))
                     * (2.0 * ca * cf + 2.0 * v - v.powi(2) + ca.powi(2) * v.powi(2)))
-                    / ((1.0 - v).powi(2) * v.powi(2))
+                    / (t1)
                 + (44.0
                     * ca
                     * cf
                     * lmu
                     * (1.0 + v.powi(2))
                     * (2.0 * ca * cf + 2.0 * v - v.powi(2) + ca.powi(2) * v.powi(2)))
-                    / (3.0 * (1.0 - v).powi(2) * v.powi(2))
+                    / (3.0 * t1)
                 - (8.0
                     * ca
                     * cf
@@ -1370,21 +1370,21 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                     * lv
                     * (1.0 + v.powi(2))
                     * (2.0 * ca * cf + 2.0 * v - v.powi(2) + ca.powi(2) * v.powi(2)))
-                    / ((1.0 - v).powi(2) * v.powi(2))
+                    / (t1)
                 - (8.0
                     * cf.powi(2)
                     * lmss
                     * lv
                     * (1.0 + v.powi(2))
                     * (2.0 * ca * cf + 2.0 * v - v.powi(2) + ca.powi(2) * v.powi(2)))
-                    / ((1.0 - v).powi(2) * v.powi(2))
+                    / (t1)
                 - (8.0
                     * cf
                     * lmu
                     * nf
                     * (1.0 + v.powi(2))
                     * (2.0 * ca * cf + 2.0 * v - v.powi(2) + ca.powi(2) * v.powi(2)))
-                    / (3.0 * (1.0 - v).powi(2) * v.powi(2))
+                    / (3.0 * t1)
                 + (2.0
                     * cf
                     * l1v
@@ -1406,7 +1406,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         - 28.0 * ca.powi(2) * v.powi(3)
                         + 11.0 * ca.powi(2) * v.powi(4)
                         - 11.0 * ca.powi(4) * v.powi(4)))
-                    / (3.0 * ca * (1.0 - v).powi(2) * v.powi(2))
+                    / (3.0 * ca * t1)
                 + (4.0
                     * cf
                     * l1v
@@ -1422,7 +1422,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         - v.powi(4)
                         + 2.0 * ca.powi(2) * v.powi(4)
                         - ca.powi(4) * v.powi(4)))
-                    / (ca * (1.0 - v).powi(2) * v.powi(2))
+                    / (ca * t1)
                 + (2.0
                     * cf
                     * l1v.powi(2)
@@ -1436,7 +1436,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         + 2.0 * ca.powi(4) * v.powi(3)
                         + 3.0 * v.powi(4)
                         + ca.powi(4) * v.powi(4)))
-                    / (ca * (1.0 - v).powi(2) * v.powi(2))
+                    / (ca * t1)
                 + (2.0
                     * cf
                     * lv.powi(2)
@@ -1451,7 +1451,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         + 3.0 * v.powi(4)
                         - 10.0 * ca.powi(2) * v.powi(4)
                         + 3.0 * ca.powi(4) * v.powi(4)))
-                    / (ca * (1.0 - v).powi(2) * v.powi(2))
+                    / (ca * t1)
                 - (2.0
                     * cf
                     * (63.0 - 59.0 * ca.powi(2) - 4.0 * ca.powi(4) - 9.0 * pi2
@@ -1480,9 +1480,11 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         - 18.0 * pi2 * v.powi(4)
                         - 6.0 * ca.powi(2) * pi2 * v.powi(4)
                         - 12.0 * ca.powi(4) * pi2 * v.powi(4)))
-                    / (9.0 * ca * (1.0 - v).powi(2) * v.powi(2))
+                    / (9.0 * ca * t1)
         }
+        // 14: qg -> qg (Compton), hadron from gluon
         14 => {
+            let t1 = (1.0 - v) * v.powi(3);
             (-2.0
                 * cf
                 * l1v
@@ -1495,7 +1497,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                     * (2.0 - 2.0 * v + v.powi(2))
                     * (2.0 * ca.powi(2) - 2.0 * ca.powi(2) * v - v.powi(2)
                         + ca.powi(2) * v.powi(2)))
-                    / (3.0 * ca * (1.0 - v) * v.powi(3))
+                    / (3.0 * ca * t1)
                 + (8.0
                     * ca
                     * cf
@@ -1504,7 +1506,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                     * (2.0 - 2.0 * v + v.powi(2))
                     * (2.0 * ca.powi(2) - 2.0 * ca.powi(2) * v - v.powi(2)
                         + ca.powi(2) * v.powi(2)))
-                    / ((1.0 - v) * v.powi(3))
+                    / (t1)
                 - (22.0
                     * ca
                     * cf
@@ -1512,7 +1514,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                     * (2.0 - 2.0 * v + v.powi(2))
                     * (2.0 * ca.powi(2) - 2.0 * ca.powi(2) * v - v.powi(2)
                         + ca.powi(2) * v.powi(2)))
-                    / (3.0 * (1.0 - v) * v.powi(3))
+                    / (3.0 * t1)
                 + (44.0
                     * ca
                     * cf
@@ -1520,7 +1522,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                     * (2.0 - 2.0 * v + v.powi(2))
                     * (2.0 * ca.powi(2) - 2.0 * ca.powi(2) * v - v.powi(2)
                         + ca.powi(2) * v.powi(2)))
-                    / (3.0 * (1.0 - v) * v.powi(3))
+                    / (3.0 * t1)
                 - (8.0
                     * ca
                     * cf
@@ -1529,7 +1531,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                     * (2.0 - 2.0 * v + v.powi(2))
                     * (2.0 * ca.powi(2) - 2.0 * ca.powi(2) * v - v.powi(2)
                         + ca.powi(2) * v.powi(2)))
-                    / ((1.0 - v) * v.powi(3))
+                    / (t1)
                 - (8.0
                     * ca
                     * cf
@@ -1538,7 +1540,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                     * (2.0 - 2.0 * v + v.powi(2))
                     * (2.0 * ca.powi(2) - 2.0 * ca.powi(2) * v - v.powi(2)
                         + ca.powi(2) * v.powi(2)))
-                    / ((1.0 - v) * v.powi(3))
+                    / (t1)
                 + (4.0
                     * cf
                     * lms
@@ -1546,7 +1548,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                     * (2.0 - 2.0 * v + v.powi(2))
                     * (2.0 * ca.powi(2) - 2.0 * ca.powi(2) * v - v.powi(2)
                         + ca.powi(2) * v.powi(2)))
-                    / (3.0 * (1.0 - v) * v.powi(3))
+                    / (3.0 * t1)
                 + (4.0
                     * cf
                     * lmss
@@ -1554,7 +1556,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                     * (2.0 - 2.0 * v + v.powi(2))
                     * (2.0 * ca.powi(2) - 2.0 * ca.powi(2) * v - v.powi(2)
                         + ca.powi(2) * v.powi(2)))
-                    / (3.0 * (1.0 - v) * v.powi(3))
+                    / (3.0 * t1)
                 - (8.0
                     * cf
                     * lmu
@@ -1562,7 +1564,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                     * (2.0 - 2.0 * v + v.powi(2))
                     * (2.0 * ca.powi(2) - 2.0 * ca.powi(2) * v - v.powi(2)
                         + ca.powi(2) * v.powi(2)))
-                    / (3.0 * (1.0 - v) * v.powi(3))
+                    / (3.0 * t1)
                 + (2.0
                     * cf
                     * l1v.powi(2)
@@ -1573,7 +1575,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         - 10.0 * ca.powi(4) * v.powi(3)
                         + 2.0 * v.powi(4)
                         + 2.0 * ca.powi(4) * v.powi(4)))
-                    / (ca * (1.0 - v) * v.powi(3))
+                    / (ca * t1)
                 - (cf
                     * lv
                     * (12.0 * ca.powi(2) - 12.0 * ca.powi(4) - 24.0 * ca.powi(2) * v
@@ -1587,7 +1589,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         + 3.0 * v.powi(4)
                         - 6.0 * ca.powi(2) * v.powi(4)
                         + 3.0 * ca.powi(4) * v.powi(4)))
-                    / (ca * (1.0 - v) * v.powi(3))
+                    / (ca * t1)
                 - (4.0
                     * cf
                     * l1v
@@ -1602,7 +1604,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         + 2.0 * v.powi(4)
                         + 2.0 * ca.powi(2) * v.powi(4)
                         + 4.0 * ca.powi(4) * v.powi(4)))
-                    / (ca * (1.0 - v) * v.powi(3))
+                    / (ca * t1)
                 + (2.0
                     * cf
                     * lv.powi(2)
@@ -1615,7 +1617,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         + 3.0 * v.powi(4)
                         - 2.0 * ca.powi(2) * v.powi(4)
                         + 11.0 * ca.powi(4) * v.powi(4)))
-                    / (ca * (1.0 - v) * v.powi(3))
+                    / (ca * t1)
                 + (cf
                     * (108.0 * ca.powi(2) - 60.0 * ca.powi(4)
                         + 8.0 * ca.powi(2) * pi2
@@ -1642,30 +1644,23 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         + 10.0 * pi2 * v.powi(4)
                         + 4.0 * ca.powi(2) * pi2 * v.powi(4)
                         + 10.0 * ca.powi(4) * pi2 * v.powi(4)))
-                    / (3.0 * ca * (1.0 - v) * v.powi(3))
+                    / (3.0 * ca * t1)
         }
+        // 15: gg -> gg, hadron from gluon
         15 => {
+            let t1 = (1.0 - v).powi(2) * v.powi(3);
             (-16.0 * ca.powi(3) * lv.powi(2) * nf * (1.0 - v - v.powi(2))) / (3.0 * (1.0 - v) * v)
                 + (16.0 * ca.powi(3) * l1v.powi(2) * nf * (1.0 - 3.0 * v + v.powi(2)))
                     / (3.0 * v.powi(2))
-                - (1408.0 * ca.powi(3) * lms * (1.0 - v + v.powi(2)).powi(3))
-                    / (3.0 * (1.0 - v).powi(2) * v.powi(3))
-                + (256.0 * ca.powi(3) * l1v * lms * (1.0 - v + v.powi(2)).powi(3))
-                    / ((1.0 - v).powi(2) * v.powi(3))
-                - (704.0 * ca.powi(3) * lmss * (1.0 - v + v.powi(2)).powi(3))
-                    / (3.0 * (1.0 - v).powi(2) * v.powi(3))
-                + (1408.0 * ca.powi(3) * lmu * (1.0 - v + v.powi(2)).powi(3))
-                    / (3.0 * (1.0 - v).powi(2) * v.powi(3))
-                - (256.0 * ca.powi(3) * lms * lv * (1.0 - v + v.powi(2)).powi(3))
-                    / ((1.0 - v).powi(2) * v.powi(3))
-                - (256.0 * ca.powi(3) * lmss * lv * (1.0 - v + v.powi(2)).powi(3))
-                    / ((1.0 - v).powi(2) * v.powi(3))
-                + (256.0 * ca.powi(3) * lms * nf * (1.0 - v + v.powi(2)).powi(3))
-                    / (9.0 * (1.0 - v).powi(2) * v.powi(3))
-                + (128.0 * ca.powi(3) * lmss * nf * (1.0 - v + v.powi(2)).powi(3))
-                    / (9.0 * (1.0 - v).powi(2) * v.powi(3))
-                - (256.0 * ca.powi(3) * lmu * nf * (1.0 - v + v.powi(2)).powi(3))
-                    / (9.0 * (1.0 - v).powi(2) * v.powi(3))
+                - (1408.0 * ca.powi(3) * lms * (1.0 - v + v.powi(2)).powi(3)) / (3.0 * t1)
+                + (256.0 * ca.powi(3) * l1v * lms * (1.0 - v + v.powi(2)).powi(3)) / (t1)
+                - (704.0 * ca.powi(3) * lmss * (1.0 - v + v.powi(2)).powi(3)) / (3.0 * t1)
+                + (1408.0 * ca.powi(3) * lmu * (1.0 - v + v.powi(2)).powi(3)) / (3.0 * t1)
+                - (256.0 * ca.powi(3) * lms * lv * (1.0 - v + v.powi(2)).powi(3)) / (t1)
+                - (256.0 * ca.powi(3) * lmss * lv * (1.0 - v + v.powi(2)).powi(3)) / (t1)
+                + (256.0 * ca.powi(3) * lms * nf * (1.0 - v + v.powi(2)).powi(3)) / (9.0 * t1)
+                + (128.0 * ca.powi(3) * lmss * nf * (1.0 - v + v.powi(2)).powi(3)) / (9.0 * t1)
+                - (256.0 * ca.powi(3) * lmu * nf * (1.0 - v + v.powi(2)).powi(3)) / (9.0 * t1)
                 - (32.0 * ca.powi(3) * l1v * lv * nf * (1.0 - 2.0 * v + 2.0 * v.powi(2)))
                     / (3.0 * (1.0 - v) * v.powi(2))
                 - (32.0
@@ -1686,21 +1681,21 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                     * lv
                     * (1.0 - v + v.powi(2))
                     * (11.0 - 22.0 * v - 4.0 * v.powi(2) + 15.0 * v.powi(3) - 11.0 * v.powi(4)))
-                    / (3.0 * (1.0 - v).powi(2) * v.powi(3))
+                    / (3.0 * t1)
                 - (32.0
                     * ca.powi(3)
                     * lv
                     * nf
                     * (1.0 - v + v.powi(2))
                     * (4.0 - 8.0 * v + v.powi(2) + 3.0 * v.powi(3) - 4.0 * v.powi(4)))
-                    / (9.0 * (1.0 - v).powi(2) * v.powi(3))
+                    / (9.0 * t1)
                 + (64.0
                     * ca.powi(3)
                     * l1v.powi(2)
                     * (2.0 - 7.0 * v + 14.0 * v.powi(2) - 16.0 * v.powi(3) + 14.0 * v.powi(4)
                         - 7.0 * v.powi(5)
                         + 2.0 * v.powi(6)))
-                    / ((1.0 - v).powi(2) * v.powi(3))
+                    / (t1)
                 - (64.0
                     * ca.powi(3)
                     * l1v
@@ -1708,14 +1703,14 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                     * (8.0 - 26.0 * v + 47.0 * v.powi(2) - 50.0 * v.powi(3) + 37.0 * v.powi(4)
                         - 16.0 * v.powi(5)
                         + 4.0 * v.powi(6)))
-                    / ((1.0 - v).powi(2) * v.powi(3))
+                    / (t1)
                 + (64.0
                     * ca.powi(3)
                     * lv.powi(2)
                     * (12.0 - 36.0 * v + 66.0 * v.powi(2) - 72.0 * v.powi(3) + 57.0 * v.powi(4)
                         - 27.0 * v.powi(5)
                         + 8.0 * v.powi(6)))
-                    / ((1.0 - v).powi(2) * v.powi(3))
+                    / (t1)
                 + (16.0
                     * ca.powi(3)
                     * nf
@@ -1727,7 +1722,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         - 18.0 * pi2 * v.powi(4)
                         - 120.0 * v.powi(5)
                         + 40.0 * v.powi(6)))
-                    / (27.0 * (1.0 - v).powi(2) * v.powi(3))
+                    / (27.0 * t1)
                 - (32.0
                     * ca.powi(3)
                     * (134.0 - 24.0 * pi2 - 402.0 * v + 90.0 * pi2 * v + 831.0 * v.powi(2)
@@ -1740,9 +1735,11 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         + 72.0 * pi2 * v.powi(5)
                         + 134.0 * v.powi(6)
                         - 24.0 * pi2 * v.powi(6)))
-                    / (9.0 * (1.0 - v).powi(2) * v.powi(3))
+                    / (9.0 * t1)
         }
+        // 16: gg -> qqbar, hadron from quark
         16 => {
+            let t1 = (1.0 - v) * v.powi(2);
             (2.0 * cf
                 * l1v
                 * (2.0 + 2.0 * ca.powi(2) + v - 5.0 * ca.powi(2) * v)
@@ -1756,7 +1753,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                     * (1.0 + ca - ca * v)
                     * (1.0 - ca + ca * v)
                     * (1.0 - 2.0 * v + 2.0 * v.powi(2)))
-                    / ((1.0 - v) * v.powi(2))
+                    / (t1)
                 + (16.0
                     * ca.powi(2)
                     * cf
@@ -1764,21 +1761,21 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                     * lms
                     * (1.0 - 2.0 * v + 2.0 * v.powi(2))
                     * (cf - ca * v + ca * v.powi(2)))
-                    / ((1.0 - v) * v.powi(2))
+                    / (t1)
                 - (12.0
                     * ca
                     * cf.powi(2)
                     * lmss
                     * (1.0 - 2.0 * v + 2.0 * v.powi(2))
                     * (cf - ca * v + ca * v.powi(2)))
-                    / ((1.0 - v) * v.powi(2))
+                    / (t1)
                 + (88.0
                     * ca.powi(2)
                     * cf
                     * lmu
                     * (1.0 - 2.0 * v + 2.0 * v.powi(2))
                     * (cf - ca * v + ca * v.powi(2)))
-                    / (3.0 * (1.0 - v) * v.powi(2))
+                    / (3.0 * t1)
                 - (16.0
                     * ca.powi(2)
                     * cf
@@ -1786,7 +1783,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                     * lv
                     * (1.0 - 2.0 * v + 2.0 * v.powi(2))
                     * (cf - ca * v + ca * v.powi(2)))
-                    / ((1.0 - v) * v.powi(2))
+                    / (t1)
                 - (16.0
                     * ca
                     * cf.powi(2)
@@ -1794,7 +1791,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                     * lv
                     * (1.0 - 2.0 * v + 2.0 * v.powi(2))
                     * (cf - ca * v + ca * v.powi(2)))
-                    / ((1.0 - v) * v.powi(2))
+                    / (t1)
                 - (16.0
                     * ca
                     * cf
@@ -1802,21 +1799,21 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                     * nf
                     * (1.0 - 2.0 * v + 2.0 * v.powi(2))
                     * (cf - ca * v + ca * v.powi(2)))
-                    / (3.0 * (1.0 - v) * v.powi(2))
+                    / (3.0 * t1)
                 + (44.0
                     * ca
                     * cf
                     * lms
                     * (1.0 - 2.0 * v + 2.0 * v.powi(2))
                     * (-2.0 * ca * cf + 2.0 * ca.powi(2) * v - 2.0 * ca.powi(2) * v.powi(2)))
-                    / (3.0 * (1.0 - v) * v.powi(2))
+                    / (3.0 * t1)
                 - (8.0
                     * cf
                     * lms
                     * nf
                     * (1.0 - 2.0 * v + 2.0 * v.powi(2))
                     * (-2.0 * ca * cf + 2.0 * ca.powi(2) * v - 2.0 * ca.powi(2) * v.powi(2)))
-                    / (3.0 * (1.0 - v) * v.powi(2))
+                    / (3.0 * t1)
                 + (cf
                     * lv
                     * (3.0 - 6.0 * ca.powi(2) + 3.0 * ca.powi(4) - 2.0 * v + 12.0 * ca.powi(2) * v
@@ -1828,7 +1825,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         + 14.0 * ca.powi(4) * v.powi(3)
                         + 12.0 * ca.powi(2) * v.powi(4)
                         - 12.0 * ca.powi(4) * v.powi(4)))
-                    / (ca * (1.0 - v) * v.powi(2))
+                    / (ca * t1)
                 + (2.0
                     * cf
                     * l1v.powi(2)
@@ -1838,7 +1835,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         - ca.powi(2) * v.powi(3)
                         - 20.0 * ca.powi(4) * v.powi(3)
                         + 8.0 * ca.powi(4) * v.powi(4)))
-                    / (ca * (1.0 - v) * v.powi(2))
+                    / (ca * t1)
                 + (2.0
                     * cf
                     * lv.powi(2)
@@ -1852,7 +1849,7 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         - 68.0 * ca.powi(4) * v.powi(3)
                         - 4.0 * ca.powi(2) * v.powi(4)
                         + 28.0 * ca.powi(4) * v.powi(4)))
-                    / (ca * (1.0 - v) * v.powi(2))
+                    / (ca * t1)
                 - (cf
                     * (21.0 - 42.0 * ca.powi(2) + 21.0 * ca.powi(4) - 4.0 * pi2
                         + 8.0 * ca.powi(2) * pi2
@@ -1877,13 +1874,14 @@ pub fn avdel(j0: usize, v: f64, s: f64, ctx: &MeContext) -> f64 {
                         + 60.0 * ca.powi(4) * v.powi(4)
                         + 16.0 * ca.powi(2) * pi2 * v.powi(4)
                         - 16.0 * ca.powi(4) * pi2 * v.powi(4)))
-                    / (3.0 * ca * (1.0 - v) * v.powi(2))
+                    / (3.0 * ca * t1)
         }
         _ => unreachable!("j0 must be in 1..=16, got {j0}"),
     }
 }
 
-/// `AVLO(W,V,S)`: the `log(1-W)/(1-W)+` term.
+/// `AVLO(W,V,S)`: the `log(1-W)/(1-W)+` term. See the channel table on
+/// [`fbor`] for what each index physically represents.
 #[must_use]
 pub fn avlo(j0: usize, _w: f64, v: f64, _s: f64, ctx: &MeContext) -> f64 {
     let ca = ctx.ca;
@@ -1892,7 +1890,9 @@ pub fn avlo(j0: usize, _w: f64, v: f64, _s: f64, ctx: &MeContext) -> f64 {
     match j0 {
         1 | 3 => (40.0 * ca * cf.powi(2) * (1.0 + v.powi(2))) / ((-1.0 + v).powi(2) * v),
         2 | 4 | 7..=10 => 0.0,
+        // 5: qqbar -> q'qbar' (annihilation, unlike flavor), hadron from quark
         5 => (40.0 * ca * cf.powi(2) * (1.0 - 2.0 * v + 2.0 * v.powi(2))) / v,
+        // 6: qq -> qq (identical flavor, elastic), hadron from quark
         6 => {
             (80.0
                 * cf.powi(2)
@@ -1900,6 +1900,7 @@ pub fn avlo(j0: usize, _w: f64, v: f64, _s: f64, ctx: &MeContext) -> f64 {
                     + ca * v.powi(4)))
                 / ((-1.0 + v).powi(2) * v.powi(3))
         }
+        // 11: qqbar -> qqbar (same flavor, elastic + annihilation), hadron from quark
         11 => {
             (80.0
                 * cf.powi(2)
@@ -1909,6 +1910,7 @@ pub fn avlo(j0: usize, _w: f64, v: f64, _s: f64, ctx: &MeContext) -> f64 {
                     + ca * v.powi(4)))
                 / ((-1.0 + v).powi(2) * v)
         }
+        // 12: qqbar -> gg (same-flavor annihilation), hadron from gluon
         12 => {
             (-16.0
                 * (-2.0 + 3.0 * ca.powi(2))
@@ -1917,6 +1919,7 @@ pub fn avlo(j0: usize, _w: f64, v: f64, _s: f64, ctx: &MeContext) -> f64 {
                 * (cf - ca * v + ca * v.powi(2)))
                 / ((-1.0 + v) * v.powi(2))
         }
+        // 13: qg -> qg (Compton), hadron from quark
         13 => {
             (8.0 * (-2.0 + 3.0 * ca.powi(2))
                 * cf
@@ -1924,6 +1927,7 @@ pub fn avlo(j0: usize, _w: f64, v: f64, _s: f64, ctx: &MeContext) -> f64 {
                 * (2.0 * ca * cf + 2.0 * v - v.powi(2) + ca.powi(2) * v.powi(2)))
                 / (ca * (-1.0 + v).powi(2) * v.powi(2))
         }
+        // 14: qg -> qg (Compton), hadron from gluon
         14 => {
             (-4.0
                 * (-1.0 + 3.0 * ca)
@@ -1933,9 +1937,11 @@ pub fn avlo(j0: usize, _w: f64, v: f64, _s: f64, ctx: &MeContext) -> f64 {
                 * (2.0 * ca.powi(2) - 2.0 * ca.powi(2) * v - v.powi(2) + ca.powi(2) * v.powi(2)))
                 / (ca * (-1.0 + v) * v.powi(3))
         }
+        // 15: gg -> gg, hadron from gluon
         15 => {
             (1280.0 * ca.powi(3) * (1.0 - v + v.powi(2)).powi(3)) / ((-1.0 + v).powi(2) * v.powi(3))
         }
+        // 16: gg -> qqbar, hadron from quark
         16 => {
             (-8.0
                 * (-1.0 + 3.0 * ca)
@@ -1955,35 +1961,45 @@ pub fn avgo(_w: f64, _v: f64) -> f64 {
     0.0
 }
 
-/// `STRUV(W,V,X3,S)`: dispatches to `STRUV1..16` by channel `j0`.
+/// `STRUV(W,V,X3,S)`: dispatches to the per-channel regular remainder terms
+/// (formerly `STRUV1..16`) by channel `j0`. See the channel table on
+/// [`fbor`] for what each index physically represents.
 #[must_use]
 pub fn struv(j0: usize, w: f64, v: f64, x3: f64, s: f64, ctx: &MeContext, pre: &Precalc) -> f64 {
     match j0 {
-        1 => struv1(w, v, x3, s, ctx, pre),
-        2 => struv2(w, v, x3, s, ctx, pre),
-        3 => struv3(w, v, x3, s, ctx, pre),
-        4 => struv4(w, v, x3, s, ctx, pre),
-        5 => struv5(w, v, x3, s, ctx, pre),
-        6 => struv6(w, v, x3, s, ctx, pre),
-        7 => struv7(w, v, x3, s, ctx, pre),
-        8 => struv8(w, v, x3, s, ctx, pre),
-        9 => struv9(w, v, x3, s, ctx, pre),
-        10 => struv10(w, v, x3, s, ctx, pre),
-        11 => struv11(w, v, x3, s, ctx, pre),
-        12 => struv12(w, v, x3, s, ctx, pre),
-        13 => struv13(w, v, x3, s, ctx, pre),
-        14 => struv14(w, v, x3, s, ctx, pre),
-        15 => struv15(w, v, x3, s, ctx, pre),
-        16 => struv16(w, v, x3, s, ctx, pre),
+        1 => qqprime_elastic_quark_frag(w, v, x3, s, ctx, pre),
+        2 => qqprime_elastic_gluon_frag(w, v, x3, s, ctx, pre),
+        3 => qqbarprime_elastic_quark_frag(w, v, x3, s, ctx, pre),
+        4 => qqbarprime_elastic_gluon_frag(w, v, x3, s, ctx, pre),
+        5 => qqbar_to_qprimeqbarprime_quark_frag(w, v, x3, s, ctx, pre),
+        6 => qq_identical_elastic_quark_frag(w, v, x3, s, ctx, pre),
+        7 => qq_identical_elastic_gluon_frag(w, v, x3, s, ctx, pre),
+        8 => qg_seapair_unlike_quark_frag(w, v, x3, s, ctx, pre),
+        9 => qg_seapair_unlike_antiquark_frag(w, v, x3, s, ctx, pre),
+        10 => qg_seapair_same_flavor_frag(w, v, x3, s, ctx, pre),
+        11 => qqbar_elastic_quark_frag(w, v, x3, s, ctx, pre),
+        12 => qqbar_to_gg_gluon_frag(w, v, x3, s, ctx, pre),
+        13 => qg_compton_quark_frag(w, v, x3, s, ctx, pre),
+        14 => qg_compton_gluon_frag(w, v, x3, s, ctx, pre),
+        15 => gg_to_gg_gluon_frag(w, v, x3, s, ctx, pre),
+        16 => gg_to_qqbar_quark_frag(w, v, x3, s, ctx, pre),
         _ => unreachable!("j0 must be in 1..=16, got {j0}"),
     }
 }
 
-/// `STRUV1(W,V,X3,S)`. `x3`/`s` are unused, matching the Fortran (the
-/// function's value depends only on `w`, `v`, and the precomputed powers
-/// and logs in `pre`).
+/// Channel 1: `qq' -> qq'` (unlike flavor, elastic), hadron from the
+/// outgoing quark. Regular remainder term (formerly `STRUV1(W,V,X3,S)`).
+/// `x3`/`s` are unused, matching the Fortran (the function's value depends
+/// only on `w`, `v`, and the precomputed powers and logs in `pre`).
 #[must_use]
-pub fn struv1(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc) -> f64 {
+pub fn qqprime_elastic_quark_frag(
+    w: f64,
+    v: f64,
+    _x3: f64,
+    _s: f64,
+    ctx: &MeContext,
+    pre: &Precalc,
+) -> f64 {
     let cf = ctx.cf;
     let ca = ctx.ca;
     let (v2, v3, v4, v5, v6, v7) = (pre.v2, pre.v3, pre.v4, pre.v5, pre.v6, pre.v7);
@@ -1994,6 +2010,7 @@ pub fn struv1(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
         pre.l1v, pre.lv, pre.l1w, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.lmss,
     );
 
+    let t1 = (1.0 - v).powi(2) * v * w * (1.0 - v * w).powi(3);
     let part1 = (-4.0
         * cf
         * l1v
@@ -2122,7 +2139,7 @@ pub fn struv1(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 2.0 * ca2 * v6 * w5
             - 2.0 * v6 * w6
             + 2.0 * ca2 * v6 * w6))
-        / ((1.0 - v).powi(2) * v * w * (1.0 - v * w).powi(3))
+        / (t1)
         - (2.0
             * cf
             * l1w
@@ -2178,7 +2195,7 @@ pub fn struv1(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
                 + 8.0 * ca2 * v7 * w6
                 + 4.0 * v7 * w7
                 - 4.0 * ca2 * v7 * w7))
-            / ((1.0 - v).powi(2) * v * w * (1.0 - v * w).powi(3) * (1.0 - v + v * w));
+            / (t1 * (1.0 - v + v * w));
 
     let part6 = -(2.0
         * cf
@@ -2236,7 +2253,7 @@ pub fn struv1(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 8.0 * ca2 * v7 * w6
             + 4.0 * v7 * w7
             - 4.0 * ca2 * v7 * w7))
-        / ((1.0 - v).powi(2) * v * w * (1.0 - v * w).powi(3) * (1.0 - v + v * w));
+        / (t1 * (1.0 - v + v * w));
 
     let part7 = -(cf
         * (6.0 - 6.0 * ca2 + 4.0 * cacf - 14.0 * v + 14.0 * ca2 * v - 12.0 * cacf * v + 14.0 * v2
@@ -2314,7 +2331,7 @@ pub fn struv1(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 8.0 * ca2 * v7 * w6
             + 4.0 * v7 * w7
             - 4.0 * ca2 * v7 * w7))
-        / ((1.0 - v).powi(2) * v * w * (1.0 - v * w).powi(3) * (1.0 - v + v * w));
+        / (t1 * (1.0 - v + v * w));
 
     let part8 = -(2.0
         * cf
@@ -2430,9 +2447,17 @@ pub fn struv1(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
     part1 + part2 + part3 + part4 + part5 + part6 + part7 + part8
 }
 
-/// `STRUV2(W,V,X3,S)`.
+/// Channel 2: `qq' -> qq'` (unlike flavor) plus an extra gluon, hadron
+/// from the gluon. Regular remainder term (formerly `STRUV2(W,V,X3,S)`).
 #[must_use]
-pub fn struv2(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc) -> f64 {
+pub fn qqprime_elastic_gluon_frag(
+    w: f64,
+    v: f64,
+    _x3: f64,
+    _s: f64,
+    ctx: &MeContext,
+    pre: &Precalc,
+) -> f64 {
     let cf = ctx.cf;
     let ca = ctx.ca;
     let (v2, v3, v4, v5, v6, v7, v8) = (pre.v2, pre.v3, pre.v4, pre.v5, pre.v6, pre.v7, pre.v8);
@@ -2441,6 +2466,7 @@ pub fn struv2(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
     let (l1v, lw, lvw, l1vw, lms, l1w, lv) =
         (pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv);
 
+    let t1 = (1.0 - v).powi(2) * v2 * w2;
     let part1 = (16.0
         * ca
         * cf.powi(2)
@@ -2465,7 +2491,7 @@ pub fn struv2(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 2.0 * v3 * w2
             - 5.0 * ca2 * v3 * w2
             + 2.0 * ca2 * v3 * w3))
-        / ((1.0 - v).powi(2) * v2 * w2 * (1.0 - v + v * w));
+        / (t1 * (1.0 - v + v * w));
 
     let part3 = -(8.0
         * ca
@@ -2480,7 +2506,7 @@ pub fn struv2(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + v3 * w3
             - v4 * w3
             + v4 * w4))
-        / ((1.0 - v).powi(2) * v2 * w2 * (1.0 - v + v * w).powi(2));
+        / (t1 * (1.0 - v + v * w).powi(2));
 
     let part4 = -(4.0
         * cf
@@ -2516,7 +2542,7 @@ pub fn struv2(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + v5 * w3
             - ca2 * v5 * w3
             + 2.0 * ca2 * v4 * w4))
-        / ((1.0 - v).powi(2) * v2 * w2 * (1.0 - v + v * w));
+        / (t1 * (1.0 - v + v * w));
 
     let part5 = (4.0
         * cf
@@ -2539,7 +2565,7 @@ pub fn struv2(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 2.0 * ca2 * v4 * w3
             - 2.0 * v4 * w4
             + 2.0 * ca2 * v4 * w4))
-        / ((1.0 - v).powi(2) * v2 * w2);
+        / (t1);
 
     let part6 = (2.0
         * cf
@@ -2596,7 +2622,7 @@ pub fn struv2(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 2.0 * ca2 * v6 * w5
             + 2.0 * v6 * w6
             - 2.0 * ca2 * v6 * w6))
-        / ((1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(2));
+        / (t1 * (1.0 - v * w).powi(2));
 
     let part7 = -(2.0
         * cf
@@ -2695,7 +2721,7 @@ pub fn struv2(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 12.0 * ca2 * v8 * w7
             + 4.0 * v8 * w8
             - 4.0 * ca2 * v8 * w8))
-        / ((1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
+        / (t1 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
 
     let part8 = -(2.0
         * cf
@@ -2795,7 +2821,7 @@ pub fn struv2(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 12.0 * ca2 * v8 * w7
             + 4.0 * v8 * w8
             - 4.0 * ca2 * v8 * w8))
-        / ((1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
+        / (t1 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
 
     let part9 = -(2.0
         * cf
@@ -2892,14 +2918,22 @@ pub fn struv2(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 6.0 * ca2 * v8 * w7
             + 2.0 * v8 * w8
             - 2.0 * ca2 * v8 * w8))
-        / ((1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
+        / (t1 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
 
     part1 + part2 + part3 + part4 + part5 + part6 + part7 + part8 + part9
 }
 
-/// `STRUV3(W,V,X3,S)`.
+/// Channel 3: `qqbar' -> qqbar'` (unlike flavor, elastic), hadron from
+/// the outgoing quark. Regular remainder term (formerly `STRUV3(W,V,X3,S)`).
 #[must_use]
-pub fn struv3(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc) -> f64 {
+pub fn qqbarprime_elastic_quark_frag(
+    w: f64,
+    v: f64,
+    _x3: f64,
+    _s: f64,
+    ctx: &MeContext,
+    pre: &Precalc,
+) -> f64 {
     let cf = ctx.cf;
     let ca = ctx.ca;
     let (v2, v3, v4, v5, v6, v7) = (pre.v2, pre.v3, pre.v4, pre.v5, pre.v6, pre.v7);
@@ -2909,6 +2943,7 @@ pub fn struv3(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
     let (l1v, lw, lvw, l1vw, lms, l1w, lv) =
         (pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv);
 
+    let t1 = (1.0 - v).powi(2) * v * w * (1.0 - v * w).powi(3);
     let part1 = (4.0
         * cf
         * l1v
@@ -3035,7 +3070,7 @@ pub fn struv3(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 2.0 * ca2 * v6 * w5
             - 2.0 * v6 * w6
             + 2.0 * ca2 * v6 * w6))
-        / ((1.0 - v).powi(2) * v * w * (1.0 - v * w).powi(3));
+        / (t1);
 
     let part6 = -(2.0
         * cf
@@ -3092,7 +3127,7 @@ pub fn struv3(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 8.0 * ca2 * v7 * w6
             + 4.0 * v7 * w7
             - 4.0 * ca2 * v7 * w7))
-        / ((1.0 - v).powi(2) * v * w * (1.0 - v * w).powi(3) * (1.0 - v + v * w));
+        / (t1 * (1.0 - v + v * w));
 
     let part7 = -(2.0
         * cf
@@ -3150,7 +3185,7 @@ pub fn struv3(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 8.0 * ca2 * v7 * w6
             + 4.0 * v7 * w7
             - 4.0 * ca2 * v7 * w7))
-        / ((1.0 - v).powi(2) * v * w * (1.0 - v * w).powi(3) * (1.0 - v + v * w));
+        / (t1 * (1.0 - v + v * w));
 
     let part8 = -(cf
         * (6.0 - 6.0 * ca2 + 4.0 * cacf - 14.0 * v + 14.0 * ca2 * v - 12.0 * cacf * v + 14.0 * v2
@@ -3231,7 +3266,7 @@ pub fn struv3(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 8.0 * ca2 * v7 * w6
             + 4.0 * v7 * w7
             - 4.0 * ca2 * v7 * w7))
-        / ((1.0 - v).powi(2) * v * w * (1.0 - v * w).powi(3) * (1.0 - v + v * w));
+        / (t1 * (1.0 - v + v * w));
 
     let part9 = -(2.0
         * cf
@@ -3343,9 +3378,17 @@ pub fn struv3(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
     part1 + part2 + part3 + part4 + part5 + part6 + part7 + part8 + part9
 }
 
-/// `STRUV4(W,V,X3,S)`.
+/// Channel 4: `qqbar' -> qqbar'` (unlike flavor) plus an extra gluon,
+/// hadron from the gluon. Regular remainder term (formerly `STRUV4(W,V,X3,S)`).
 #[must_use]
-pub fn struv4(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc) -> f64 {
+pub fn qqbarprime_elastic_gluon_frag(
+    w: f64,
+    v: f64,
+    _x3: f64,
+    _s: f64,
+    ctx: &MeContext,
+    pre: &Precalc,
+) -> f64 {
     let cf = ctx.cf;
     let ca = ctx.ca;
     let (v2, v3, v4, v5, v6, v7, v8) = (pre.v2, pre.v3, pre.v4, pre.v5, pre.v6, pre.v7, pre.v8);
@@ -3354,6 +3397,7 @@ pub fn struv4(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
     let (l1v, lw, lvw, l1vw, lms, l1w, lv) =
         (pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv);
 
+    let t1 = (1.0 - v).powi(2) * v2 * w2;
     let part1 = (8.0
         * cf
         * l1vw
@@ -3379,7 +3423,7 @@ pub fn struv4(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + v3 * w2
             - 3.0 * ca2 * v3 * w2
             + ca2 * v3 * w3))
-        / ((1.0 - v).powi(2) * v2 * w2 * (1.0 - v + v * w));
+        / (t1 * (1.0 - v + v * w));
 
     let part3 = -(8.0
         * ca
@@ -3394,7 +3438,7 @@ pub fn struv4(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + v3 * w3
             - v4 * w3
             + v4 * w4))
-        / ((1.0 - v).powi(2) * v2 * w2 * (1.0 - v + v * w).powi(2));
+        / (t1 * (1.0 - v + v * w).powi(2));
 
     let part4 = -(4.0
         * cf
@@ -3430,7 +3474,7 @@ pub fn struv4(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + v5 * w3
             - ca2 * v5 * w3
             + 2.0 * ca2 * v4 * w4))
-        / ((1.0 - v).powi(2) * v2 * w2 * (1.0 - v + v * w));
+        / (t1 * (1.0 - v + v * w));
 
     let part5 = (4.0
         * cf
@@ -3451,7 +3495,7 @@ pub fn struv4(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 2.0 * ca2 * v4 * w3
             - 2.0 * v4 * w4
             + 2.0 * ca2 * v4 * w4))
-        / ((1.0 - v).powi(2) * v2 * w2);
+        / (t1);
 
     let part6 = (2.0
         * cf
@@ -3508,7 +3552,7 @@ pub fn struv4(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 2.0 * ca2 * v6 * w5
             + 2.0 * v6 * w6
             - 2.0 * ca2 * v6 * w6))
-        / ((1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(2));
+        / (t1 * (1.0 - v * w).powi(2));
 
     let part7 = -(2.0
         * cf
@@ -3608,7 +3652,7 @@ pub fn struv4(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 12.0 * ca2 * v8 * w7
             + 4.0 * v8 * w8
             - 4.0 * ca2 * v8 * w8))
-        / ((1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
+        / (t1 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
 
     let part8 = -(2.0
         * cf
@@ -3708,7 +3752,7 @@ pub fn struv4(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 12.0 * ca2 * v8 * w7
             + 4.0 * v8 * w8
             - 4.0 * ca2 * v8 * w8))
-        / ((1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
+        / (t1 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
 
     let part9 = -(2.0
         * cf
@@ -3800,14 +3844,23 @@ pub fn struv4(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 6.0 * ca2 * v8 * w7
             + 2.0 * v8 * w8
             - 2.0 * ca2 * v8 * w8))
-        / ((1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
+        / (t1 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
 
     part1 + part2 + part3 + part4 + part5 + part6 + part7 + part8 + part9
 }
 
-/// `STRUV5(W,V,X3,S)`.
+/// Channel 5: `qqbar -> q'qbar'` (annihilation into an unlike-flavor
+/// pair), hadron from the outgoing quark. Regular remainder term
+/// (formerly `STRUV5(W,V,X3,S)`).
 #[must_use]
-pub fn struv5(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc) -> f64 {
+pub fn qqbar_to_qprimeqbarprime_quark_frag(
+    w: f64,
+    v: f64,
+    _x3: f64,
+    _s: f64,
+    ctx: &MeContext,
+    pre: &Precalc,
+) -> f64 {
     let cf = ctx.cf;
     let ca = ctx.ca;
     let (v2, v3, v4, v5, v6, v7) = (pre.v2, pre.v3, pre.v4, pre.v5, pre.v6, pre.v7);
@@ -3818,6 +3871,7 @@ pub fn struv5(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
         pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv, pre.lmss,
     );
 
+    let t1 = (1.0 - v) * v * w * (1.0 - v * w) * (1.0 - v + v * w).powi(3);
     let part1 = (-4.0
         * cf
         * l1v
@@ -4063,7 +4117,7 @@ pub fn struv5(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 16.0 * ca2 * v7 * w5
             + 8.0 * ca2 * v6 * w6
             - 8.0 * ca2 * v7 * w6))
-        / ((1.0 - v) * v * w * (1.0 - v * w) * (1.0 - v + v * w).powi(3));
+        / (t1);
 
     let part7 = -(2.0
         * cf
@@ -4137,7 +4191,7 @@ pub fn struv5(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 8.0 * ca2 * v7 * w6
             - 4.0 * v7 * w7
             + 4.0 * ca2 * v7 * w7))
-        / ((1.0 - v) * v * w * (1.0 - v * w) * (1.0 - v + v * w).powi(3));
+        / (t1);
 
     let part8 = -(2.0
         * cf
@@ -4212,7 +4266,7 @@ pub fn struv5(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 8.0 * ca2 * v7 * w6
             - 4.0 * v7 * w7
             + 4.0 * ca2 * v7 * w7))
-        / ((1.0 - v) * v * w * (1.0 - v * w) * (1.0 - v + v * w).powi(3));
+        / (t1);
 
     let part9 = -(2.0
         * cf
@@ -4354,9 +4408,17 @@ pub fn struv5(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
     part1 + part2 + part3 + part4 + part5 + part6 + part7 + part8 + part9
 }
 
-/// `STRUV6(W,V,X3,S)`.
+/// Channel 6: `qq -> qq` (identical flavor, elastic), hadron from the
+/// outgoing quark. Regular remainder term (formerly `STRUV6(W,V,X3,S)`).
 #[must_use]
-pub fn struv6(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc) -> f64 {
+pub fn qq_identical_elastic_quark_frag(
+    w: f64,
+    v: f64,
+    _x3: f64,
+    _s: f64,
+    ctx: &MeContext,
+    pre: &Precalc,
+) -> f64 {
     let cf = ctx.cf;
     let ca = ctx.ca;
     let (v2, v3, v4, v5, v6, v7, v8, v9) = (
@@ -4373,6 +4435,8 @@ pub fn struv6(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
         pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv, pre.lmss,
     );
 
+    let t1 = ca * (1.0 - v).powi(2) * v3 * w2;
+    let t2 = (1.0 - v).powi(2) * v3 * w2 * (1.0 - v * w).powi(3);
     let part1 = (4.0
         * cf
         * l1v
@@ -4432,7 +4496,7 @@ pub fn struv6(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - ca2 * v5 * w4
             - v6 * w4
             + ca2 * v6 * w4))
-        / (ca * (1.0 - v).powi(2) * v3 * w2 * (1.0 - v * w));
+        / (t1 * (1.0 - v * w));
 
     let part2 = -(4.0
         * cf
@@ -4483,7 +4547,7 @@ pub fn struv6(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 4.0 * ca3 * v5 * w4
             + 2.0 * ca * v5 * w5
             - 2.0 * ca3 * v5 * w5))
-        / (ca * (1.0 - v).powi(2) * v3 * w2);
+        / (t1);
 
     let part3 = -(8.0
         * cf.powi(2)
@@ -4670,7 +4734,7 @@ pub fn struv6(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 2.0 * ca * v6 * w6
             - 2.0 * ca3 * v6 * w6
             + 4.0 * ca2cf * v6 * w6))
-        / (ca * (1.0 - v).powi(2) * v3 * w2 * (1.0 - v + v * w));
+        / (t1 * (1.0 - v + v * w));
 
     let part5 = -(2.0
         * cf
@@ -4795,7 +4859,7 @@ pub fn struv6(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 2.0 * ca2 * v8 * w6
             - 2.0 * v8 * w7
             + 2.0 * ca2 * v8 * w7))
-        / ((1.0 - v).powi(2) * v3 * w2 * (1.0 - v * w).powi(3));
+        / (t2);
 
     let part6 = -(2.0
         * cf
@@ -4970,7 +5034,7 @@ pub fn struv6(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 8.0 * ca3 * v9 * w7
             + 4.0 * ca * v9 * w8
             - 4.0 * ca3 * v9 * w8))
-        / (ca * (1.0 - v).powi(2) * v3 * w2 * (1.0 - v * w).powi(3) * (1.0 - v + v * w));
+        / (t1 * (1.0 - v * w).powi(3) * (1.0 - v + v * w));
 
     let part7 = -(2.0
         * cf
@@ -5158,7 +5222,7 @@ pub fn struv6(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 8.0 * ca3 * v9 * w7
             + 4.0 * ca * v9 * w8
             - 4.0 * ca3 * v9 * w8))
-        / (ca * (1.0 - v).powi(2) * v3 * w2 * (1.0 - v * w).powi(3) * (1.0 - v + v * w));
+        / (t1 * (1.0 - v * w).powi(3) * (1.0 - v + v * w));
 
     let part8 = -(cf
         * (8.0 * ca * v2 - 8.0 * ca3 * v2 - 24.0 * ca * v3 + 24.0 * ca3 * v3 + 28.0 * ca * v4
@@ -5406,7 +5470,7 @@ pub fn struv6(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 8.0 * cacf * v9 * w7
             + 4.0 * ca * v9 * w8
             - 4.0 * ca3 * v9 * w8))
-        / (ca * (1.0 - v).powi(2) * v3 * w2 * (1.0 - v * w).powi(3) * (1.0 - v + v * w));
+        / (t1 * (1.0 - v * w).powi(3) * (1.0 - v + v * w));
 
     let part9 = -(4.0
         * cf
@@ -5748,9 +5812,17 @@ pub fn struv6(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
     part1 + part2 + part3 + part4 + part5 + part6 + part7 + part8 + part9
 }
 
-/// `STRUV7(W,V,X3,S)`.
+/// Channel 7: `qq -> qq` (identical flavor) plus an extra gluon, hadron
+/// from the gluon. Regular remainder term (formerly `STRUV7(W,V,X3,S)`).
 #[must_use]
-pub fn struv7(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc) -> f64 {
+pub fn qq_identical_elastic_gluon_frag(
+    w: f64,
+    v: f64,
+    _x3: f64,
+    _s: f64,
+    ctx: &MeContext,
+    pre: &Precalc,
+) -> f64 {
     let cf = ctx.cf;
     let ca = ctx.ca;
     let (v2, v3, v4, v5, v6, v7, v8) = (pre.v2, pre.v3, pre.v4, pre.v5, pre.v6, pre.v7, pre.v8);
@@ -5761,6 +5833,7 @@ pub fn struv7(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
         pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv, pre.lmss,
     );
 
+    let t1 = (1.0 - v).powi(2) * v2 * w2;
     let part1 = (16.0
         * ca
         * cf.powi(2)
@@ -5794,7 +5867,7 @@ pub fn struv7(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + v4 * w3
             - ca * v4 * w3
             + ca * v4 * w4))
-        / ((1.0 - v).powi(2) * v2 * w2 * (1.0 - v + v * w).powi(2));
+        / (t1 * (1.0 - v + v * w).powi(2));
 
     let part3 = (4.0
         * cf
@@ -5817,7 +5890,7 @@ pub fn struv7(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 2.0 * ca2 * v4 * w3
             - 2.0 * v4 * w4
             + 2.0 * ca2 * v4 * w4))
-        / ((1.0 - v).powi(2) * v2 * w2);
+        / (t1);
 
     let part4 = -(4.0
         * cf
@@ -5909,7 +5982,7 @@ pub fn struv7(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 2.0 * ca3 * v5 * w5
             - v6 * w5
             + ca2 * v6 * w5))
-        / (ca * (1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w) * (1.0 - v + v * w));
+        / (ca * t1 * (1.0 - v * w) * (1.0 - v + v * w));
 
     let part5 = -(4.0
         * cf
@@ -5982,7 +6055,7 @@ pub fn struv7(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 2.0 * ca3 * v5 * w5
             - v6 * w5
             + ca2 * v6 * w5))
-        / (ca * (1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w) * (1.0 - v + v * w));
+        / (ca * t1 * (1.0 - v * w) * (1.0 - v + v * w));
 
     let part6 = (2.0
         * cf
@@ -6039,7 +6112,7 @@ pub fn struv7(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 2.0 * ca2 * v6 * w5
             + 2.0 * v6 * w6
             - 2.0 * ca2 * v6 * w6))
-        / ((1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(2));
+        / (t1 * (1.0 - v * w).powi(2));
 
     let part7 = -(2.0
         * cf
@@ -6199,7 +6272,7 @@ pub fn struv7(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 12.0 * ca3 * v8 * w7
             + 4.0 * ca * v8 * w8
             - 4.0 * ca3 * v8 * w8))
-        / (ca * (1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
+        / (ca * t1 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
 
     let part8 = -(2.0
         * cf
@@ -6360,7 +6433,7 @@ pub fn struv7(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 12.0 * ca3 * v8 * w7
             + 4.0 * ca * v8 * w8
             - 4.0 * ca3 * v8 * w8))
-        / (ca * (1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
+        / (ca * t1 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
 
     let part9 = -(2.0
         * cf
@@ -6523,14 +6596,23 @@ pub fn struv7(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 6.0 * ca3 * v8 * w7
             + 2.0 * ca * v8 * w8
             - 2.0 * ca3 * v8 * w8))
-        / (ca * (1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
+        / (ca * t1 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
 
     part1 + part2 + part3 + part4 + part5 + part6 + part7 + part8 + part9
 }
 
-/// `STRUV8(W,V,X3,S)`.
+/// Channel 8: `qg -> q q'qbar'` (unlike-flavor sea pair from a split
+/// gluon), hadron from the outgoing quark `q'`. Regular remainder term
+/// (formerly `STRUV8(W,V,X3,S)`).
 #[must_use]
-pub fn struv8(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc) -> f64 {
+pub fn qg_seapair_unlike_quark_frag(
+    w: f64,
+    v: f64,
+    _x3: f64,
+    _s: f64,
+    ctx: &MeContext,
+    pre: &Precalc,
+) -> f64 {
     let cf = ctx.cf;
     let ca = ctx.ca;
     let (v2, v3, v4, v5, v6, v7, v8) = (pre.v2, pre.v3, pre.v4, pre.v5, pre.v6, pre.v7, pre.v8);
@@ -6541,6 +6623,7 @@ pub fn struv8(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
         pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv, pre.lmss,
     );
 
+    let t1 = (1.0 - v) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2);
     let part1 = (-2.0
         * cf
         * lmss
@@ -6787,7 +6870,7 @@ pub fn struv8(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 16.0 * ca2 * v8 * w7
             + 4.0 * v8 * w8
             - 4.0 * ca2 * v8 * w8))
-        / ((1.0 - v) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
+        / (t1);
 
     let part8 = -(2.0
         * cf
@@ -6885,7 +6968,7 @@ pub fn struv8(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 20.0 * ca2 * v8 * w7
             + 4.0 * v8 * w8
             - 4.0 * ca2 * v8 * w8))
-        / ((1.0 - v) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
+        / (t1);
 
     let part9 = -(2.0
         * cf
@@ -6978,14 +7061,23 @@ pub fn struv8(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 16.0 * ca2 * v8 * w7
             - 2.0 * v8 * w8
             + 2.0 * ca2 * v8 * w8))
-        / ((1.0 - v) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
+        / (t1);
 
     part1 + part2 + part3 + part4 + part5 + part6 + part7 + part8 + part9
 }
 
-/// `STRUV9(W,V,X3,S)`.
+/// Channel 9: `qg -> q q'qbar'` (unlike-flavor sea pair from a split
+/// gluon), hadron from the outgoing antiquark `qbar'`. Regular remainder
+/// term (formerly `STRUV9(W,V,X3,S)`).
 #[must_use]
-pub fn struv9(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc) -> f64 {
+pub fn qg_seapair_unlike_antiquark_frag(
+    w: f64,
+    v: f64,
+    _x3: f64,
+    _s: f64,
+    ctx: &MeContext,
+    pre: &Precalc,
+) -> f64 {
     let cf = ctx.cf;
     let ca = ctx.ca;
     let (v2, v3, v4, v5, v6, v7, v8) = (pre.v2, pre.v3, pre.v4, pre.v5, pre.v6, pre.v7, pre.v8);
@@ -6995,6 +7087,7 @@ pub fn struv9(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
         pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv, pre.lmss,
     );
 
+    let t1 = (1.0 - v) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2);
     let part1 = (-2.0
         * cf
         * lmss
@@ -7231,7 +7324,7 @@ pub fn struv9(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 16.0 * ca2 * v8 * w7
             + 4.0 * v8 * w8
             - 4.0 * ca2 * v8 * w8))
-        / ((1.0 - v) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
+        / (t1);
 
     let part8 = -(2.0
         * cf
@@ -7329,7 +7422,7 @@ pub fn struv9(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             + 20.0 * ca2 * v8 * w7
             + 4.0 * v8 * w8
             - 4.0 * ca2 * v8 * w8))
-        / ((1.0 - v) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
+        / (t1);
 
     let part9 = -(2.0
         * cf
@@ -7421,14 +7514,23 @@ pub fn struv9(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc)
             - 16.0 * ca2 * v8 * w7
             - 2.0 * v8 * w8
             + 2.0 * ca2 * v8 * w8))
-        / ((1.0 - v) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
+        / (t1);
 
     part1 + part2 + part3 + part4 + part5 + part6 + part7 + part8 + part9
 }
 
-/// `STRUV10(W,V,X3,S)`.
+/// Channel 10: `qg -> q qqbar` (sea pair of the same flavor as the beam
+/// quark, from a split gluon), hadron from the produced quark/antiquark.
+/// Regular remainder term (formerly `STRUV10(W,V,X3,S)`).
 #[must_use]
-pub fn struv10(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc) -> f64 {
+pub fn qg_seapair_same_flavor_frag(
+    w: f64,
+    v: f64,
+    _x3: f64,
+    _s: f64,
+    ctx: &MeContext,
+    pre: &Precalc,
+) -> f64 {
     let cf = ctx.cf;
     let ca = ctx.ca;
     let (v2, v3, v4, v5, v6, v7, v8) = (pre.v2, pre.v3, pre.v4, pre.v5, pre.v6, pre.v7, pre.v8);
@@ -7439,6 +7541,8 @@ pub fn struv10(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
         pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv, pre.lmss,
     );
 
+    let t1 = ca * (1.0 - v) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2);
+    let t2 = ca * (1.0 - v) * v2 * w2 * (1.0 - v * w) * (1.0 - v + v * w);
     let part1 = (-2.0
         * cf
         * lmss
@@ -7562,7 +7666,7 @@ pub fn struv10(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - ca2 * v5 * w5
             + 2.0 * ca3 * v5 * w5
             - 2.0 * ca3 * v6 * w5))
-        / (ca * (1.0 - v) * v2 * w2 * (1.0 - v * w) * (1.0 - v + v * w));
+        / (t2);
 
     let part5 = -(4.0
         * cf
@@ -7631,7 +7735,7 @@ pub fn struv10(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - ca2 * v5 * w5
             + 2.0 * ca3 * v5 * w5
             - 2.0 * ca3 * v6 * w5))
-        / (ca * (1.0 - v) * v2 * w2 * (1.0 - v * w) * (1.0 - v + v * w));
+        / (t2);
 
     let part6 = (2.0
         * cf
@@ -7861,7 +7965,7 @@ pub fn struv10(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 16.0 * ca3 * v8 * w7
             + 4.0 * ca * v8 * w8
             - 4.0 * ca3 * v8 * w8))
-        / (ca * (1.0 - v) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
+        / (t1);
 
     let part8 = -(2.0
         * cf
@@ -8004,7 +8108,7 @@ pub fn struv10(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 20.0 * ca3 * v8 * w7
             + 4.0 * ca * v8 * w8
             - 4.0 * ca3 * v8 * w8))
-        / (ca * (1.0 - v) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
+        / (t1);
 
     let part9 = -(2.0
         * cf
@@ -8138,14 +8242,23 @@ pub fn struv10(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 16.0 * ca3 * v8 * w7
             - 2.0 * ca * v8 * w8
             + 2.0 * ca3 * v8 * w8))
-        / (ca * (1.0 - v) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(2));
+        / (t1);
 
     part1 + part2 + part3 + part4 + part5 + part6 + part7 + part8 + part9
 }
 
-/// `STRUV11(W,V,X3,S)`.
+/// Channel 11: `qqbar -> qqbar` (same flavor, elastic + annihilation),
+/// hadron from the outgoing quark. Regular remainder term (formerly
+/// `STRUV11(W,V,X3,S)`).
 #[must_use]
-pub fn struv11(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc) -> f64 {
+pub fn qqbar_elastic_quark_frag(
+    w: f64,
+    v: f64,
+    _x3: f64,
+    _s: f64,
+    ctx: &MeContext,
+    pre: &Precalc,
+) -> f64 {
     let cf = ctx.cf;
     let ca = ctx.ca;
     let (v2, v3, v4, v5, v6, v7, v8, v9, v10) = (
@@ -8161,6 +8274,7 @@ pub fn struv11(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
     let (l1v, lw, lvw, l1vw, lms, l1w, lv, lmss) = (
         pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv, pre.lmss,
     );
+    let t1 = ca * (1.0 - v).powi(2) * v * w * (1.0 - v * w).powi(3) * (1.0 - v + v * w).powi(3);
 
     let part1 = (-4.0
         * cf
@@ -8891,7 +9005,7 @@ pub fn struv11(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 8.0 * ca3 * v10 * w8
             + 4.0 * ca * v9 * w9
             - 4.0 * ca3 * v9 * w9))
-        / (ca * (1.0 - v).powi(2) * v * w * (1.0 - v * w).powi(3) * (1.0 - v + v * w).powi(3));
+        / (t1);
 
     let part7 = -(2.0
         * cf
@@ -9097,7 +9211,7 @@ pub fn struv11(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 8.0 * ca3 * v10 * w8
             + 4.0 * ca * v10 * w9
             - 4.0 * ca3 * v10 * w9))
-        / (ca * (1.0 - v).powi(2) * v * w * (1.0 - v * w).powi(3) * (1.0 - v + v * w).powi(3));
+        / (t1);
 
     let part8 = -(2.0
         * cf
@@ -9291,7 +9405,7 @@ pub fn struv11(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 8.0 * ca3 * v10 * w8
             + 4.0 * ca * v10 * w9
             - 4.0 * ca3 * v10 * w9))
-        / (ca * (1.0 - v).powi(2) * v * w * (1.0 - v * w).powi(3) * (1.0 - v + v * w).powi(3));
+        / (t1);
 
     let part9 = -(4.0
         * cf
@@ -9664,9 +9778,18 @@ pub fn struv11(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
     part1 + part2 + part3 + part4 + part5 + part6 + part7 + part8 + part9
 }
 
-/// `STRUV12(W,V,X3,S)`.
+/// Channel 12: `qqbar -> gg` (same-flavor annihilation into two gluons),
+/// hadron from the outgoing gluon. Regular remainder term (formerly
+/// `STRUV12(W,V,X3,S)`).
 #[must_use]
-pub fn struv12(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc) -> f64 {
+pub fn qqbar_to_gg_gluon_frag(
+    w: f64,
+    v: f64,
+    _x3: f64,
+    _s: f64,
+    ctx: &MeContext,
+    pre: &Precalc,
+) -> f64 {
     let cf = ctx.cf;
     let ca = ctx.ca;
     let nf = ctx.nf;
@@ -9685,6 +9808,8 @@ pub fn struv12(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
         pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv, pre.lmss,
     );
 
+    let t1 = ca * (1.0 - v).powi(2) * v2 * w2;
+    let t2 = (1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(2);
     let part1 = (8.0
         * ca
         * cf.powi(2)
@@ -9792,7 +9917,7 @@ pub fn struv12(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 4.0 * ca4 * v4 * w5
             + 4.0 * ca2 * v5 * w5
             - 4.0 * ca4 * v5 * w5))
-        / (ca * (1.0 - v).powi(2) * v2 * w2);
+        / (t1);
 
     let part6 = -(4.0
         * cf
@@ -9951,7 +10076,7 @@ pub fn struv12(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 7.0 * ca2 * v6 * w5
             + ca4 * v6 * w5
             + 4.0 * ca2 * v7 * w5))
-        / (ca * (1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w) * (1.0 - v + v * w));
+        / (t1 * (1.0 - v * w) * (1.0 - v + v * w));
 
     let part8 = -(4.0
         * cf
@@ -10208,7 +10333,7 @@ pub fn struv12(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 2.0 * ca2 * v6 * w6
             + 8.0 * ca2 * cf * v6 * w6
             - 8.0 * ca2 * cf * v7 * w6))
-        / ((1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(2));
+        / (t2);
 
     let part10 = -(4.0
         * cf
@@ -10614,7 +10739,7 @@ pub fn struv12(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 2.0 * ca4 * v8 * w8
             + 2.0 * ca2 * v9 * w8
             - 2.0 * ca4 * v9 * w8))
-        / (ca * (1.0 - v).powi(2) * v2 * w2 * (1.0 - v + v * w).powi(4));
+        / (t1 * (1.0 - v + v * w).powi(4));
 
     let part12 = -(2.0
         * cf
@@ -11361,7 +11486,7 @@ pub fn struv12(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 8.0 * ca4 * v10 * w10
             + 8.0 * ca2 * v11 * w10
             - 8.0 * ca4 * v11 * w10))
-        / (ca * (1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(4));
+        / (t1 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(4));
 
     let part14 = -(2.0
         * cf
@@ -11736,7 +11861,7 @@ pub fn struv12(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 8.0 * ca4 * v10 * w10
             + 8.0 * ca2 * v11 * w10
             - 8.0 * ca4 * v11 * w10))
-        / (ca * (1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(4));
+        / (t1 * (1.0 - v * w).powi(2) * (1.0 - v + v * w).powi(4));
 
     part1
         + part2
@@ -11754,9 +11879,17 @@ pub fn struv12(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
         + part14
 }
 
-/// `STRUV13(W,V,X3,S)`.
+/// Channel 13: `qg -> qg` (Compton), hadron from the outgoing quark.
+/// Regular remainder term (formerly `STRUV13(W,V,X3,S)`).
 #[must_use]
-pub fn struv13(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc) -> f64 {
+pub fn qg_compton_quark_frag(
+    w: f64,
+    v: f64,
+    _x3: f64,
+    _s: f64,
+    ctx: &MeContext,
+    pre: &Precalc,
+) -> f64 {
     let cf = ctx.cf;
     let ca = ctx.ca;
     let nf = ctx.nf;
@@ -11776,32 +11909,16 @@ pub fn struv13(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
     let (l1v, lw, lvw, l1vw, lms, l1w, lv) =
         (pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv);
 
-    let part1 = (8.0
-        * ca
-        * cf2
-        * l1w
-        * nf
-        * (1.0 + v2 * w2)
-        * (1.0 - 2.0 * v + 2.0 * v2 - 2.0 * v2 * w + v2 * w2))
-        / ((1.0 - v) * (1.0 - v * w).powi(4));
+    let t1 = 1.0 - 2.0 * v + 2.0 * v2 - 2.0 * v2 * w + v2 * w2;
+    let t2 = ca * (1.0 - v).powi(2) * pre.v2 * pre.w2;
+    let part1 =
+        (8.0 * ca * cf2 * l1w * nf * (1.0 + v2 * w2) * (t1)) / ((1.0 - v) * (1.0 - v * w).powi(4));
 
-    let part2 = -(8.0
-        * ca
-        * cf2
-        * lms
-        * nf
-        * (1.0 + v2 * w2)
-        * (1.0 - 2.0 * v + 2.0 * v2 - 2.0 * v2 * w + v2 * w2))
-        / ((1.0 - v) * (1.0 - v * w).powi(4));
+    let part2 =
+        -(8.0 * ca * cf2 * lms * nf * (1.0 + v2 * w2) * (t1)) / ((1.0 - v) * (1.0 - v * w).powi(4));
 
-    let part3 = (8.0
-        * ca
-        * cf2
-        * lv
-        * nf
-        * (1.0 + v2 * w2)
-        * (1.0 - 2.0 * v + 2.0 * v2 - 2.0 * v2 * w + v2 * w2))
-        / ((1.0 - v) * (1.0 - v * w).powi(4));
+    let part3 =
+        (8.0 * ca * cf2 * lv * nf * (1.0 + v2 * w2) * (t1)) / ((1.0 - v) * (1.0 - v * w).powi(4));
 
     let part4 = -(4.0
         * cf
@@ -11890,7 +12007,7 @@ pub fn struv13(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 4.0 * ca4 * v4 * w5
             + 2.0 * ca * v5 * w5
             - 2.0 * ca3 * v5 * w5))
-        / (ca * (1.0 - v).powi(2) * pre.v2 * pre.w2);
+        / (t2);
 
     let part5 = -(4.0
         * cf
@@ -11997,7 +12114,7 @@ pub fn struv13(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 4.0 * ca3 * v6 * w5
             + ca4 * v6 * w5
             + 2.0 * ca3 * v7 * w5))
-        / (ca * (1.0 - v).powi(2) * pre.v2 * pre.w2 * (1.0 - v * w) * (1.0 - v + v * w));
+        / (t2 * (1.0 - v * w) * (1.0 - v + v * w));
 
     let part6 = -(4.0
         * cf
@@ -12701,7 +12818,7 @@ pub fn struv13(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 4.0 * ca4 * v8 * w8
             - 2.0 * ca * v9 * w8
             + 2.0 * ca3 * v9 * w8))
-        / (ca * (1.0 - v).powi(2) * pre.v2 * pre.w2 * (1.0 - v * w).powi(4));
+        / (t2 * (1.0 - v * w).powi(4));
 
     let part11 = -(2.0
         * cf
@@ -13719,9 +13836,17 @@ pub fn struv13(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
         + part13
 }
 
-/// `STRUV14(W,V,X3,S)`.
+/// Channel 14: `qg -> qg` (Compton), hadron from the outgoing gluon.
+/// Regular remainder term (formerly `STRUV14(W,V,X3,S)`).
 #[must_use]
-pub fn struv14(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc) -> f64 {
+pub fn qg_compton_gluon_frag(
+    w: f64,
+    v: f64,
+    _x3: f64,
+    _s: f64,
+    ctx: &MeContext,
+    pre: &Precalc,
+) -> f64 {
     let cf = ctx.cf;
     let ca = ctx.ca;
     let (v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12) = (
@@ -13739,6 +13864,7 @@ pub fn struv14(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
         pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv, pre.lmss,
     );
 
+    let t1 = ca * (1.0 - v).powi(2) * v3 * w2;
     let part1 = (4.0
         * cf
         * lvw
@@ -13787,7 +13913,7 @@ pub fn struv14(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 12.0 * ca4 * v6 * w4
             + 4.0 * ca2 * v6 * w5
             - 4.0 * ca4 * v6 * w5))
-        / (ca * (1.0 - v).powi(2) * v3 * w2);
+        / (t1);
 
     let part2 = -(4.0
         * cf
@@ -13851,7 +13977,7 @@ pub fn struv14(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 2.0 * ca2 * v7 * w5
             + 8.0 * ca4 * v7 * w5
             - 4.0 * ca4 * v8 * w5))
-        / (ca * (1.0 - v).powi(2) * v3 * w2 * (1.0 - v * w) * (1.0 - v + v * w));
+        / (t1 * (1.0 - v * w) * (1.0 - v + v * w));
 
     let part3 = -(4.0
         * cf
@@ -14118,7 +14244,7 @@ pub fn struv14(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 8.0 * ca4 * v9 * w6
             + 4.0 * ca2 * v9 * w7
             - 4.0 * ca4 * v9 * w7))
-        / (ca * (1.0 - v).powi(2) * v3 * w2 * (1.0 - v * w).powi(3));
+        / (t1 * (1.0 - v * w).powi(3));
 
     let part6 = -(2.0
         * cf
@@ -14229,7 +14355,7 @@ pub fn struv14(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 28.0 * ca4 * v9 * w6
             - 4.0 * ca2 * v9 * w7
             + 4.0 * ca4 * v9 * w7))
-        / (ca * (1.0 - v).powi(2) * v3 * w2 * (1.0 - v + v * w).powi(3));
+        / (t1 * (1.0 - v + v * w).powi(3));
 
     let part7 = -(cf
         * (12.0 * ca2 - 28.0 * ca4 - 72.0 * ca2 * v + 168.0 * ca4 * v - 6.0 * v2
@@ -14726,7 +14852,7 @@ pub fn struv14(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 40.0 * ca4 * v12 * w9
             + 8.0 * ca2 * v12 * w10
             - 8.0 * ca4 * v12 * w10))
-        / (ca * (1.0 - v).powi(2) * v3 * w2 * (1.0 - v * w).powi(3) * (1.0 - v + v * w).powi(3));
+        / (t1 * (1.0 - v * w).powi(3) * (1.0 - v + v * w).powi(3));
 
     let part9 = (2.0
         * cf
@@ -14943,17 +15069,26 @@ pub fn struv14(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 48.0 * ca4 * v12 * w9
             + 8.0 * ca2 * v12 * w10
             - 8.0 * ca4 * v12 * w10))
-        / (ca * (1.0 - v).powi(2) * v3 * w2 * (1.0 - v * w).powi(3) * (1.0 - v + v * w).powi(3));
+        / (t1 * (1.0 - v * w).powi(3) * (1.0 - v + v * w).powi(3));
 
     part1 + part2 + part3 + part4 + part5 + part6 + part7 + part8 + part9
 }
 
-/// `STRUV15(W,V,X3,S)`. Uses `v**13`, `v**14`, `w**12`, `w**13` beyond the
-/// `PREV`/`PREW` common range (`V2..V12`, `W2..W12`); Fortran computes
-/// these via inline exponentiation rather than a precomputed common
-/// variable, so we do the same here with local `.powi()` calls.
+/// Channel 15: `gg -> gg`, hadron from the outgoing gluon. Regular
+/// remainder term (formerly `STRUV15(W,V,X3,S)`). Uses `v**13`, `v**14`,
+/// `w**12`, `w**13` beyond the `PREV`/`PREW` common range (`V2..V12`,
+/// `W2..W12`); Fortran computes these via inline exponentiation rather
+/// than a precomputed common variable, so we do the same here with local
+/// `.powi()` calls.
 #[must_use]
-pub fn struv15(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc) -> f64 {
+pub fn gg_to_gg_gluon_frag(
+    w: f64,
+    v: f64,
+    _x3: f64,
+    _s: f64,
+    ctx: &MeContext,
+    pre: &Precalc,
+) -> f64 {
     let ca3 = ctx.ca.powi(3);
     let nf = ctx.nf;
     let (v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12) = (
@@ -14969,6 +15104,7 @@ pub fn struv15(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
         pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv, pre.lmss,
     );
 
+    let t1 = (1.0 - v).powi(2) * v3 * w2;
     let part1 = (-256.0
         * ca3
         * lmss
@@ -15047,7 +15183,7 @@ pub fn struv15(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 4.0 * v5 * w5
             - 8.0 * v6 * w5
             + 4.0 * v6 * w6))
-        / ((1.0 - v).powi(2) * v3 * w2);
+        / (t1);
 
     let part5 = -(128.0
         * ca3
@@ -15083,7 +15219,7 @@ pub fn struv15(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 4.0 * v8 * w5
             - 4.0 * v7 * w6
             + 2.0 * v8 * w6))
-        / ((1.0 - v).powi(2) * v3 * w2 * (1.0 - v * w) * (1.0 - v + v * w));
+        / (t1 * (1.0 - v * w) * (1.0 - v + v * w));
 
     let part6 = -(256.0
         * ca3
@@ -15308,7 +15444,7 @@ pub fn struv15(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 5.0 * v9 * w8
             + v10 * w8
             - v10 * w9))
-        / ((1.0 - v).powi(2) * v3 * w2 * (1.0 - v * w).powi(4));
+        / (t1 * (1.0 - v * w).powi(4));
 
     let part11 = -(256.0
         * ca3
@@ -15373,7 +15509,7 @@ pub fn struv15(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 5.0 * v9 * w8
             + 6.0 * v10 * w8
             - v10 * w9))
-        / ((1.0 - v).powi(2) * v3 * w2 * (1.0 - v + v * w).powi(4));
+        / (t1 * (1.0 - v + v * w).powi(4));
 
     let part12 = (64.0
         * ca3
@@ -15907,7 +16043,7 @@ pub fn struv15(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 2.0 * v13 * w12
             + 20.0 * v14 * w12
             - 4.0 * v14 * w13))
-        / ((1.0 - v).powi(2) * v3 * w2 * (1.0 - v * w).powi(4) * (1.0 - v + v * w).powi(4));
+        / (t1 * (1.0 - v * w).powi(4) * (1.0 - v + v * w).powi(4));
 
     let part17 = (128.0
         * ca3
@@ -16038,7 +16174,7 @@ pub fn struv15(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 62.0 * v14 * w11
             + 22.0 * v14 * w12
             - 4.0 * v14 * w13))
-        / ((1.0 - v).powi(2) * v3 * w2 * (1.0 - v * w).powi(4) * (1.0 - v + v * w).powi(4));
+        / (t1 * (1.0 - v * w).powi(4) * (1.0 - v + v * w).powi(4));
 
     part1
         + part2
@@ -16059,9 +16195,17 @@ pub fn struv15(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
         + part17
 }
 
-/// `STRUV16(W,V,X3,S)`.
+/// Channel 16: `gg -> qqbar`, hadron from the outgoing quark. Regular
+/// remainder term (formerly `STRUV16(W,V,X3,S)`).
 #[must_use]
-pub fn struv16(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc) -> f64 {
+pub fn gg_to_qqbar_quark_frag(
+    w: f64,
+    v: f64,
+    _x3: f64,
+    _s: f64,
+    ctx: &MeContext,
+    pre: &Precalc,
+) -> f64 {
     let cf = ctx.cf;
     let ca = ctx.ca;
     let (v2, v3, v4, v5, v6, v7, v8, v9, v10, v11) = (
@@ -16081,6 +16225,7 @@ pub fn struv16(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
         pre.l1v, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.l1w, pre.lv, pre.lmss,
     );
 
+    let t1 = ca * (1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(3);
     let part1 = (-4.0
         * cf
         * lvw
@@ -16702,7 +16847,7 @@ pub fn struv16(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 64.0 * ca4 * v7 * w7
             - 16.0 * ca4 * v8 * w7
             + 16.0 * ca4 * v8 * w8))
-        / (ca * (1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(3));
+        / (t1);
 
     let part7 = -(cf
         * (16.0 * ca2 * v - 48.0 * ca4 * v - 80.0 * ca2 * v2
@@ -16940,7 +17085,7 @@ pub fn struv16(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 32.0 * ca4 * v10 * w10
             + 160.0 * ca4 * v11 * w10
             - 32.0 * ca4 * v11 * w11))
-        / (ca * (1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(3) * (1.0 - v + v * w).powi(3));
+        / (t1 * (1.0 - v + v * w).powi(3));
 
     let part8 = -(2.0
         * cf
@@ -17173,7 +17318,7 @@ pub fn struv16(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             + 352.0 * ca4 * v11 * w9
             - 144.0 * ca4 * v11 * w10
             + 32.0 * ca4 * v11 * w11))
-        / (ca * (1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(3) * (1.0 - v + v * w).powi(3));
+        / (t1 * (1.0 - v + v * w).powi(3));
 
     let part9 = -(2.0
         * cf
@@ -17408,7 +17553,7 @@ pub fn struv16(w: f64, v: f64, _x3: f64, _s: f64, ctx: &MeContext, pre: &Precalc
             - 16.0 * ca4 * v10 * w10
             - 128.0 * ca4 * v11 * w10
             + 32.0 * ca4 * v11 * w11))
-        / (ca * (1.0 - v).powi(2) * v2 * w2 * (1.0 - v * w).powi(3) * (1.0 - v + v * w).powi(3));
+        / (t1 * (1.0 - v + v * w).powi(3));
 
     part1 + part2 + part3 + part4 + part5 + part6 + part7 + part8 + part9
 }
