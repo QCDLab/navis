@@ -23,7 +23,7 @@ This will install two binaries `navis-pol` and `navis-unpol` that can be used to
 a YAML card containing the input settings. For example:
 
 ```sh
-navis-unpol example.yml
+navis-unpol ./runcards/example.yml
 ```
 
 ## Citation
