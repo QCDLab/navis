@@ -11,11 +11,6 @@ jobs:
   test:
     name: Build and test navis
     runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/nnpdf/lhapdf:v2
-      credentials:
-        username: ${{ github.repository_owner }}
-        password: ${{ github.token }}
     defaults:
       run:
         shell: bash --login {0}
