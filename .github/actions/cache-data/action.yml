@@ -14,6 +14,6 @@ runs:
     - name: Download data if cache miss
       if: steps.cache-data.outputs.cache-hit != 'true'
       run: |
-        wget --no-verbose --no-clobber -P navis-cli/tests/fixtures/ "https://data.nnpdf.science/neopdf/navis/SIHP-PP-POLARIZED-STAR-2006-LO.pineappl.lz4"
-        wget --no-verbose --no-clobber -P navis-cli/tests/fixtures/ "https://data.nnpdf.science/neopdf/navis/SIHP-PP-UNPOLARIZED-STAR-2006-LO.pineappl.lz4"
+        cd maintainer
+        ./download-data.sh
       shell: bash
