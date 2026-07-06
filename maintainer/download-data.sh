@@ -19,7 +19,7 @@ test -d navis-cli/tests/fixtures/ || mkdir -p navis-cli/tests/fixtures/
 
 # Download PineAPPL grids
 for grid in "${PINEAPPL_GRIDS[@]}"; do
-  wget --no-verbose --no-clobber -P navis-cli/tests/fixtures/ "https://data.nnpdf.science/neopdf/data/${grid}.pineappl.lz4"
+  wget --no-verbose --no-clobber -P navis-cli/tests/fixtures/ "https://data.nnpdf.science/neopdf/navis/${grid}.pineappl.lz4"
 done
 
 # Download NeoPDF sets
