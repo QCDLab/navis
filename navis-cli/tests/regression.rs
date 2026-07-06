@@ -12,15 +12,9 @@ const RUNCARD: &str = concat!(
     "/tests/fixtures/runcards/template.yml"
 );
 
-/// Relative tolerance for comparing MC results across runs. VEGAS is seeded
-/// deterministically per bin, so runs should be reproducible up to floating
-/// point summation-order differences from `rayon`'s parallel reduction --
-/// this tolerance is far looser than that noise floor, but far tighter than
-/// any physics-affecting change would produce.
 const RTOL: f64 = 1.0e-6;
 
-/// Parses the `sihp-pp::MC-RESULT` metadata value: one `pT value error`
-/// triple per (non-empty) line, see `navis-cli/src/bin/navis-{unpol,pol}.rs`.
+/// Parses the `sihp-pp::MC-RESULT`.
 fn parse_mc_result(s: &str) -> Vec<(f64, f64, f64)> {
     s.lines()
         .filter(|line| !line.trim().is_empty())
@@ -52,10 +46,7 @@ fn assert_close(label: &str, got: f64, want: f64) {
     );
 }
 
-/// Runs `bin_exe` against the fixture runcard inside a fresh temp
-/// directory, reads back `grid_filename` (the deterministic output name for
-/// this runcard/binary combination), and returns it alongside the reference
-/// grid loaded from `fixtures/`.
+/// Runs `bin_exe` against the fixture runcard.
 fn run_and_load(bin_exe: &str, grid_filename: &str) -> (Grid, Grid) {
     let tmp = tempfile::tempdir().expect("failed to create temp dir");
 
