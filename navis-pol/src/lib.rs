@@ -2,5 +2,5 @@
 //! matrix elements.
 
 pub mod integrand;
-pub mod matrix_elements;
-pub mod pdf_ff;
+pub mod mes;
+pub mod pdfs;

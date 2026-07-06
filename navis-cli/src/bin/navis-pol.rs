@@ -16,7 +16,7 @@ use navis_core::kinematics::{BinInputs, CrossSectionType, RunParams};
 use navis_core::runcard::RunCard;
 use navis_core::vegas::{vegas, VegasOutcome};
 use navis_pol::integrand::{dplus, Targets};
-use navis_pol::pdf_ff::PdfFf;
+use navis_pol::pdfs::PdfFf;
 
 #[derive(Parser)]
 #[command(about = "Polarized single-inclusive hadron production cross sections")]

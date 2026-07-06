@@ -17569,9 +17569,9 @@ pub fn gg_to_qqbar_quark_frag(
 /// its last quark flavor; no `XBHA`/`XBHB` exist).
 #[must_use]
 pub fn stru(
-    a: &crate::pdf_ff::PartonDensities,
-    b: &crate::pdf_ff::PartonDensities,
-    ff: &crate::pdf_ff::FragmentationFunctions,
+    a: &crate::pdfs::PartonDensities,
+    b: &crate::pdfs::PartonDensities,
+    ff: &crate::pdfs::FragmentationFunctions,
 ) -> ([f64; 16], [f64; 16]) {
     let (xuha, xubha, xdha, xdbha, xsha, xcha, xgproa) =
         (a.up, a.upb, a.down, a.downb, a.strange, a.charm, a.gluon);

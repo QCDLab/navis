@@ -6,10 +6,10 @@ use navis_core::grid_setup::PertOrder;
 use navis_core::kinematics::{map_phase_space, BinInputs, RunParams};
 use navis_core::vegas::GridFill;
 
-use crate::matrix_elements::{
+use crate::mes::{
     fbor, fdel1, fdel2, fresc1, fresc2, fvlo1, fvlo2, fvwpl1, fvwpl2, stru, MeContext,
 };
-use crate::pdf_ff::PdfFf;
+use crate::pdfs::PdfFf;
 
 /// Target-hadron selectors for `STRUCI`'s `ITAR` argument (`IH1`/`IH2` in
 /// the Fortran `COMMON /HADR/`).
@@ -142,7 +142,7 @@ pub fn dplus(
         }
 
         let shd_nlo = ps.shd_nlo(run);
-        let pre1 = crate::matrix_elements::precalc(ps.v, ps.w, shd_nlo, &ctx);
+        let pre1 = crate::mes::precalc(ps.v, ps.w, shd_nlo, &ctx);
 
         let mut fhorest1 = [0.0_f64; 16];
         (0..16).for_each(|j0| {
@@ -159,7 +159,7 @@ pub fn dplus(
         let mut fhorest2 = fhorest1;
         let vx = 1.0 - ps.v * ps.w;
         let wx = (1.0 - ps.v) / (1.0 - ps.v * ps.w);
-        let pre2 = crate::matrix_elements::precalc(vx, wx, shd_nlo, &ctx);
+        let pre2 = crate::mes::precalc(vx, wx, shd_nlo, &ctx);
         for &j0 in &IA3 {
             let j0f = j0 + 1;
             fhorest2[j0] = (ps.wmax - ps.wmin) / (1.0 - ps.v)
