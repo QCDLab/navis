@@ -15,8 +15,7 @@ pub enum PertOrder {
 }
 
 impl PertOrder {
-    /// Parse the runcard's `iord` integer the same way `hadrive-ms.f` does,
-    /// including its "PTO not valid" failure mode.
+    /// Parse the runcard's `iord` integer.
     pub fn from_iord(iord: i32) -> anyhow::Result<Self> {
         match iord {
             0 => Ok(Self::Lo),
@@ -60,8 +59,7 @@ impl PertOrder {
 }
 
 /// Everything needed to build a per-bin [`Grid`], computed once per run and
-/// reused for every pT bin (only the bin limits differ between grids built
-/// from the same [`GridConfig`]).
+/// reused for every pT bin.
 #[derive(Clone)]
 pub struct GridConfig {
     channels: Vec<Channel>,
@@ -75,9 +73,7 @@ pub struct GridConfig {
 impl GridConfig {
     /// `global_edges` must be the full list of bin edges (length `n_bins +
     /// 1`) across *all* pT bins in the run: the Q2 interpolation range is
-    /// derived from the overall pT range, exactly as in `hadrive-ms.f`
-    /// (`bin_min = bins(1)`, `bin_max = bins(nb_bins)`), even though each
-    /// resulting [`Grid`] only ever gets filled for a single bin.
+    /// derived from the overall pT range.
     #[must_use]
     pub fn new(order: PertOrder, convolutions: Vec<Conv>, global_edges: &[f64]) -> Self {
         let bin_min = global_edges[0];

@@ -1,6 +1,4 @@
-//! The 16 partonic channels used by both the unpolarized and polarized
-//! codes, corresponding to `ADD_PINEAPPL_CHANNELS` in `hadrive-ms.f` and
-//! `hadrive-pol-ms.f`.
+//! The 16 partonic channels used by both the unpolarized and polarized.
 
 use pineappl::boc::Channel;
 

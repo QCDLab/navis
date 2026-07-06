@@ -78,10 +78,9 @@ impl RunCard {
         Ok(serde_yaml::from_str(&text)?)
     }
 
-    /// Reconstruct bin edges from the bin centers the same way `hadrive-ms.f`
-    /// does: the first edge is placed half a step below the first center,
-    /// and each subsequent edge mirrors the previous center across the
-    /// previous edge.
+    /// Reconstruct bin edges from the bin centers. The first edge is
+    /// placed half a step below the first center, and each subsequent
+    /// edge mirrors the previous center across the previous edge.
     ///
     /// ```text
     /// bins(1) = centers(1) - 0.5 * (centers(2) - centers(1))

@@ -37,8 +37,7 @@ const ALPHA: f64 = 1.5;
 const BETA: f64 = 0.75;
 
 /// One PineAPPL grid-fill record, the side effect an integrand emits per
-/// Monte Carlo point (mirrors a single `pineappl_grid_fill2` call in
-/// `DPLUS`).
+/// Monte Carlo point.
 #[derive(Debug, Clone)]
 pub struct GridFill {
     pub order: usize,
@@ -49,9 +48,7 @@ pub struct GridFill {
 }
 
 /// Final result of a VEGAS+ run: the weighted-average integral estimate,
-/// its standard deviation, and the chi-squared per degree of freedom,
-/// matching `ERG1`/`ERG2`/`ERG3` (`COMMON /RESULT/`) as read by `FUNCDG` in
-/// `hadrive-ms.f`.
+/// its standard deviation, and the chi-squared per degree of freedom.
 #[derive(Debug, Clone, Copy)]
 pub struct VegasOutcome {
     pub integral: f64,
@@ -98,13 +95,6 @@ fn choose_n_strat(n_eval: usize, dim: usize) -> usize {
 /// counted iteration -- the first, "warm-up" iteration is excluded from
 /// both the reported result and the grid fills, matching `mchep`'s own
 /// convention) and returning the final estimate.
-///
-/// `integrand(xx, fill_weight)` mirrors `DPLUS(XX,grid,calls,wgt)`'s role:
-/// it receives a point `xx` in `[0, 1]^5` together with this point's total
-/// Monte Carlo weight, and must return the *unscaled* integrand value (used
-/// to drive VEGAS+'s own importance-sampling estimator) plus any grid-fill
-/// records for that point, already scaled by `fill_weight` where
-/// appropriate.
 #[allow(clippy::too_many_arguments)]
 pub fn vegas<F>(
     integrand: F,
@@ -122,29 +112,10 @@ where
     let mut integrator = VegasPlus::new(n_iter, n_eval, N_BINS, ALPHA, n_strat, BETA, &boundaries);
     integrator.set_seed(seed);
 
-    // `grid` is guaranteed empty here (every call site builds a fresh
-    // per-bin grid immediately before calling `vegas`), so this clone is a
-    // cheap structural template -- no filled subgrids to copy -- used below
-    // to give each parallel fill task its own accumulator.
     let empty_template = grid.clone();
 
     let wrapped = ClosureIntegrand { eval: integrand };
     let result = integrator.integrate_with_observations(&wrapped, None, |fills| {
-        // `grid.fill` runs real interpolation-kernel work per call (it
-        // touches every node touched by the interpolation order in each
-        // dimension), and at NLO there are dozens of fills per Monte Carlo
-        // point -- cheap per call but this loop dominates wall time if run
-        // serially. Fan it out across one chunk per thread (a fine-grained
-        // rayon fold/reduce here -- both with a fixed split count and with
-        // `with_min_len`-bounded adaptive splitting -- was measured to be no
-        // better, and sometimes worse, than this simple fixed chunking, since
-        // the callers of `vegas` already run many bins concurrently via their
-        // own outer `rayon` parallelism; the dominant remaining cost in that
-        // regime is bin-to-bin load imbalance, which no fill-splitting
-        // strategy here can fix), each accumulating into its own partial grid
-        // (cloned from `empty_template`, so still empty at chunk-start), then
-        // merged back sequentially; `Grid::merge` just sums overlapping bins,
-        // far cheaper than re-deriving interpolation weights from scratch.
         let n_chunks = rayon::current_num_threads().max(1);
         let chunk_len = fills.len().div_ceil(n_chunks).max(1);
         let partials: Vec<Grid> = fills

@@ -2005,7 +2005,7 @@ pub fn qqprime_elastic_quark_frag(
     let (v2, v3, v4, v5, v6, v7) = (pre.v2, pre.v3, pre.v4, pre.v5, pre.v6, pre.v7);
     let (w2, w3, w4, w5, w6, w7, w8) = (pre.w2, pre.w3, pre.w4, pre.w5, pre.w6, pre.w7, pre.w8);
     let ca2 = pre.ca2;
-    let cacf = ca * cf; // CA*CF appears literally, not via COMMON /PRECOLOR/ CACF here
+    let cacf = ca * cf;
     let (l1v, lv, l1w, lw, lvw, l1vw, lms, lmss) = (
         pre.l1v, pre.lv, pre.l1w, pre.lw, pre.lvw, pre.l1vw, pre.lms, pre.lmss,
     );
