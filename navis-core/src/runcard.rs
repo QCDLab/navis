@@ -15,6 +15,10 @@ fn default_empty_string() -> String {
     String::new()
 }
 
+fn default_true() -> bool {
+    true
+}
+
 /// Mirrors the keys read out of `runcards/template.yml` / `runcards/example.yml`.
 ///
 /// Both the unpolarized and polarized binaries share this same runcard shape;
@@ -69,6 +73,14 @@ pub struct RunCard {
     pub yup: f64,
     #[serde(default = "default_zero_f64")]
     pub ydum: f64,
+
+    /// Whether to build and write the PineAPPL grid. When false, only the
+    /// Monte Carlo predictions (integral, MC error) are computed and
+    /// written to the `.res` file -- skipping all interpolation-grid
+    /// filling/merging, which otherwise dominates the runtime. Default:
+    /// true.
+    #[serde(default = "default_true")]
+    pub generate_grids: bool,
 }
 
 impl RunCard {

@@ -14,7 +14,7 @@ use navis_core::constants::Params;
 use navis_core::grid_setup::{GridConfig, PertOrder};
 use navis_core::kinematics::{BinInputs, CrossSectionType, RunParams};
 use navis_core::runcard::RunCard;
-use navis_core::vegas::{vegas, VegasOutcome};
+use navis_core::vegas::{vegas, vegas_value_only, VegasOutcome};
 use navis_pol::integrand::{dplus, Targets};
 use navis_pol::pdfs::PdfFf;
 
@@ -62,7 +62,9 @@ fn main() -> anyhow::Result<()> {
         Conv::new(ConvType::UnpolFF, 211),
     ];
     let edges = card.bin_edges();
-    let grid_config = GridConfig::new(order, convolutions, &edges);
+    let grid_config = card
+        .generate_grids
+        .then(|| GridConfig::new(order, convolutions, &edges));
 
     let n_iter = card.iter_max as usize;
     let n_eval = card.ncalls_vegas as usize;
@@ -71,7 +73,7 @@ fn main() -> anyhow::Result<()> {
     println!("Predictions:");
     println!("{:>14}{:>14}{:>14}", "x", "dsig/dx", "MC Error");
 
-    let results: Vec<(Grid, VegasOutcome)> = (0..card.n_bins)
+    let results: Vec<(Option<Grid>, VegasOutcome)> = (0..card.n_bins)
         .into_par_iter()
         .map(|i| {
             let ptdo = edges[i];
@@ -89,31 +91,50 @@ fn main() -> anyhow::Result<()> {
             let bin_width = ptup - ptdo;
             let seed = 0x5eed_1234_u64 ^ (i as u64);
 
-            let mut grid = grid_config
-                .new_grid_for_bin(ptdo, ptup)
-                .expect("failed to build per-bin grid");
+            match &grid_config {
+                Some(grid_config) => {
+                    let mut grid = grid_config
+                        .new_grid_for_bin(ptdo, ptup)
+                        .expect("failed to build per-bin grid");
 
-            let outcome = vegas(
-                |xx, fill_weight| {
-                    dplus(
-                        xx,
-                        fill_weight,
-                        &bin,
-                        &run,
-                        &params,
-                        order,
-                        targets,
-                        &pdf_ff,
-                        bin_width,
-                    )
-                },
-                n_iter,
-                n_eval,
-                seed,
-                &mut grid,
-            );
+                    let outcome = vegas(
+                        |xx, fill_weight| {
+                            dplus(
+                                xx,
+                                fill_weight,
+                                &bin,
+                                &run,
+                                &params,
+                                order,
+                                targets,
+                                &pdf_ff,
+                                bin_width,
+                            )
+                        },
+                        n_iter,
+                        n_eval,
+                        seed,
+                        &mut grid,
+                    );
 
-            (grid, outcome)
+                    (Some(grid), outcome)
+                }
+                None => {
+                    let outcome = vegas_value_only(
+                        |xx| {
+                            dplus(
+                                xx, 1.0, &bin, &run, &params, order, targets, &pdf_ff, bin_width,
+                            )
+                            .0
+                        },
+                        n_iter,
+                        n_eval,
+                        seed,
+                    );
+
+                    (None, outcome)
+                }
+            }
         })
         .collect();
 
@@ -131,15 +152,28 @@ fn main() -> anyhow::Result<()> {
             pt, outcome.integral, outcome.std_dev
         ));
 
-        merged = Some(match merged {
-            None => grid,
-            Some(mut acc) => {
-                acc.merge(grid)?;
-                acc
-            }
-        });
+        if let Some(grid) = grid {
+            merged = Some(match merged {
+                None => grid,
+                Some(mut acc) => {
+                    acc.merge(grid)?;
+                    acc
+                }
+            });
+        }
     }
-    let mut grid = merged.expect("n_bins must be > 0");
+
+    let outfile = format!("SIHP-PP-POLARIZED-{}{}", card.experiment, pto_suffix);
+    std::fs::create_dir_all("results")?;
+    std::fs::write(
+        format!("results/{}_{}.res", card.experiment, outfile),
+        result_string.clone(),
+    )?;
+
+    let Some(mut grid) = merged else {
+        println!("generate_grids is false: skipped PineAPPL grid generation.");
+        return Ok(());
+    };
     grid.optimize();
 
     let meta = grid.metadata_mut();
@@ -173,14 +207,7 @@ fn main() -> anyhow::Result<()> {
         "sihp-pp::ncalls_vegas".into(),
         card.ncalls_vegas.to_string(),
     );
-    meta.insert("sihp-pp::MC-RESULT".into(), result_string.clone());
-
-    let outfile = format!("SIHP-PP-POLARIZED-{}{}", card.experiment, pto_suffix);
-    std::fs::create_dir_all("results")?;
-    std::fs::write(
-        format!("results/{}_{}.res", card.experiment, outfile),
-        result_string,
-    )?;
+    meta.insert("sihp-pp::MC-RESULT".into(), result_string);
 
     let gridname = format!(
         "SIHP-PP-POLARIZED-{}{}{}.pineappl.lz4",

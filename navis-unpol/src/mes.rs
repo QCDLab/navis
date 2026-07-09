@@ -13,8 +13,8 @@ pub struct MeContext {
 
 /// `FBOR(V,SHD,F0)`: Born cross sections (including the `1/v/(1-v)` phase
 /// space factor), one entry per of the 16 channels shared by this
-/// function, [`avwpl`], [`avdel`], [`avlo`], and [`struv`] (1-indexed,
-/// matching the Fortran `J0`), identified from the flavor bookkeeping in
+/// function, [`avwpl`], [`avdel`], [`avlo`], and [`struv`], identified from
+/// the flavor bookkeeping in
 /// [`stru`]:
 ///
 /// 01. `qq' -> qq'`.
@@ -1955,15 +1955,15 @@ pub fn avlo(j0: usize, _w: f64, v: f64, _s: f64, ctx: &MeContext) -> f64 {
     }
 }
 
-/// `AVGO(W,V)`: always zero in the Fortran source (unused/placeholder).
+/// `AVGO(W,V)`: always zero.
 #[must_use]
 pub fn avgo(_w: f64, _v: f64) -> f64 {
     0.0
 }
 
 /// `STRUV(W,V,X3,S)`: dispatches to the per-channel regular remainder terms
-/// (formerly `STRUV1..16`) by channel `j0`. See the channel table on
-/// [`fbor`] for what each index physically represents.
+/// by channel `j0`. See the channel table on [`fbor`] for what each index
+/// physically represents.
 #[must_use]
 pub fn struv(j0: usize, w: f64, v: f64, x3: f64, s: f64, ctx: &MeContext, pre: &Precalc) -> f64 {
     match j0 {
@@ -1988,9 +1988,7 @@ pub fn struv(j0: usize, w: f64, v: f64, x3: f64, s: f64, ctx: &MeContext, pre: &
 }
 
 /// Channel 1: `qq' -> qq'` (unlike flavor, elastic), hadron from the
-/// outgoing quark. Regular remainder term (formerly `STRUV1(W,V,X3,S)`).
-/// `x3`/`s` are unused, matching the Fortran (the function's value depends
-/// only on `w`, `v`, and the precomputed powers and logs in `pre`).
+/// outgoing quark.
 #[must_use]
 pub fn qqprime_elastic_quark_frag(
     w: f64,
@@ -2448,7 +2446,7 @@ pub fn qqprime_elastic_quark_frag(
 }
 
 /// Channel 2: `qq' -> qq'` (unlike flavor) plus an extra gluon, hadron
-/// from the gluon. Regular remainder term (formerly `STRUV2(W,V,X3,S)`).
+/// from the gluon. Regular remainder term.
 #[must_use]
 pub fn qqprime_elastic_gluon_frag(
     w: f64,
@@ -2924,7 +2922,7 @@ pub fn qqprime_elastic_gluon_frag(
 }
 
 /// Channel 3: `qqbar' -> qqbar'` (unlike flavor, elastic), hadron from
-/// the outgoing quark. Regular remainder term (formerly `STRUV3(W,V,X3,S)`).
+/// the outgoing quark. Regular remainder term.
 #[must_use]
 pub fn qqbarprime_elastic_quark_frag(
     w: f64,
@@ -3379,7 +3377,7 @@ pub fn qqbarprime_elastic_quark_frag(
 }
 
 /// Channel 4: `qqbar' -> qqbar'` (unlike flavor) plus an extra gluon,
-/// hadron from the gluon. Regular remainder term (formerly `STRUV4(W,V,X3,S)`).
+/// hadron from the gluon. Regular remainder term.
 #[must_use]
 pub fn qqbarprime_elastic_gluon_frag(
     w: f64,
@@ -3850,8 +3848,7 @@ pub fn qqbarprime_elastic_gluon_frag(
 }
 
 /// Channel 5: `qqbar -> q'qbar'` (annihilation into an unlike-flavor
-/// pair), hadron from the outgoing quark. Regular remainder term
-/// (formerly `STRUV5(W,V,X3,S)`).
+/// pair), hadron from the outgoing quark. Regular remainder term.
 #[must_use]
 pub fn qqbar_to_qprimeqbarprime_quark_frag(
     w: f64,
@@ -4409,7 +4406,7 @@ pub fn qqbar_to_qprimeqbarprime_quark_frag(
 }
 
 /// Channel 6: `qq -> qq` (identical flavor, elastic), hadron from the
-/// outgoing quark. Regular remainder term (formerly `STRUV6(W,V,X3,S)`).
+/// outgoing quark. Regular remainder term.
 #[must_use]
 pub fn qq_identical_elastic_quark_frag(
     w: f64,
@@ -5813,7 +5810,7 @@ pub fn qq_identical_elastic_quark_frag(
 }
 
 /// Channel 7: `qq -> qq` (identical flavor) plus an extra gluon, hadron
-/// from the gluon. Regular remainder term (formerly `STRUV7(W,V,X3,S)`).
+/// from the gluon. Regular remainder term.
 #[must_use]
 pub fn qq_identical_elastic_gluon_frag(
     w: f64,
@@ -6602,8 +6599,7 @@ pub fn qq_identical_elastic_gluon_frag(
 }
 
 /// Channel 8: `qg -> q q'qbar'` (unlike-flavor sea pair from a split
-/// gluon), hadron from the outgoing quark `q'`. Regular remainder term
-/// (formerly `STRUV8(W,V,X3,S)`).
+/// gluon), hadron from the outgoing quark `q'`.
 #[must_use]
 pub fn qg_seapair_unlike_quark_frag(
     w: f64,
@@ -7067,8 +7063,7 @@ pub fn qg_seapair_unlike_quark_frag(
 }
 
 /// Channel 9: `qg -> q q'qbar'` (unlike-flavor sea pair from a split
-/// gluon), hadron from the outgoing antiquark `qbar'`. Regular remainder
-/// term (formerly `STRUV9(W,V,X3,S)`).
+/// gluon), hadron from the outgoing antiquark `qbar'`.
 #[must_use]
 pub fn qg_seapair_unlike_antiquark_frag(
     w: f64,
@@ -7521,7 +7516,6 @@ pub fn qg_seapair_unlike_antiquark_frag(
 
 /// Channel 10: `qg -> q qqbar` (sea pair of the same flavor as the beam
 /// quark, from a split gluon), hadron from the produced quark/antiquark.
-/// Regular remainder term (formerly `STRUV10(W,V,X3,S)`).
 #[must_use]
 pub fn qg_seapair_same_flavor_frag(
     w: f64,
@@ -8248,8 +8242,7 @@ pub fn qg_seapair_same_flavor_frag(
 }
 
 /// Channel 11: `qqbar -> qqbar` (same flavor, elastic + annihilation),
-/// hadron from the outgoing quark. Regular remainder term (formerly
-/// `STRUV11(W,V,X3,S)`).
+/// hadron from the outgoing quark.
 #[must_use]
 pub fn qqbar_elastic_quark_frag(
     w: f64,
@@ -9779,8 +9772,7 @@ pub fn qqbar_elastic_quark_frag(
 }
 
 /// Channel 12: `qqbar -> gg` (same-flavor annihilation into two gluons),
-/// hadron from the outgoing gluon. Regular remainder term (formerly
-/// `STRUV12(W,V,X3,S)`).
+/// hadron from the outgoing gluon.
 #[must_use]
 pub fn qqbar_to_gg_gluon_frag(
     w: f64,
@@ -11880,7 +11872,6 @@ pub fn qqbar_to_gg_gluon_frag(
 }
 
 /// Channel 13: `qg -> qg` (Compton), hadron from the outgoing quark.
-/// Regular remainder term (formerly `STRUV13(W,V,X3,S)`).
 #[must_use]
 pub fn qg_compton_quark_frag(
     w: f64,
@@ -13837,7 +13828,6 @@ pub fn qg_compton_quark_frag(
 }
 
 /// Channel 14: `qg -> qg` (Compton), hadron from the outgoing gluon.
-/// Regular remainder term (formerly `STRUV14(W,V,X3,S)`).
 #[must_use]
 pub fn qg_compton_gluon_frag(
     w: f64,
@@ -15075,11 +15065,8 @@ pub fn qg_compton_gluon_frag(
 }
 
 /// Channel 15: `gg -> gg`, hadron from the outgoing gluon. Regular
-/// remainder term (formerly `STRUV15(W,V,X3,S)`). Uses `v**13`, `v**14`,
-/// `w**12`, `w**13` beyond the `PREV`/`PREW` common range (`V2..V12`,
-/// `W2..W12`); Fortran computes these via inline exponentiation rather
-/// than a precomputed common variable, so we do the same here with local
-/// `.powi()` calls.
+/// remainder term. Uses `v**13`, `v**14`, `w**12`, `w**13` beyond
+/// the `PREV`/`PREW` common range (`V2..V12`,`W2..W12`).
 #[must_use]
 pub fn gg_to_gg_gluon_frag(
     w: f64,
@@ -16195,8 +16182,7 @@ pub fn gg_to_gg_gluon_frag(
         + part17
 }
 
-/// Channel 16: `gg -> qqbar`, hadron from the outgoing quark. Regular
-/// remainder term (formerly `STRUV16(W,V,X3,S)`).
+/// Channel 16: `gg -> qqbar`, hadron from the outgoing quark.
 #[must_use]
 pub fn gg_to_qqbar_quark_frag(
     w: f64,
@@ -17562,11 +17548,9 @@ pub fn gg_to_qqbar_quark_frag(
 /// parton densities of hadrons A/B with fragmentation functions into the
 /// flavor-summed weight for each of the 16 channels. `GPPV` uses A as the
 /// "unintegrated" (v-side) hadron and B as the "collinear" (w-side) one;
-/// `GPPC` swaps A and B (Fortran's convention for the two `DPLUS` terms).
+/// `GPPC` swaps A and B.
 ///
-/// Bottom-quark densities (`PartonDensities::bottom`) are never referenced
-/// here, matching the Fortran subroutine's argument list (`XCHA`/`XCHB` are
-/// its last quark flavor; no `XBHA`/`XBHB` exist).
+/// Bottom-quark densities (`PartonDensities::bottom`) are never referenced.
 #[must_use]
 pub fn stru(
     a: &crate::pdfs::PartonDensities,

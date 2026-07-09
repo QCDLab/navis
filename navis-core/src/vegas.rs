@@ -20,7 +20,7 @@
 //! `navis_core::kinematics::map_phase_space` and everything downstream of
 //! it is unchanged from the previous VEGAS backend.
 
-use mchep::integrand::ObservableIntegrand;
+use mchep::integrand::{Integrand, ObservableIntegrand};
 use mchep::vegasplus::VegasPlus;
 use pineappl::grid::Grid;
 use rayon::prelude::*;
@@ -79,6 +79,27 @@ where
     }
 }
 
+/// Adapts a `Fn(&[f64; VEGAS_NDIM]) -> f64` closure into `mchep`'s plain
+/// `Integrand`, used when no grid fills are needed (see [`vegas_value_only`]).
+struct ValueClosureIntegrand<F> {
+    eval: F,
+}
+
+impl<F> Integrand for ValueClosureIntegrand<F>
+where
+    F: Fn(&[f64; VEGAS_NDIM]) -> f64 + Sync,
+{
+    fn dim(&self) -> usize {
+        VEGAS_NDIM
+    }
+
+    fn eval(&self, x: &[f64]) -> f64 {
+        let mut xx = [0.0_f64; VEGAS_NDIM];
+        xx.copy_from_slice(x);
+        (self.eval)(&xx)
+    }
+}
+
 /// Picks a safe number of stratification bins per dimension for VEGAS+'s
 /// hypercubes.
 fn choose_n_strat(n_eval: usize, dim: usize) -> usize {
@@ -115,7 +136,32 @@ where
     let empty_template = grid.clone();
 
     let wrapped = ClosureIntegrand { eval: integrand };
-    let result = integrator.integrate_with_observations(&wrapped, None, |fills| {
+    let result = integrator.integrate_with_observations(&wrapped, None, |mut fills| {
+        // PineAPPL's `PackedArray` stores its non-default entries in ascending
+        // raveled-index order and inserts a not-yet-seen index by shifting
+        // everything after its insertion point -- cheap (amortized O(1)) when
+        // the new index is at or near the end of what's already stored, but
+        // O(current size) when it lands in the middle. VEGAS+ hands points in
+        // random order, so without sorting, most insertions land in the middle
+        // of an ever-growing array. This dominated grid-filling time end to end.
+        // Sorting by the same key `Grid::fill` uses to place an entry -- first
+        // `(order, channel)` to pick the subgrid (matching the `[order, bin, channel]`
+        // indexing in `Grid::fill`), then `observable` to pick the bin, then
+        // `ntuple` in the same order as the `Scale(0), X(0), X(1), X(2)` kinematics
+        // set up in `GridConfig::new` -- makes each subsequent fill (and each
+        // chunk's later merge back into the running `grid`) land at or near the
+        // tail of what's already stored.
+        fills.sort_unstable_by(|a, b| {
+            a.order
+                .cmp(&b.order)
+                .then_with(|| a.channel.cmp(&b.channel))
+                .then_with(|| a.observable.total_cmp(&b.observable))
+                .then_with(|| a.ntuple[0].total_cmp(&b.ntuple[0]))
+                .then_with(|| a.ntuple[1].total_cmp(&b.ntuple[1]))
+                .then_with(|| a.ntuple[2].total_cmp(&b.ntuple[2]))
+                .then_with(|| a.ntuple[3].total_cmp(&b.ntuple[3]))
+        });
+
         let n_chunks = rayon::current_num_threads().max(1);
         let chunk_len = fills.len().div_ceil(n_chunks).max(1);
         let partials: Vec<Grid> = fills
@@ -141,6 +187,32 @@ where
                 .expect("partial grid shares the same schema");
         }
     });
+
+    VegasOutcome {
+        integral: result.value,
+        std_dev: result.error,
+        chi2_per_it: result.chi2_dof,
+    }
+}
+
+/// Runs VEGAS+ on `integrand` and returns the final estimate, without
+/// recording any grid fills. Uses `mchep`'s plain (non-observation)
+/// `VegasPlus::integrate`, which skips the per-point observation buffering
+/// and the PineAPPL interpolation-grid fill/merge that otherwise dominates
+/// the runtime -- for when only the Monte Carlo prediction is wanted (see
+/// `RunCard::generate_grids`).
+pub fn vegas_value_only<F>(integrand: F, n_iter: usize, n_eval: usize, seed: u64) -> VegasOutcome
+where
+    F: Fn(&[f64; VEGAS_NDIM]) -> f64 + Sync,
+{
+    let boundaries = [(0.0_f64, 1.0_f64); VEGAS_NDIM];
+    let n_strat = choose_n_strat(n_eval, VEGAS_NDIM);
+
+    let mut integrator = VegasPlus::new(n_iter, n_eval, N_BINS, ALPHA, n_strat, BETA, &boundaries);
+    integrator.set_seed(seed);
+
+    let wrapped = ValueClosureIntegrand { eval: integrand };
+    let result = integrator.integrate(&wrapped, None);
 
     VegasOutcome {
         integral: result.value,

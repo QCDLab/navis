@@ -65,6 +65,12 @@ scfac : 1.0
 scmu  : 1.0
 scfrag: 1.0
 
+# Whether to build and write the PineAPPL grid. Set to false to only
+# compute the Monte Carlo predictions (written to the .res file), skipping
+# the interpolation-grid filling/merging that otherwise dominates runtime.
+# Optional, default: true.
+# generate_grids: false
+
 ######## STAR-2013 LOWRAP experiment ########
 # # Bin configurations
 # n_bins: 4

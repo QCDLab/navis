@@ -1509,8 +1509,8 @@ pub fn avlo(j0: usize, _w: f64, v: f64, _s: f64, ctx: &MeContext) -> f64 {
 }
 
 /// `STRUV(W,V,X3,S)`: dispatches to the per-channel regular remainder terms
-/// (formerly `STRUV1..16`) by channel `j0`. See the channel table on
-/// [`fbor`] for what each index physically represents.
+/// by channel `j0`. See the channel table on [`fbor`] for what each index
+/// physically represents.
 #[must_use]
 pub fn struv(j0: usize, w: f64, v: f64, x3: f64, s: f64, ctx: &MeContext, pre: &Precalc) -> f64 {
     match j0 {
