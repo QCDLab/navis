@@ -34,7 +34,7 @@ const N_BINS: usize = 50;
 /// Grid-refinement damping factor.
 const ALPHA: f64 = 1.5;
 /// Hypercube-resampling damping factor.
-const BETA: f64 = 0.75;
+const BETA: f64 = 0.0;
 
 /// One PineAPPL grid-fill record, the side effect an integrand emits per
 /// Monte Carlo point.
