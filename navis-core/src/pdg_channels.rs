@@ -1,4 +1,4 @@
-//! The 16 partonic channels used by both the unpolarized and polarized.
+//! The partonic channels used by both the unpolarized and polarized.
 
 use pineappl::boc::Channel;
 
@@ -11,11 +11,10 @@ fn ch(entries: &[(i32, i32, i32, f64)]) -> Channel {
     )
 }
 
-/// Build the 16 PDG-basis channels, in Fortran `J0` order (`channels[0]` is
-/// `J0=1`, etc).
+/// Build the PDG-basis channels.
 #[must_use]
-pub fn sihp_pdg_channels() -> Vec<Channel> {
-    vec![
+pub fn sihp_pdg_channels(include_qed: bool) -> Vec<Channel> {
+    let mut channels = vec![
         // CHANNEL 1: q q' -> q
         ch(&[
             (2, 1, 2, 1.0),
@@ -267,5 +266,32 @@ pub fn sihp_pdg_channels() -> Vec<Channel> {
             (21, 21, -3, 0.5),
             (21, 21, -2, 0.5),
         ]),
-    ]
+    ];
+
+    if include_qed {
+        // CHANNEL 17 (QED): q qbar -> gamma, Born only.
+        channels.push(ch(&[
+            (2, -2, 22, 1.0),
+            (-2, 2, 22, 1.0),
+            (1, -1, 22, 1.0),
+            (-1, 1, 22, 1.0),
+            (3, -3, 22, 1.0),
+            (-3, 3, 22, 1.0),
+            (4, -4, 22, 1.0),
+            (-4, 4, 22, 1.0),
+        ]));
+        // CHANNEL 18 (QED): q g -> gamma, Born only.
+        channels.push(ch(&[
+            (2, 21, 22, 1.0),
+            (-2, 21, 22, 1.0),
+            (1, 21, 22, 1.0),
+            (-1, 21, 22, 1.0),
+            (3, 21, 22, 1.0),
+            (-3, 21, 22, 1.0),
+            (4, 21, 22, 1.0),
+            (-4, 21, 22, 1.0),
+        ]));
+    }
+
+    channels
 }

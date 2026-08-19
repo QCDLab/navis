@@ -66,6 +66,10 @@ pub struct RunCard {
     pub scmu: f64,
     pub scfrag: f64,
 
+    /// Virtual-photon virtuality/regulator scale for the QED-correction.
+    #[serde(default = "default_zero_f64")]
+    pub q2pho: f64,
+
     pub n_bins: usize,
     pub center_bins: Vec<f64>,
 

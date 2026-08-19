@@ -26,10 +26,7 @@ const IA2: [usize; 6] = [0, 2, 4, 10, 12, 13];
 const IA3: [usize; 9] = [0, 2, 4, 7, 8, 9, 10, 12, 13];
 
 /// One evaluation of the `DPLUS` integrand at VEGAS point `xx`, with this
-/// point's total Monte Carlo weight `fill_weight` (see
-/// `navis_core::vegas::vegas`'s doc comment for the calling convention --
-/// it replaces the Fortran's separate `/calls*wgt/iter_max` grid-fill
-/// normalization with one pre-combined factor).
+/// point's total Monte Carlo weight `fill_weight`.
 ///
 /// `bin_width` is `PTUP - PTDO` for this bin.
 #[allow(clippy::too_many_arguments)]

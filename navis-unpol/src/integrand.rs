@@ -26,10 +26,7 @@ const IA2: [usize; 6] = [0, 2, 4, 10, 12, 13];
 const IA3: [usize; 9] = [0, 2, 4, 7, 8, 9, 10, 12, 13];
 
 /// One evaluation of the `DPLUS` integrand at VEGAS point `xx`, with this
-/// point's total Monte Carlo weight `fill_weight` (see
-/// `navis_core::vegas::vegas`'s doc comment for the calling convention --
-/// it replaces the Fortran's separate `/calls*wgt/iter_max` grid-fill
-/// normalization with one pre-combined factor).
+/// point's total Monte Carlo weight `fill_weight`.
 ///
 /// `bin_width` is `PTUP - PTDO` for this bin.
 #[allow(clippy::too_many_arguments)]
@@ -57,26 +54,41 @@ pub fn dplus(
     let mut fills = Vec::new();
 
     // --- Born cross sections (FBOR calls + LO grid fills) ---
-    let f01 = fbor(ps.v, ps.shd_born, params.ca, params.cf);
-    let f02 = fbor(1.0 - ps.v, ps.shd_born, params.ca, params.cf);
+    let f01 = fbor(ps.v, ps.shd_born, params.ca, params.cf, run.q2pho);
+    let f02 = fbor(1.0 - ps.v, ps.shd_born, params.ca, params.cf, run.q2pho);
 
-    let mut born = [0.0_f64; 16];
-    for j0 in 0..16 {
+    let mut born = [0.0_f64; 18];
+    for j0 in 0..18 {
+        let w_pho = if j0 >= 16 { params.aem / alpord } else { 1.0 };
         fills.push(GridFill {
             order: PertOrder::born_index(),
             observable: ps.pt,
             channel: j0,
             ntuple: [ps.q2mu, ps.bx1, ps.bx2, ps.x3],
-            weight: f01[j0] * fill_weight * ps.bx1 * ps.bx2 * ps.bxjac * ps.phase_space * bin_width,
+            weight: f01[j0]
+                * w_pho
+                * fill_weight
+                * ps.bx1
+                * ps.bx2
+                * ps.bxjac
+                * ps.phase_space
+                * bin_width,
         });
         fills.push(GridFill {
             order: PertOrder::born_index(),
             observable: ps.pt,
             channel: j0,
             ntuple: [ps.q2mu, ps.bx2, ps.bx1, ps.x3],
-            weight: f02[j0] * fill_weight * ps.bx1 * ps.bx2 * ps.bxjac * ps.phase_space * bin_width,
+            weight: f02[j0]
+                * w_pho
+                * fill_weight
+                * ps.bx1
+                * ps.bx2
+                * ps.bxjac
+                * ps.phase_space
+                * bin_width,
         });
-        born[j0] = (f01[j0] * grrt[j0] + f02[j0] * grrc[j0]) * ps.bxjac;
+        born[j0] = (f01[j0] * grrt[j0] + f02[j0] * grrc[j0]) * ps.bxjac * w_pho;
     }
 
     let mut ghd = 0.0_f64;
@@ -198,6 +210,8 @@ pub fn dplus(
             ghd += born[j0];
         });
     }
+
+    ghd += born[16] + born[17];
 
     let dplus = (ghd + ghe) * alpord.powi(2) * ps.phase_space;
 

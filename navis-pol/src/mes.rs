@@ -14,10 +14,9 @@ pub struct MeContext {
 
 /// `FBOR(V,SHD,F0)`: Born cross sections (including the `1/v/(1-v)` phase
 /// space factor), one entry per of the 16 channels shared by this
-/// function, [`avwpl`], [`avdel`], [`avlo`], and [`struv`] (1-indexed,
-/// matching the Fortran `J0`), identified from the flavor bookkeeping in
-/// [`stru`] (confirmed byte-for-byte identical to the unpolarized
-/// package's `stru`):
+/// function, [`avwpl`], [`avdel`], [`avlo`], and [`struv`], identified from
+/// the flavor bookkeeping in [`stru`] (confirmed byte-for-byte identical to
+/// the unpolarized package's `stru`):
 ///
 /// 01. `qq' -> qq'`.
 /// 02. `qq' -> qq'`.
@@ -321,7 +320,7 @@ pub fn avwpl(j0: usize, _w: f64, v: f64, s: f64, ctx: &MeContext) -> f64 {
     let lv = v.ln();
     let lms = (ctx.q2fac / s).ln();
     let lmss = (ctx.q2frag / s).ln();
-    let nf = ctx.nf; // Fortran recomputes `Nf = 2.*GTR` where `GTR = NF/2`.
+    let nf = ctx.nf;
 
     match j0 {
         // 1: qq' -> qq' (unlike flavor, elastic), hadron from quark
@@ -1534,9 +1533,7 @@ pub fn struv(j0: usize, w: f64, v: f64, x3: f64, s: f64, ctx: &MeContext, pre: &
     }
 }
 
-/// `STRUV1(W,V,X3,S)`. `x3`/`s` are unused, matching the Fortran (the
-/// function's value depends only on `w`, `v`, and the precomputed powers
-/// and logs in `pre`).
+/// `STRUV1(W,V,X3,S)`.
 #[must_use]
 pub fn qqprime_elastic_quark_frag(
     w: f64,
@@ -6602,10 +6599,7 @@ fn qqbar_elastic_quark_frag_part4(w: f64, v: f64, ctx: &MeContext, pre: &Precalc
 }
 
 /// `STRUV12(W,V,X3,S)`, part A: the four `Nf`-proportional terms sharing
-/// the common factor `(1-2V+V2+V2W2)*(1+V2-2V2W+V2W2)/(1-V+VW)^4`
-/// (verbatim identical in the Fortran source across all four terms, so
-/// factored here rather than retyped four times -- not a physics
-/// simplification, just avoiding four copies of the same bracket).
+/// the common factor `(1-2V+V2+V2W2)*(1+V2-2V2W+V2W2)/(1-V+VW)^4`.
 fn qqbar_to_gg_gluon_frag_part_a(w: f64, v: f64, ctx: &MeContext, pre: &Precalc) -> f64 {
     let ca = ctx.ca;
     let cf = ctx.cf;
@@ -8307,8 +8301,7 @@ pub fn qqbar_to_gg_gluon_frag(
 }
 
 /// `STRUV13(W,V,X3,S)`, part A: the three `Nf`-proportional terms sharing
-/// `(1+VW)(1-2V+VW)/((1-V)(1-VW)^2)` (identical bracket in the Fortran
-/// source, factored to avoid retyping), plus the `Nf` polynomial term.
+/// `(1+VW)(1-2V+VW)/((1-V)(1-VW)^2)`.
 fn qg_compton_quark_frag_part_a(w: f64, v: f64, ctx: &MeContext, pre: &Precalc) -> f64 {
     let cf = ctx.cf;
     let ca = ctx.ca;
@@ -11999,11 +11992,10 @@ pub fn gg_to_qqbar_quark_frag(
 /// package's `STRU` -- the flavor combinatorics don't depend on whether the
 /// PDFs are polarized, only the numeric values fed in do. `GPPV` uses A as
 /// the "unintegrated" (v-side) hadron and B as the "collinear" (w-side)
-/// one; `GPPC` swaps A and B (Fortran's convention for the two `DPLUS`
-/// terms).
+/// one; `GPPC` swaps A and B.
 ///
 /// Bottom-quark densities (`PartonDensities::bottom`, always zero here)
-/// are never referenced, matching the Fortran subroutine's argument list.
+/// are never referenced.
 #[must_use]
 pub fn stru(
     a: &crate::pdfs::PartonDensities,

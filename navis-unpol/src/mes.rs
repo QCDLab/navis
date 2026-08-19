@@ -34,7 +34,7 @@ pub struct MeContext {
 /// 15. `gg -> gg`.
 /// 16. `gg -> qqbar`.
 #[must_use]
-pub fn fbor(v: f64, shd: f64, nc: f64, cf: f64) -> [f64; 16] {
+pub fn fbor(v: f64, shd: f64, nc: f64, cf: f64, q2pho: f64) -> [f64; 18] {
     let v2 = v.powi(2);
     let v3 = v.powi(3);
     let v4 = v.powi(4);
@@ -44,7 +44,7 @@ pub fn fbor(v: f64, shd: f64, nc: f64, cf: f64) -> [f64; 16] {
     let vm2 = vm.powi(2);
     let prelo = std::f64::consts::PI / shd / v / vm;
 
-    let mut f0 = [0.0_f64; 16];
+    let mut f0 = [0.0_f64; 18];
 
     f0[0] = cf / nc * prelo * (v2 + 1.0) / vm2;
     f0[1] = 0.0;
@@ -82,6 +82,10 @@ pub fn fbor(v: f64, shd: f64, nc: f64, cf: f64) -> [f64; 16] {
     f0[14] = 4.0 * nc2 / vc * prelo * (3.0 - v * vm + v / vm2 + vm / v2);
     f0[15] =
         1.0 / (2.0 * nc) / vc * prelo * (v2 + vm2) * (2.0 * nc2 * (v2 - v) + nc2 - 1.0) / v / vm;
+
+    let tau = q2pho / shd;
+    f0[16] = (8.0 / 9.0) * prelo * (v2 + vm2 + 2.0 * tau) / (v * vm);
+    f0[17] = (1.0 / 3.0) * prelo * (1.0 + v2 - 2.0 * tau * vm) / v;
 
     f0
 }
@@ -17551,21 +17555,27 @@ pub fn gg_to_qqbar_quark_frag(
 /// `GPPC` swaps A and B.
 ///
 /// Bottom-quark densities (`PartonDensities::bottom`) are never referenced.
+/// Squared electric charge of an up-type quark, `(2/3)^2`.
+const UP_CHARGE_SQ: f64 = 4.0 / 9.0;
+/// Squared electric charge of a down-type quark, `(1/3)^2`.
+const DOWN_CHARGE_SQ: f64 = 1.0 / 9.0;
+
 #[must_use]
 pub fn stru(
     a: &crate::pdfs::PartonDensities,
     b: &crate::pdfs::PartonDensities,
     ff: &crate::pdfs::FragmentationFunctions,
-) -> ([f64; 16], [f64; 16]) {
+) -> ([f64; 18], [f64; 18]) {
     let (xuha, xubha, xdha, xdbha, xsha, xcha, xgproa) =
         (a.up, a.upb, a.down, a.downb, a.strange, a.charm, a.gluon);
     let (xuhb, xubhb, xdhb, xdbhb, xshb, xchb, xgprob) =
         (b.up, b.upb, b.down, b.downb, b.strange, b.charm, b.gluon);
     let (xdup, xdubp, xddp, xddbp, xdsp, xdsbp, xdcp, xdcbp, xdgp) =
         (ff.u, ff.ub, ff.d, ff.db, ff.s, ff.sb, ff.c, ff.cb, ff.g);
+    let xdpho = ff.photon;
 
-    let mut gppv = [0.0_f64; 16];
-    let mut gppc = [0.0_f64; 16];
+    let mut gppv = [0.0_f64; 18];
+    let mut gppc = [0.0_f64; 18];
 
     gppv[0] = xuha * (xdhb + xshb + xchb) * xdup
         + xdha * (xuhb + xshb + xchb) * xddp
@@ -17788,6 +17798,29 @@ pub fn stru(
 
     gppv[15] = xgproa * xgprob * (xdup + xdubp + xddp + xddbp + xdsp + xdsbp + xdcp + xdcbp) / 2.0;
     gppc[15] = xgprob * xgproa * (xdup + xdubp + xddp + xddbp + xdsp + xdsbp + xdcp + xdcbp) / 2.0;
+
+    // --- QED channels (17/18 in Fortran 1-indexing), Born only, matching
+    // the `qed-corrections` branch. Channel 17 (`q qbar -> gamma`) has no
+    // direct/crossed distinction (`gppc == gppv`), matching the Fortran.
+    gppv[16] = ((xuha * xubhb + xubha * xuhb) * UP_CHARGE_SQ
+        + (xdha * xdbhb + xdbha * xdhb) * DOWN_CHARGE_SQ
+        + (xsha * xshb + xsha * xshb) * DOWN_CHARGE_SQ
+        + (xcha * xchb + xcha * xchb) * UP_CHARGE_SQ)
+        * xdpho;
+    gppc[16] = gppv[16];
+
+    gppv[17] = ((xuha + xubha) * UP_CHARGE_SQ
+        + (xdha + xdbha) * DOWN_CHARGE_SQ
+        + (xsha + xsha) * DOWN_CHARGE_SQ
+        + (xcha + xcha) * UP_CHARGE_SQ)
+        * xgprob
+        * xdpho;
+    gppc[17] = ((xuhb + xubhb) * UP_CHARGE_SQ
+        + (xdhb + xdbhb) * DOWN_CHARGE_SQ
+        + (xshb + xshb) * DOWN_CHARGE_SQ
+        + (xchb + xchb) * UP_CHARGE_SQ)
+        * xgproa
+        * xdpho;
 
     (gppv, gppc)
 }

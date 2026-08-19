@@ -75,7 +75,12 @@ impl GridConfig {
     /// 1`) across *all* pT bins in the run: the Q2 interpolation range is
     /// derived from the overall pT range.
     #[must_use]
-    pub fn new(order: PertOrder, convolutions: Vec<Conv>, global_edges: &[f64]) -> Self {
+    pub fn new(
+        order: PertOrder,
+        convolutions: Vec<Conv>,
+        global_edges: &[f64],
+        include_qed: bool,
+    ) -> Self {
         let bin_min = global_edges[0];
         let bin_max = global_edges[global_edges.len() - 1];
 
@@ -119,7 +124,7 @@ impl GridConfig {
         ];
 
         Self {
-            channels: sihp_pdg_channels(),
+            channels: sihp_pdg_channels(include_qed),
             orders: order.orders(),
             convolutions,
             interps,

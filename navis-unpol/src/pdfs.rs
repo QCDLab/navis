@@ -29,6 +29,7 @@ pub struct FragmentationFunctions {
     pub c: f64,
     pub cb: f64,
     pub g: f64,
+    pub photon: f64,
 }
 
 /// Bundles the unpolarized PDF and fragmentation-function sets used by one
@@ -107,6 +108,7 @@ impl PdfFf {
                 c: 0.0,
                 cb: 0.0,
                 g: 0.0,
+                photon: 0.0,
             };
         }
 
@@ -117,6 +119,7 @@ impl PdfFf {
         let db = self.ff.xfxq2(-1, &[z, q2]);
         let sb = self.ff.xfxq2(-3, &[z, q2]);
         let gl = self.ff.xfxq2(0, &[z, q2]);
+        let pho = self.ff.xfxq2(22, &[z, q2]);
 
         FragmentationFunctions {
             u: u / z,
@@ -128,6 +131,7 @@ impl PdfFf {
             c: 0.0,
             cb: 0.0,
             g: gl / z,
+            photon: pho / z,
         }
     }
 }

@@ -58,7 +58,6 @@ pub struct BinInputs {
 #[derive(Debug, Clone, Copy)]
 pub struct RunParams {
     pub sqs: f64,
-    /// `S = SQS**2`.
     pub s: f64,
     pub scfac: f64,
     pub scmu: f64,
@@ -66,6 +65,7 @@ pub struct RunParams {
     pub isigm: CrossSectionType,
     pub hc2: f64,
     pub pi: f64,
+    pub q2pho: f64,
 }
 
 /// The result of mapping one VEGAS point through the 5D phase space.
@@ -113,8 +113,7 @@ impl PhaseSpace {
     }
 }
 
-/// Map a 5D VEGAS point `xx` (`XX(1..5)` in Fortran, 0-indexed here) to a
-/// [`PhaseSpace`] point.
+/// Map a 5D VEGAS point `xx` to a [`PhaseSpace`] point.
 #[must_use]
 pub fn map_phase_space(
     xx: &[f64; 5],
