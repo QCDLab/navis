@@ -22,8 +22,7 @@ pub struct Params {
     pub vc: f64,
     /// `GTR = NF / 2`.
     pub gtr: f64,
-    /// The 18-entry channel normalization prefactor `CC(J0)`, see [`prefactors`].
-    pub cc: [f64; 18],
+    pub cc: [f64; 21],
 }
 
 impl Params {
@@ -43,18 +42,16 @@ impl Params {
     }
 }
 
-/// Per-channel color prefactor `CC(J0)`, `J0 = 1..18`, computed in the `DO 2
-/// J0=1,18`.
-///
-/// Channels 15/16 get `8*VC^2`; channels 8,9,10,13,14 get `8*VC*NC`;
-/// channels 17/18 (photon) get `1`; all others get `8*NC^2`.
+/// Per-channel color prefactor `CC(J0)`. Channels 15/16 get `8*VC^2`;
+/// channels 8,9,10,13,14 get `8*VC*NC`; channels 17-21 (photon) get `1`;
+/// all others get `8*NC^2`.
 #[must_use]
-pub fn prefactors(nc: f64) -> [f64; 18] {
+pub fn prefactors(nc: f64) -> [f64; 21] {
     let vc = nc * nc - 1.0;
-    let mut cc = [0.0; 18];
+    let mut cc = [0.0; 21];
     for (j0, entry) in cc.iter_mut().enumerate() {
         let channel = j0 + 1;
-        *entry = if channel == 17 || channel == 18 {
+        *entry = if channel >= 17 {
             1.0
         } else if channel == 16 || channel == 15 {
             8.0 * vc * vc

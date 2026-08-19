@@ -39,7 +39,7 @@ pub struct MeContext {
 /// 15. `gg -> gg`.
 /// 16. `gg -> qqbar`.
 #[must_use]
-pub fn fbor(v: f64, shd: f64, nc: f64, cf: f64, q2pho: f64) -> [f64; 18] {
+pub fn fbor(v: f64, shd: f64, nc: f64, cf: f64, q2pho: f64) -> [f64; 21] {
     let v2 = v.powi(2);
     let v3 = v.powi(3);
     let v4 = v.powi(4);
@@ -49,7 +49,7 @@ pub fn fbor(v: f64, shd: f64, nc: f64, cf: f64, q2pho: f64) -> [f64; 18] {
     let vm2 = vm.powi(2);
     let prelo = std::f64::consts::PI / shd / v / vm;
 
-    let mut f0 = [0.0_f64; 18];
+    let mut f0 = [0.0_f64; 21];
 
     f0[0] = cf / nc * prelo * (v2 + 1.0) / vm2;
     f0[1] = 0.0;
@@ -91,6 +91,11 @@ pub fn fbor(v: f64, shd: f64, nc: f64, cf: f64, q2pho: f64) -> [f64; 18] {
     let tau = q2pho / shd;
     f0[16] = (8.0 / 9.0) * prelo * (v2 + vm2 + 2.0 * tau) / (v * vm);
     f0[17] = (1.0 / 3.0) * prelo * (1.0 + v2 - 2.0 * tau * vm) / v;
+
+    // Initial-state-photon channels.
+    f0[18] = (1.0 / 3.0) * prelo * (1.0 + v2) / v;
+    f0[19] = (1.0 / 3.0) * prelo * (1.0 + vm2) / vm;
+    f0[20] = (8.0 / 9.0) * prelo * (v2 + vm2) / (v * vm);
 
     f0
 }
@@ -17565,7 +17570,7 @@ pub fn stru(
     a: &crate::pdfs::PartonDensities,
     b: &crate::pdfs::PartonDensities,
     ff: &crate::pdfs::FragmentationFunctions,
-) -> ([f64; 18], [f64; 18]) {
+) -> ([f64; 21], [f64; 21]) {
     let (xuha, xubha, xdha, xdbha, xsha, xcha, xgproa) =
         (a.up, a.upb, a.down, a.downb, a.strange, a.charm, a.gluon);
     let (xuhb, xubhb, xdhb, xdbhb, xshb, xchb, xgprob) =
@@ -17573,9 +17578,10 @@ pub fn stru(
     let (xdup, xdubp, xddp, xddbp, xdsp, xdsbp, xdcp, xdcbp, xdgp) =
         (ff.u, ff.ub, ff.d, ff.db, ff.s, ff.sb, ff.c, ff.cb, ff.g);
     let xdpho = ff.photon;
+    let (xphoa, xphob) = (a.photon, b.photon);
 
-    let mut gppv = [0.0_f64; 18];
-    let mut gppc = [0.0_f64; 18];
+    let mut gppv = [0.0_f64; 21];
+    let mut gppc = [0.0_f64; 21];
 
     gppv[0] = xuha * (xdhb + xshb + xchb) * xdup
         + xdha * (xuhb + xshb + xchb) * xddp
@@ -17821,6 +17827,58 @@ pub fn stru(
         + (xchb + xchb) * UP_CHARGE_SQ)
         * xgproa
         * xdpho;
+
+    // Channel 19: gamma q -> g q, gluon fragments. Quark stays a PDF input
+    // (hadron B in the direct term); gluon comes from the FF.
+    gppv[18] = xphoa
+        * ((xuhb + xubhb) * UP_CHARGE_SQ
+            + (xdhb + xdbhb) * DOWN_CHARGE_SQ
+            + (xshb + xshb) * DOWN_CHARGE_SQ
+            + (xchb + xchb) * UP_CHARGE_SQ)
+        * xdgp;
+    gppc[18] = xphob
+        * ((xuha + xubha) * UP_CHARGE_SQ
+            + (xdha + xdbha) * DOWN_CHARGE_SQ
+            + (xsha + xsha) * DOWN_CHARGE_SQ
+            + (xcha + xcha) * UP_CHARGE_SQ)
+        * xdgp;
+
+    // Channel 20: gamma q -> q g, quark fragments (elastic-like, same
+    // flavor as the incoming quark).
+    gppv[19] = xphoa
+        * (xuhb * xdup * UP_CHARGE_SQ
+            + xubhb * xdubp * UP_CHARGE_SQ
+            + xdhb * xddp * DOWN_CHARGE_SQ
+            + xdbhb * xddbp * DOWN_CHARGE_SQ
+            + xshb * xdsp * DOWN_CHARGE_SQ
+            + xshb * xdsbp * DOWN_CHARGE_SQ
+            + xchb * xdcp * UP_CHARGE_SQ
+            + xchb * xdcbp * UP_CHARGE_SQ);
+    gppc[19] = xphob
+        * (xuha * xdup * UP_CHARGE_SQ
+            + xubha * xdubp * UP_CHARGE_SQ
+            + xdha * xddp * DOWN_CHARGE_SQ
+            + xdbha * xddbp * DOWN_CHARGE_SQ
+            + xsha * xdsp * DOWN_CHARGE_SQ
+            + xsha * xdsbp * DOWN_CHARGE_SQ
+            + xcha * xdcp * UP_CHARGE_SQ
+            + xcha * xdcbp * UP_CHARGE_SQ);
+
+    // Channel 21: gamma g -> q qbar, either the quark or the antiquark
+    // fragments (summed via the FF pair, v/vm-symmetric formula, no
+    // direct/crossed distinction needed beyond the usual hadron A/B swap).
+    gppv[20] = xphoa
+        * xgprob
+        * ((xdup + xdubp) * UP_CHARGE_SQ
+            + (xddp + xddbp) * DOWN_CHARGE_SQ
+            + (xdsp + xdsbp) * DOWN_CHARGE_SQ
+            + (xdcp + xdcbp) * UP_CHARGE_SQ);
+    gppc[20] = xphob
+        * xgproa
+        * ((xdup + xdubp) * UP_CHARGE_SQ
+            + (xddp + xddbp) * DOWN_CHARGE_SQ
+            + (xdsp + xdsbp) * DOWN_CHARGE_SQ
+            + (xdcp + xdcbp) * UP_CHARGE_SQ);
 
     (gppv, gppc)
 }

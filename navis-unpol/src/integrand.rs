@@ -57,8 +57,8 @@ pub fn dplus(
     let f01 = fbor(ps.v, ps.shd_born, params.ca, params.cf, run.q2pho);
     let f02 = fbor(1.0 - ps.v, ps.shd_born, params.ca, params.cf, run.q2pho);
 
-    let mut born = [0.0_f64; 18];
-    for j0 in 0..18 {
+    let mut born = [0.0_f64; 21];
+    for j0 in 0..21 {
         let w_pho = if j0 >= 16 { params.aem / alpord } else { 1.0 };
         fills.push(GridFill {
             order: PertOrder::born_index(),
@@ -211,7 +211,7 @@ pub fn dplus(
         });
     }
 
-    ghd += born[16] + born[17];
+    ghd += born[16] + born[17] + born[18] + born[19] + born[20];
 
     let dplus = (ghd + ghe) * alpord.powi(2) * ps.phase_space;
 

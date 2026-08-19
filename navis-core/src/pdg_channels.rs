@@ -291,6 +291,44 @@ pub fn sihp_pdg_channels(include_qed: bool) -> Vec<Channel> {
             (4, 21, 22, 1.0),
             (-4, 21, 22, 1.0),
         ]));
+        // CHANNEL 19 (QED, initial-state photon): gamma q -> g q, gluon
+        // fragments. Bödeker DESY 92-188 (arXiv:9303214) eq. 69.
+        channels.push(ch(&[
+            (22, 2, 21, 1.0),
+            (22, -2, 21, 1.0),
+            (22, 1, 21, 1.0),
+            (22, -1, 21, 1.0),
+            (22, 3, 21, 1.0),
+            (22, -3, 21, 1.0),
+            (22, 4, 21, 1.0),
+            (22, -4, 21, 1.0),
+        ]));
+        // CHANNEL 20 (QED, initial-state photon): gamma q -> q g, quark
+        // fragments (same flavor as incoming). Same physical vertex as
+        // channel 19, formula obtained by v <-> vm (bracket (1+vm^2)/vm).
+        channels.push(ch(&[
+            (22, 2, 2, 1.0),
+            (22, -2, -2, 1.0),
+            (22, 1, 1, 1.0),
+            (22, -1, -1, 1.0),
+            (22, 3, 3, 1.0),
+            (22, -3, -3, 1.0),
+            (22, 4, 4, 1.0),
+            (22, -4, -4, 1.0),
+        ]));
+        // CHANNEL 21 (QED, initial-state photon): gamma g -> q qbar, either
+        // fragments. Bödeker eq. 69, S_0 = t-hat/u-hat + u-hat/t-hat, same
+        // v/vm-symmetric bracket as channel 17's (v^2+vm^2)/(v*vm).
+        channels.push(ch(&[
+            (22, 21, 2, 1.0),
+            (22, 21, -2, 1.0),
+            (22, 21, 1, 1.0),
+            (22, 21, -1, 1.0),
+            (22, 21, 3, 1.0),
+            (22, 21, -3, 1.0),
+            (22, 21, 4, 1.0),
+            (22, 21, -4, 1.0),
+        ]));
     }
 
     channels
