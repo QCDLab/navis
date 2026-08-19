@@ -1,5 +1,10 @@
 //! Unpolarized partonic matrix elements.
 
+/// Squared electric charge of an up-type quark, `(2/3)^2`.
+const UP_CHARGE_SQ: f64 = 4.0 / 9.0;
+/// Squared electric charge of a down-type quark, `(1/3)^2`.
+const DOWN_CHARGE_SQ: f64 = 1.0 / 9.0;
+
 /// Scale/color context threaded through the matrix elements.
 #[derive(Debug, Clone, Copy)]
 pub struct MeContext {
@@ -17552,14 +17557,9 @@ pub fn gg_to_qqbar_quark_frag(
 /// parton densities of hadrons A/B with fragmentation functions into the
 /// flavor-summed weight for each of the 16 channels. `GPPV` uses A as the
 /// "unintegrated" (v-side) hadron and B as the "collinear" (w-side) one;
-/// `GPPC` swaps A and B.
+// `GPPC` swaps A and B.
 ///
 /// Bottom-quark densities (`PartonDensities::bottom`) are never referenced.
-/// Squared electric charge of an up-type quark, `(2/3)^2`.
-const UP_CHARGE_SQ: f64 = 4.0 / 9.0;
-/// Squared electric charge of a down-type quark, `(1/3)^2`.
-const DOWN_CHARGE_SQ: f64 = 1.0 / 9.0;
-
 #[must_use]
 pub fn stru(
     a: &crate::pdfs::PartonDensities,
