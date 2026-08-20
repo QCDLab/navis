@@ -6,16 +6,19 @@
   QCD and dump the results in the form of
   <a href="https://github.com/NNPDF/pineappl">PineAPPL</a>
   fast interpolation grids. It is based on the following papers:
-  <a href="https://arxiv.org/abs/hep-ph/0210442">[arXiv:0210442]</a> and
-  <a href="https://arxiv.org/abs/hep-ph/0211007">[arXiv:0211007]</a>.
+  <a href="https://arxiv.org/abs/hep-ph/0210442">[arXiv:0210442]</a>,
+  <a href="https://arxiv.org/abs/hep-ph/0211007">[arXiv:0211007]</a>,
+  <a href="https://bib-pubdb1.desy.de/record/517576/files/">[DESY94-042]</a>,
+  and <a href="https://inspirehep.net/literature/342979">[iNSPIRE:342979]</a>.
 </p>
 
 ## Installation
 
 To compile the code, you only need [cargo](https://doc.rust-lang.org/cargo/) and then
-run the following command:
+run the following commands:
 
 ```sh
+git clone https://github.com/QCDLab/navis.git
 cargo install --path navis-cli
 ```
 
@@ -28,7 +31,7 @@ navis-unpol ./runcards/example.yml
 
 ## Citation
 
-If you use **ηaνis**, please cite the following:
+If you use **ηaνis**, please cite the papers above and the following:
 
 <table>
   <tr>
