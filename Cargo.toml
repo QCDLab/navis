@@ -8,7 +8,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 rust-version = "1.91.0"
 repository = "https://github.com/QCDLab/navis"
@@ -30,9 +30,9 @@ thiserror = "1.0"
 clap = { version = "4.5", features = ["derive"] }
 
 # internal crates
-navis-core = { path = "./navis-core" }
-navis-pol = { path = "./navis-pol" }
-navis-unpol = { path = "./navis-unpol" }
+navis-core = { path = "./navis-core", version = "0.2.0" }
+navis-pol = { path = "./navis-pol", version = "0.2.0" }
+navis-unpol = { path = "./navis-unpol", version = "0.2.0" }
 
 [profile.release]
 opt-level = 3

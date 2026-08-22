@@ -688,7 +688,7 @@ dependencies = [
 
 [[package]]
 name = "navis-cli"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -704,7 +704,7 @@ dependencies = [
 
 [[package]]
 name = "navis-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "mchep",
@@ -718,7 +718,7 @@ dependencies = [
 
 [[package]]
 name = "navis-pol"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "navis-core",
  "neopdf",
@@ -727,7 +727,7 @@ dependencies = [
 
 [[package]]
 name = "navis-unpol"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "navis-core",
  "neopdf",
