@@ -14,8 +14,14 @@
 
 ## Installation
 
-To compile the code, you only need [cargo](https://doc.rust-lang.org/cargo/) and then
-run the following commands:
+ηaνis is published in [crates.io](https://crates.io/crates/navis-cli). To install it,
+simply run the following command:
+
+```sh
+cargo install navis-cli
+```
+
+Otherwise, to compile it from source, run the following commands instead:
 
 ```sh
 git clone https://github.com/QCDLab/navis.git
