@@ -52,9 +52,6 @@ impl PdfFf {
         self.pdf.alphas_q2(q2)
     }
 
-    /// `STRUCI(X,Q2,ITAR,...)`. `itar` is accepted for API symmetry with
-    /// the unpolarized crate but is unused, matching the Fortran: the
-    /// polarized `STRUCI` never reads its `ITAR`.
     #[must_use]
     pub fn struci(&self, x: f64, q2: f64, _itar: i32) -> PartonDensities {
         let up = self.pdf.xfxq2(2, &[x, q2]);

@@ -4,9 +4,8 @@
 //! `mchep`'s `Integrand` trait is a plain `fn eval(&self, x: &[f64]) -> f64`
 //! with no side channel, but every Monte Carlo point here also needs to
 //! emit PineAPPL grid fills (one per channel/order, not just contribute to
-//! a single running total) -- exactly the same requirement the Fortran's
-//! `DPLUS` has, calling `pineappl_grid_fill2` on every point rather than
-//! only at the end. To support that, `mchep` gained a small additive
+//! a single running total), calling `pineappl_grid_fill2` on every point rather
+//! than only at the end. To support that, `mchep` gained a small additive
 //! `ObservableIntegrand` trait (see `mchep::integrand`) that hands back a
 //! `fill_weight` per point -- the VEGAS+ jacobian already normalized by
 //! this point's share of its hypercube's sample count and by the number of

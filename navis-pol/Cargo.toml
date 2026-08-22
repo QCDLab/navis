@@ -3,7 +3,8 @@ name = "navis-pol"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
-description = "Polarized single-inclusive hadron production matrix elements and PDF/FF interface"
+description = "Polarized single-inclusive hadron production"
+repository.workspace = true
 license.workspace = true
 
 [dependencies]

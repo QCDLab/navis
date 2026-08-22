@@ -14,6 +14,7 @@ pub struct PartonDensities {
     pub charm: f64,
     pub bottom: f64,
     pub gluon: f64,
+    pub photon: f64,
 }
 
 /// Unpolarized fragmentation functions at a given `(z, Q^2)` (`STRUCF`'s
@@ -29,6 +30,7 @@ pub struct FragmentationFunctions {
     pub c: f64,
     pub cb: f64,
     pub g: f64,
+    pub photon: f64,
 }
 
 /// Bundles the unpolarized PDF and fragmentation-function sets used by one
@@ -65,6 +67,7 @@ impl PdfFf {
         let charm = self.pdf.xfxq2(4, &[x, q2]);
         let bottom = self.pdf.xfxq2(5, &[x, q2]);
         let gluon = self.pdf.xfxq2(0, &[x, q2]);
+        let photon = self.pdf.xfxq2(22, &[x, q2]);
 
         if itar == 1 {
             std::mem::swap(&mut up, &mut upb);
@@ -87,6 +90,7 @@ impl PdfFf {
             charm,
             bottom,
             gluon,
+            photon,
         }
     }
 
@@ -107,6 +111,7 @@ impl PdfFf {
                 c: 0.0,
                 cb: 0.0,
                 g: 0.0,
+                photon: 0.0,
             };
         }
 
@@ -117,6 +122,7 @@ impl PdfFf {
         let db = self.ff.xfxq2(-1, &[z, q2]);
         let sb = self.ff.xfxq2(-3, &[z, q2]);
         let gl = self.ff.xfxq2(0, &[z, q2]);
+        let pho = self.ff.xfxq2(22, &[z, q2]);
 
         FragmentationFunctions {
             u: u / z,
@@ -128,6 +134,7 @@ impl PdfFf {
             c: 0.0,
             cb: 0.0,
             g: gl / z,
+            photon: pho / z,
         }
     }
 }

@@ -43,6 +43,7 @@ fn main() -> anyhow::Result<()> {
         isigm: CrossSectionType::from_isigm(card.isigm)?,
         hc2: params.hc2,
         pi: params.pi,
+        q2pho: card.q2pho,
     };
     let targets = Targets {
         ih1: card.ih1,
@@ -64,7 +65,7 @@ fn main() -> anyhow::Result<()> {
     let edges = card.bin_edges();
     let grid_config = card
         .generate_grids
-        .then(|| GridConfig::new(order, convolutions, &edges));
+        .then(|| GridConfig::new(order, convolutions, &edges, true));
 
     let n_iter = card.iter_max as usize;
     let n_eval = card.ncalls_vegas as usize;

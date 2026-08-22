@@ -3,7 +3,8 @@ name = "navis-core"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
-description = "Shared kinematics, VEGAS integrator, PineAPPL grid setup, and runcard parsing for navis"
+description = "navis core API"
+repository.workspace = true
 license.workspace = true
 
 [dependencies]

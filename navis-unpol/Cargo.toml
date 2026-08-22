@@ -3,7 +3,8 @@ name = "navis-unpol"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
-description = "Unpolarized single-inclusive hadron production matrix elements and PDF/FF interface"
+description = "Unpolarized single-inclusive hadron production"
+repository.workspace = true
 license.workspace = true
 
 [dependencies]

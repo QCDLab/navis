@@ -4,8 +4,10 @@
 pub const CF: f64 = 4.0 / 3.0;
 /// Number of colors `C_A = N_C = 3`.
 pub const CA: f64 = 3.0;
-/// Conversion factor `(hbar*c)^2` in GeV^2 pbarn, i.e. `HC2` in the Fortran code.
+/// Conversion factor `(hbar*c)^2` in GeV^2 pbarn.
 pub const HC2: f64 = 0.389_429_57e9;
+/// QED fine-structure constant `AEM`.
+pub const AEM: f64 = 1.0 / 137.036;
 
 /// Physics parameters derived from the runcard, computed once per run.
 #[derive(Debug, Clone, Copy)]
@@ -15,12 +17,12 @@ pub struct Params {
     pub nf: f64,
     pub pi: f64,
     pub hc2: f64,
+    pub aem: f64,
     /// `VC = C_A^2 - 1`.
     pub vc: f64,
     /// `GTR = NF / 2`.
     pub gtr: f64,
-    /// The 16-entry channel normalization prefactor `CC(J0)`, see [`prefactors`].
-    pub cc: [f64; 16],
+    pub cc: [f64; 21],
 }
 
 impl Params {
@@ -32,6 +34,7 @@ impl Params {
             nf,
             pi: std::f64::consts::PI,
             hc2: HC2,
+            aem: AEM,
             vc: CA * CA - 1.0,
             gtr: nf / 2.0,
             cc: prefactors(CA),
@@ -39,18 +42,18 @@ impl Params {
     }
 }
 
-/// Per-channel color prefactor `CC(J0)`, `J0 = 1..16`, computed in the `DO 2
-/// J0=1,16`.
-///
-/// Channels 15/16 get `8*VC^2`; channels 8,9,10,13,14 get `8*VC*NC`; all
-/// others get `8*NC^2`.
+/// Per-channel color prefactor `CC(J0)`. Channels 15/16 get `8*VC^2`;
+/// channels 8,9,10,13,14 get `8*VC*NC`; channels 17-21 (photon) get `1`;
+/// all others get `8*NC^2`.
 #[must_use]
-pub fn prefactors(nc: f64) -> [f64; 16] {
+pub fn prefactors(nc: f64) -> [f64; 21] {
     let vc = nc * nc - 1.0;
-    let mut cc = [0.0; 16];
+    let mut cc = [0.0; 21];
     for (j0, entry) in cc.iter_mut().enumerate() {
         let channel = j0 + 1;
-        *entry = if channel == 16 || channel == 15 {
+        *entry = if channel >= 17 {
+            1.0
+        } else if channel == 16 || channel == 15 {
             8.0 * vc * vc
         } else if matches!(channel, 14 | 13 | 10 | 9 | 8) {
             8.0 * vc * nc
