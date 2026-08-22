@@ -35,6 +35,15 @@ If you use **ηaνis**, please cite the papers above and the following:
 
 <table>
   <tr>
+  <td valign="middle"><b>ηaνis</b> itself</td>
+  <td valign="middle">
+    <a href="https://doi.org/10.5281/zenodo.22062166"><img
+          alt="zenodo"
+          src="https://img.shields.io/badge/DOI-10.5281%2Fzenodo.22062166-blue.svg?style=for-the-badge&logo=zenodo"
+          height="25"
+    /></a>
+  </td>
+  <tr>
   <td valign="middle"><b>MCHEP</b> for the MC integration</td>
   <td valign="middle">
     <a href="https://doi.org/10.5281/zenodo.21206363"><img
